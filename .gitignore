@@ -30,3 +30,30 @@
 *.exe
 *.out
 *.app
+
+# Other
+.temp/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon files
+Icon?
+._*
+
+# Thư mục Spotlight và Trash
+.Spotlight-V100
+.Trashes
+
+# Thư mục tạm và metadata khác
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Tạm thời khi mount ổ
+.AppleDB
+.AppleDesktop
+Network Trash Folder
