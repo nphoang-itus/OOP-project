@@ -4,9 +4,9 @@
 Flight::Flight() : _id(0), _amount(0.0), _availability(false) {}
 
 Flight::Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-        const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const bool& availability)
-    :   _id(0), _no(no), _name(name), _from(from), _destination(destination),
-        _departureTime(departureTime), _leaveTime(leaveTime), _arrivalTime(arrivalTime), _amount(amount), _availability(availability) {}
+                const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const bool& availability)
+            :   _id(0), _no(no), _name(name), _from(from), _destination(destination),
+                _departureTime(departureTime), _leaveTime(leaveTime), _arrivalTime(arrivalTime), _amount(amount), _availability(availability) {}
 
 // Getter
 int Flight::getId() const {
