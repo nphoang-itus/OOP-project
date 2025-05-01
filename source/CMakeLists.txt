@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Thêm thư mục chứa file header
 include_directories(${CMAKE_SOURCE_DIR}/src/core)
 include_directories(${CMAKE_SOURCE_DIR}/src/database)
+include_directories(${CMAKE_SOURCE_DIR}/src/repositories)
+include_directories(${CMAKE_SOURCE_DIR}/src/utils)
 
 # Tìm thư viện MySQL Connector/C++
 find_library(MYSQLCPPCONN_LIBRARY NAMES mysqlcppconn libmysqlcppconn
@@ -30,6 +32,7 @@ add_executable(main
     src/core/Passenger.cpp
     src/core/Reservation.cpp
     src/database/MySQLConnection.cpp
+    src/repositories/FlightRepository.cpp
 )
 
 # Liên kết thư viện MySQL Connector/C++

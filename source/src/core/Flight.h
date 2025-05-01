@@ -25,13 +25,13 @@ private:
     std::string _leaveTime;
     std::string _arrivalTime;
     double _amount;
-    bool _availability;
+    char _availability;
 
 public:
     // Constructor
     Flight();
     Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-            const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const bool& availability);
+            const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const char& availability);
 
     // Getter
     int getId() const;
@@ -43,7 +43,7 @@ public:
     std::string getLeaveTime() const;
     std::string getArrivalTime() const;
     double getAmount() const;
-    bool getAvailability() const;
+    char getAvailability() const;
 
     // Setter
     void setId(const int& id);
@@ -55,7 +55,7 @@ public:
     void setLeaveTime(const std::string& leaveTime);
     void setArrivalTime(const std::string& arrivalTime);
     void setAmount(const double& amount);
-    void setAvailability(const bool& availability);
+    void setAvailability(const char& availability);
 };
 
 #endif

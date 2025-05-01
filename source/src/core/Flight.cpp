@@ -1,10 +1,10 @@
 #include "Flight.h"
 
 // Constructor
-Flight::Flight() : _id(0), _amount(0.0), _availability(false) {}
+Flight::Flight() : _id(0), _amount(0.0), _availability('A') {}
 
 Flight::Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-                const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const bool& availability)
+                const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const char& availability)
             :   _id(0), _no(no), _name(name), _from(from), _destination(destination),
                 _departureTime(departureTime), _leaveTime(leaveTime), _arrivalTime(arrivalTime), _amount(amount), _availability(availability) {}
 
@@ -45,7 +45,7 @@ double Flight::getAmount() const {
     return _amount;
 }
 
-bool Flight::getAvailability() const {
+char Flight::getAvailability() const {
     return _availability;
 }
 
@@ -86,6 +86,6 @@ void Flight::setAmount(const double& amount) {
     _amount = amount;
 }
 
-void Flight::setAvailability(const bool& availability) {
+void Flight::setAvailability(const char& availability) {
     _availability = availability;
 }
