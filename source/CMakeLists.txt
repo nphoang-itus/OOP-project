@@ -1,36 +1,47 @@
 cmake_minimum_required(VERSION 3.10)
-project(AirlinesManagement)
+project(airlines_app)
 
-# C++ Standard
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Thêm thư mục chứa file header
-include_directories(${CMAKE_SOURCE_DIR}/src/core)
-include_directories(${CMAKE_SOURCE_DIR}/src/database)
+file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
+file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
+file(GLOB_RECURSE UTIL_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
 
-# Tìm thư viện MySQL Connector/C++
-find_library(MYSQLCPPCONN_LIBRARY NAMES mysqlcppconn libmysqlcppconn
-    HINTS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu
+# Tìm MySQL Connector/C++
+find_library(MYSQLCPPCONN_LIBRARY
+    NAMES mysqlcppconn
+    HINTS /usr/local/Cellar/mysql-connector-cpp/*/lib
+          /usr/local/mysql-connector-c++-8.0.33/lib64
+          /usr/lib
+          /usr/local/lib
 )
-find_path(MYSQLCPPCONN_INCLUDE_DIR NAMES cppconn/driver.h
-    HINTS /usr/include /usr/local/include
+
+if (NOT MYSQLCPPCONN_LIBRARY)
+    message(FATAL_ERROR "Could not find MYSQLCPPCONN_LIBRARY.")
+endif()
+
+find_path(MYSQLCPPCONN_INCLUDE_DIR
+    NAMES mysql_driver.h
+    HINTS /usr/local/Cellar/mysql-connector-cpp/*/include
+          /usr/local/mysql-connector-c++-8.0.33/include/jdbc
+          /usr/include/mysql-cppconn
+          /usr/local/include
 )
 
-if(NOT MYSQLCPPCONN_LIBRARY OR NOT MYSQLCPPCONN_INCLUDE_DIR)
-    message(FATAL_ERROR "MySQL Connector/C++ not found. Please install libmysqlcppconn-dev.")
+if (NOT MYSQLCPPCONN_INCLUDE_DIR)
+    message(FATAL_ERROR "Could not find MYSQLCPPCONN_INCLUDE_DIR.")
 endif()
 
 include_directories(${MYSQLCPPCONN_INCLUDE_DIR})
 
-# Tạo executable
+# Thêm các file nguồn
 add_executable(main
     src/main.cpp
-    src/core/Flight.cpp
-    src/core/Passenger.cpp
-    src/core/Reservation.cpp
-    src/database/MySQLConnection.cpp
+    ${CORE_SOURCES}
+    ${DATABASE_SOURCES}
+    ${UTIL_SOURCES}
 )
 
-# Liên kết thư viện MySQL Connector/C++
-target_link_libraries(main ${MYSQLCPPCONN_LIBRARY})
+# Link thư viện
+target_link_libraries(main PRIVATE ${MYSQLCPPCONN_LIBRARY})

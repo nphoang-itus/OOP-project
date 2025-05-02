@@ -53,6 +53,8 @@ private:
     std::string _lastError; ///< Thông báo lỗi gần nhất
     int _nextStatementId; ///< ID cho prepared statement tiếp theo
 
+    std::string _truncateQueryForLog(const std::string& query, size_t maxLength = 1000) const;
+
 public:
     MySQLConnection();
     ~MySQLConnection() override;
