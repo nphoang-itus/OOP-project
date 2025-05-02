@@ -34,6 +34,7 @@
 # Other
 .temp/
 .vscode/
+.build/
 
 # macOS system files
 .DS_Store
