@@ -14,6 +14,7 @@
 
 #include <string>
 #include <memory>
+#include <chrono>
 
 class IDatabaseResult {
 public:
@@ -31,11 +32,13 @@ public:
     virtual std::string getString(int columnIndex) = 0;
     virtual int getInt(int columnIndex) = 0;
     virtual double getDouble(int columnIndex) = 0;
+    virtual std::chrono::sys_time<std::chrono::seconds> getDateTime(int columnIndex) = 0;
 
     // Lấy giá trị chuỗi từ tên cột
     virtual std::string getString(const std::string& columnName) = 0;
     virtual int getInt(const std::string& columnName) = 0;
     virtual double getDouble(const std::string& columnName) = 0;
+    virtual std::chrono::sys_time<std::chrono::seconds> getDateTime(const std::string& columnName) = 0;
 };
 
 class IDatabaseConnection {
@@ -104,6 +107,8 @@ public:
     * @param value Giá trị số thực
     */
     virtual void setDouble(int statementId, int paramIndex, double value) = 0;
+
+    virtual void setDateTime(int statementId, int paramIndex, const std::chrono::sys_time<std::chrono::seconds>& value) = 0;
 
     /**
     * @brief Thực thi prepared statement không trả về kết quả

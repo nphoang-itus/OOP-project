@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: airlines_mysql
+    command: --default-authentication-plugin=mysql_native_password --mysqlx=ON
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-phucHoang133205}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-airlines_db}
@@ -9,42 +10,17 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-phucHoang133205}
       TZ: Asia/Ho_Chi_Minh
     ports:
-      - "3306:3306"
+      - "3306:3306"   # Classic MySQL protocol
+      - "33060:33060" # X Protocol port
     volumes:
       - mysql_data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    networks:
-      - airlines_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 2s
+      interval: 5s
       timeout: 10s
       retries: 10
       start_period: 10s
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: airlines_app
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: ${MYSQL_USER:-nphoang}
-      DB_PASS: ${MYSQL_PASSWORD:-phucHoang133205}
-      DB_NAME: ${MYSQL_DATABASE:-airlines_db}
-    networks:
-      - airlines_network
-    stdin_open: true
-    tty: true
-
-
-networks:
-  airlines_network:
-    driver: bridge
 
 volumes:
   mysql_data:
