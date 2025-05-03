@@ -52,3 +52,17 @@ VALUES
 ('FL014', 'Bamboo Airways', 'Ho Chi Minh City', 'Da Nang', '2025-05-09 18:00:00', '2025-05-09 17:30:00', '2025-05-09 20:00:00', 160.00, 'A'),
 ('FL015', 'Vietnam Airlines', 'Hanoi', 'Phu Quoc', '2025-05-10 05:00:00', '2025-05-10 04:30:00', '2025-05-10 08:00:00', 250.00, 'A'),
 ('FL016', 'Jetstar', 'Da Nang', 'Ho Chi Minh City', '2025-05-11 20:00:00', '2025-05-11 19:30:00', '2025-05-11 22:00:00', 190.00, 'A');
+
+-- Insert sample data into passenger_tb
+INSERT INTO passenger_tb (p_name, p_phone, p_passport, p_address)
+VALUES 
+('Nguyen Van A', '0901234567', 'A12345678', '123 Nguyen Trai, Ho Chi Minh City'),
+('Tran Thi B', '0912345678', 'B87654321', '456 Le Loi, Hanoi'),
+('Le Van C', '0923456789', 'C11223344', '789 Tran Hung Dao, Da Nang'),
+('Pham Thi D', '0934567890', 'D44332211', '321 Nguyen Hue, Hue'),
+('Hoang Van E', '0945678901', 'E55667788', '654 Ly Thuong Kiet, Nha Trang'),
+('Nguyen Thi F', '0956789012', 'F99887766', '987 Hai Ba Trung, Can Tho'),
+('Tran Van G', '0967890123', 'G66554433', '111 Vo Van Kiet, Phu Quoc'),
+('Le Thi H', '0978901234', 'H33445566', '222 Phan Chu Trinh, Da Nang'),
+('Pham Van I', '0989012345', 'I77889900', '333 Bach Dang, Hanoi'),
+('Hoang Thi J', '0990123456', 'J11224455', '444 Tran Phu, Ho Chi Minh City');

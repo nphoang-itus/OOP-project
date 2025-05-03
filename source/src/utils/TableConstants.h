@@ -61,6 +61,37 @@ namespace Tables {
                    " FROM " + NAME_TABLE;
         }
     }
+
+    namespace Passenger {
+        constexpr const char* NAME_TABLE = "passenger_tb";
+
+        enum ColumnNumber {
+            ID = 0,
+            NAME,
+            PHONE,
+            PASSPORT,
+            ADDRESS
+        };
+
+        constexpr const char* ColumnName[] {
+            "p_id",
+            "p_name",
+            "p_phone",
+            "p_passport",
+            "p_address"
+        };
+
+        inline std::string getOrderedSelectClause() {
+            return std::string("SELECT ") + 
+                   ColumnName[ID] + ", " +
+                   ColumnName[NAME] + ", " +
+                   ColumnName[PHONE] + ", " +
+                   ColumnName[PASSPORT] + ", " +
+                   ColumnName[ADDRESS] +
+                   " FROM " + NAME_TABLE;
+        }
+
+    };
 }
 
 #endif
