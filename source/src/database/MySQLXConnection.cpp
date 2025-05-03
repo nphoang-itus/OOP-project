@@ -1,9 +1,12 @@
 /**
  * @file MySQLXConnection.cpp
- * @author Your Name
- * @brief Implementation of MySQLXConnection class
+ * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
+ * @brief Cài đặt các hàm phục vụ chức năng kết nối và trả về kết quả từ Database sử dụng XAPIDev của MySQL
  * @version 0.1
  * @date 2025-05-02
+ * 
+ * @copyright Copyright (c) 2025
+ * 
  */
 
 #include "MySQLXConnection.h"
@@ -78,7 +81,7 @@ bool MySQLXResult::next() {
     }
 }
 
-std::string MySQLXResult::getString(int columnIndex) {
+std::string MySQLXResult::getString(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -104,7 +107,7 @@ std::string MySQLXResult::getString(int columnIndex) {
     }
 }
 
-int MySQLXResult::getInt(int columnIndex) {
+int MySQLXResult::getInt(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -131,7 +134,7 @@ int MySQLXResult::getInt(int columnIndex) {
     }
 }
 
-double MySQLXResult::getDouble(int columnIndex) {
+double MySQLXResult::getDouble(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -158,7 +161,7 @@ double MySQLXResult::getDouble(int columnIndex) {
     }
 }
 
-std::tm MySQLXResult::getDateTime(int columnIndex) {
+std::tm MySQLXResult::getDateTime(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -330,7 +333,7 @@ MySQLXConnection::~MySQLXConnection() {
 
 bool MySQLXConnection::connect( const std::string& host, const std::string& user, 
                                 const std::string& password, const std::string& database, 
-                                int port) {
+                                const int& port) {
     auto logger = Logger::getInstance();
     logger->info("Attempting to connect to MySQL server at " + host + ":" + std::to_string(port) + 
                 " with user '" + user + "' and database '" + database + "'");
@@ -486,7 +489,7 @@ int MySQLXConnection::prepareStatement(const std::string& query) {
     }
 }
 
-void MySQLXConnection::setString(int statementId, int paramIndex, const std::string& value) {
+void MySQLXConnection::setString(const int& statementId, const int& paramIndex, const std::string& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding string parameter at index " + std::to_string(paramIndex) + 
                 " for statement ID " + std::to_string(statementId));
@@ -512,7 +515,7 @@ void MySQLXConnection::setString(int statementId, int paramIndex, const std::str
     }
 }
 
-void MySQLXConnection::setInt(int statementId, int paramIndex, int value) {
+void MySQLXConnection::setInt(const int& statementId, const int& paramIndex, const int& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding integer parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -538,7 +541,7 @@ void MySQLXConnection::setInt(int statementId, int paramIndex, int value) {
     }
 }
 
-void MySQLXConnection::setDouble(int statementId, int paramIndex, double value) {
+void MySQLXConnection::setDouble(const int& statementId, const int& paramIndex, const double& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding double parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -564,7 +567,7 @@ void MySQLXConnection::setDouble(int statementId, int paramIndex, double value) 
     }
 }
 
-void MySQLXConnection::setDateTime(int statementId, int paramIndex, const std::tm& value) {
+void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) {
     auto logger = Logger::getInstance();
     logger->debug(  "Binding datetime parameter at index " + std::to_string(paramIndex) +
                     " for statement ID " + std::to_string(statementId));
@@ -622,7 +625,7 @@ std::string MySQLXConnection::buildPreparedStatement(const PreparedStatementData
     return query;
 }
 
-bool MySQLXConnection::executeStatement(int statementId) {
+bool MySQLXConnection::executeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing prepared statement with ID: " + std::to_string(statementId));
     
@@ -657,7 +660,7 @@ bool MySQLXConnection::executeStatement(int statementId) {
     }
 }
 
-std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(int statementId) {
+std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing query prepared statement with ID: " + std::to_string(statementId));
     
@@ -699,7 +702,7 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(int sta
     }
 }
 
-void MySQLXConnection::freeStatement(int statementId) {
+void MySQLXConnection::freeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Freeing prepared statement with ID: " + std::to_string(statementId));
     

@@ -1,3 +1,14 @@
+/**
+ * @file Reservation.cpp
+ * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
+ * @brief File chứa các định nghĩa lớp Đặt vé (Reservation)
+ * @version 0.1
+ * @date 2025-05-03
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
 #include "Reservation.h"
 
 Reservation::Reservation() : _id(0) {}

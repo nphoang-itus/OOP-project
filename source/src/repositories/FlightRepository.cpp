@@ -1,7 +1,7 @@
 /**
  * @file FlightRepository.cpp
  * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
- * @brief 
+ * @brief Cài đặt các hàm quản lý các thao tác với dữ liệu chuyến bay (Flight) trong cơ sở dữ liệu.
  * @version 0.1
  * @date 2025-05-01
  * 
@@ -71,7 +71,7 @@ std::vector<Flight> FlightRepository::findAll() {
     return flights;
 }
 
-std::optional<Flight> FlightRepository::findById(int id) {
+std::optional<Flight> FlightRepository::findById(const int& id) {
     try {
         _logger->debug("Finding flight by ID: " + std::to_string(id));
 
@@ -172,7 +172,7 @@ bool FlightRepository::update(const Flight& flight) {
     return false;
 }
 
-bool FlightRepository::remove(int id) {
+bool FlightRepository::remove(const int& id) {
     try {
         _logger->debug("Removing flight with ID: " + std::to_string(id));
         
