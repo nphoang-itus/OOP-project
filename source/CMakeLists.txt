@@ -1,41 +1,48 @@
 cmake_minimum_required(VERSION 3.10)
-project(airlines_app)
 
+project(AirlinesManagement)
+
+# C++ Standard
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Tự động tìm tất cả các file header và source
 file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
 file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
-file(GLOB_RECURSE UTIL_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
+file(GLOB_RECURSE UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
 
-# Tìm MySQL Connector/C++
-find_library(MYSQLCPPCONN_LIBRARY
-    NAMES mysqlcppconn
-    HINTS /usr/local/Cellar/mysql-connector-cpp/*/lib
-          /usr/local/mysql-connector-c++-8.0.33/lib64
-          /usr/lib
-          /usr/local/lib
+# Thêm thư mục chứa file header
+include_directories(${CMAKE_SOURCE_DIR})
+
+# Tìm thư viện MySQL Connector/C++
+find_library(MYSQLCPPCONN_LIBRARY 
+    NAMES mysqlcppconnx libmysqlcppconnx
+    HINTS 
+        /usr/local/Cellar/mysql-connector-c++/9.3.0/lib
+        /usr/local/lib 
+        /usr/local/opt/mysql-connector-c++/lib
+        /opt/homebrew/lib
 )
 
-if (NOT MYSQLCPPCONN_LIBRARY)
-    message(FATAL_ERROR "Could not find MYSQLCPPCONN_LIBRARY.")
+find_path(MYSQLCPPCONN_INCLUDE_DIR 
+    NAMES mysqlx/xdevapi.h
+    HINTS
+        /usr/local/Cellar/mysql-connector-c++/9.3.0/include
+        /usr/local/include 
+        /usr/local/opt/mysql-connector-c++/include
+        /opt/homebrew/include
+)
+
+if(NOT MYSQLCPPCONN_LIBRARY)
+    message(FATAL_ERROR "Không tìm thấy thư viện MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
 endif()
 
-find_path(MYSQLCPPCONN_INCLUDE_DIR
-    NAMES mysql_driver.h
-    HINTS /usr/local/Cellar/mysql-connector-cpp/*/include
-          /usr/local/mysql-connector-c++-8.0.33/include/jdbc
-          /usr/include/mysql-cppconn
-          /usr/local/include
-)
-
-if (NOT MYSQLCPPCONN_INCLUDE_DIR)
-    message(FATAL_ERROR "Could not find MYSQLCPPCONN_INCLUDE_DIR.")
+if(NOT MYSQLCPPCONN_INCLUDE_DIR)
+    message(FATAL_ERROR "Không tìm thấy thư mục include MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
 endif()
 
 include_directories(${MYSQLCPPCONN_INCLUDE_DIR})
 
-# Thêm các file nguồn
 add_executable(main
     src/main.cpp
     ${CORE_SOURCES}
@@ -43,5 +50,5 @@ add_executable(main
     ${UTIL_SOURCES}
 )
 
-# Link thư viện
-target_link_libraries(main PRIVATE ${MYSQLCPPCONN_LIBRARY})
+# Liên kết thư viện MySQL Connector/C++
+target_link_libraries(main ${MYSQLCPPCONN_LIBRARY})

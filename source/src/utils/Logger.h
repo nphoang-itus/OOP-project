@@ -17,9 +17,15 @@
 #include <string>
 
 /**
+<<<<<<< HEAD
   * @enum LogLevel
   * @brief Các mức độ log
   */
+=======
+ * @enum LogLevel
+ * @brief Các mức độ log
+ */
+>>>>>>> develop
 enum class LogLevel {
     DEBUG,   ///< Thông tin gỡ lỗi
     INFO,    ///< Thông tin chung
@@ -29,9 +35,15 @@ enum class LogLevel {
 };
 
 /**
+<<<<<<< HEAD
   * @class Logger
   * @brief Lớp xử lý ghi log
   */
+=======
+ * @class Logger
+ * @brief Lớp xử lý ghi log
+ */
+>>>>>>> develop
 class Logger {
 private:
     static Logger* _instance; ///< Thể hiện duy nhất của Logger
@@ -41,6 +53,7 @@ private:
     LogLevel minLevel; ///< Mức độ log tối thiểu
     
     /**
+<<<<<<< HEAD
      * @brief Constructor
      */
     Logger();
@@ -61,10 +74,33 @@ private:
      * @param level Mức độ log
      * @return Chuỗi mức độ log
      */
+=======
+    * @brief Constructor
+    */
+    Logger();
+    
+    /**
+    * @brief Destructor
+    */
+    ~Logger();
+    
+    /**
+    * @brief Lấy thời gian hiện tại dưới dạng chuỗi
+    * @return Chuỗi thời gian
+    */
+    std::string _getTimestamp();
+    
+    /**
+    * @brief Chuyển đổi mức độ log thành chuỗi
+    * @param level Mức độ log
+    * @return Chuỗi mức độ log
+    */
+>>>>>>> develop
     std::string _getLevelString(LogLevel level);
 
 public:
     /**
+<<<<<<< HEAD
      * @brief Lấy thể hiện duy nhất của Logger
      * @return Con trỏ đến thể hiện Logger
      */
@@ -121,6 +157,64 @@ public:
      * @brief Ghi log ở mức độ FATAL
      * @param message Thông báo log
      */
+=======
+    * @brief Lấy thể hiện duy nhất của Logger
+    * @return Con trỏ đến thể hiện Logger
+    */
+    static Logger* getInstance();
+    
+    /**
+    * @brief Xóa constructor copy
+    */
+    Logger(const Logger&) = delete;
+    
+    /**
+    * @brief Xóa toán tử gán
+    */
+    Logger& operator=(const Logger&) = delete;
+    
+    /**
+    * @brief Thiết lập mức độ log tối thiểu
+    * @param level Mức độ log tối thiểu
+    */
+    void setMinLevel(LogLevel level);
+    
+    /**
+    * @brief Ghi log
+    * @param level Mức độ log
+    * @param message Thông báo log
+    */
+    void log(LogLevel level, const std::string& message);
+    
+    /**
+    * @brief Ghi log ở mức độ DEBUG
+    * @param message Thông báo log
+    */
+    void debug(const std::string& message);
+    
+    /**
+    * @brief Ghi log ở mức độ INFO
+    * @param message Thông báo log
+    */
+    void info(const std::string& message);
+    
+    /**
+    * @brief Ghi log ở mức độ WARNING
+    * @param message Thông báo log
+    */
+    void warning(const std::string& message);
+    
+    /**
+    * @brief Ghi log ở mức độ ERROR
+    * @param message Thông báo log
+    */
+    void error(const std::string& message);
+    
+    /**
+    * @brief Ghi log ở mức độ FATAL
+    * @param message Thông báo log
+    */
+>>>>>>> develop
     void fatal(const std::string& message);
 };
 
