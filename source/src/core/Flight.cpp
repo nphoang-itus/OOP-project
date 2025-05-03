@@ -4,7 +4,8 @@
 Flight::Flight() : _id(0), _amount(0.0), _availability('A') {}
 
 Flight::Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-                const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const char& availability)
+                const std::tm& departureTime, const std::tm& leaveTime, const std::tm& arrivalTime, const double& amount,
+                const char& availability)
             :   _id(0), _no(no), _name(name), _from(from), _destination(destination),
                 _departureTime(departureTime), _leaveTime(leaveTime), _arrivalTime(arrivalTime), _amount(amount), _availability(availability) {}
 
@@ -29,15 +30,15 @@ std::string Flight::getDestination() const {
     return _destination;
 }
 
-std::string Flight::getDepartureTime() const {
+std::tm Flight::getDepartureTime() const {
     return _departureTime;
 }
 
-std::string Flight::getLeaveTime() const {
+std::tm Flight::getLeaveTime() const {
     return _leaveTime;
 }
 
-std::string Flight::getArrivalTime() const {
+std::tm Flight::getArrivalTime() const {
     return _arrivalTime;
 }
 
@@ -70,15 +71,15 @@ void Flight::setDestination(const std::string& destination) {
     _destination = destination;
 }
 
-void Flight::setDepartureTime(const std::string& departureTime) {
+void Flight::setDepartureTime(const std::tm& departureTime) {
     _departureTime = departureTime;
 }
 
-void Flight::setLeaveTime(const std::string& leaveTime) {
+void Flight::setLeaveTime(const std::tm& leaveTime) {
     _leaveTime = leaveTime;
 }
 
-void Flight::setArrivalTime(const std::string& arrivalTime) {
+void Flight::setArrivalTime(const std::tm& arrivalTime) {
     _arrivalTime = arrivalTime;
 }
 

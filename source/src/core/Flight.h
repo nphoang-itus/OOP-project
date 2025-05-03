@@ -13,6 +13,7 @@
 #define FLIGHT_H
 
 #include <string>
+#include <ctime>
 
 class Flight {
 private:
@@ -21,9 +22,9 @@ private:
     std::string _name;
     std::string _from;
     std::string _destination;
-    std::string _departureTime;
-    std::string _leaveTime;
-    std::string _arrivalTime;
+    std::tm _departureTime;
+    std::tm _leaveTime;
+    std::tm _arrivalTime;
     double _amount;
     char _availability;
 
@@ -31,7 +32,8 @@ public:
     // Constructor
     Flight();
     Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-            const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const char& availability);
+            const std::tm& departureTime, const std::tm& leaveTime, const std::tm& arrivalTime,
+            const double& amount, const char& availability);
 
     // Getter
     int getId() const;
@@ -39,9 +41,9 @@ public:
     std::string getName() const;
     std::string getFrom() const;
     std::string getDestination() const;
-    std::string getDepartureTime() const;
-    std::string getLeaveTime() const;
-    std::string getArrivalTime() const;
+    std::tm getDepartureTime() const;
+    std::tm getLeaveTime() const;
+    std::tm getArrivalTime() const;
     double getAmount() const;
     char getAvailability() const;
 
@@ -51,9 +53,9 @@ public:
     void setName(const std::string& name);
     void setFrom(const std::string& from);
     void setDestination(const std::string& destination);
-    void setDepartureTime(const std::string& departureTime);
-    void setLeaveTime(const std::string& leaveTime);
-    void setArrivalTime(const std::string& arrivalTime);
+    void setDepartureTime(const std::tm& departureTime);
+    void setLeaveTime(const std::tm& leaveTime);
+    void setArrivalTime(const std::tm& arrivalTime);
     void setAmount(const double& amount);
     void setAvailability(const char& availability);
 };

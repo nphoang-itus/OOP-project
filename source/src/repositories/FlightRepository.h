@@ -15,6 +15,8 @@
 #include "RepositoryInterface.h"
 #include "../core/Flight.h"
 #include "../database/DatabaseConnection.h"
+#include "../utils/Logger.h"
+
 #include <memory>
 #include <vector>
 #include <optional>
@@ -22,6 +24,7 @@
 class FlightRepository : public IRepository<Flight> {
 private:
     std::shared_ptr<IDatabaseConnection> _dbConnection;
+    std::shared_ptr<Logger> _logger;
     
     Flight _mapResultToFlight(IDatabaseResult& result);
 
