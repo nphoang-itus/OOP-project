@@ -188,22 +188,22 @@ src/
 #### 3.3. Nguyên tắc SOLID
 
 - S: Single Responsibility Principle (SRP): Mỗi lớp chỉ có một trách nhiệm duy nhất.
-- Ví dụ: Lớp `Flight` chỉ quản lý thông tin chuyến bay. Lớp Passenger chỉ quản lý thông tin hành khách.
+    - Ví dụ: Lớp `Flight` chỉ quản lý thông tin chuyến bay. Lớp Passenger chỉ quản lý thông tin hành khách.
 
 - O: Open/Closed Principle (OCP): Các lớp nên mở cho việc mở rộng nhưng đóng cho việc sửa đổi.
-- Ví dụ: Thêm một lớp `FlightService` mới mà không cần sửa đổi lớp `Flight`.
+    - Ví dụ: Thêm một lớp `FlightService` mới mà không cần sửa đổi lớp `Flight`.
 
 - L: Liskov Substitution Principle (LSP): Các lớp con nên có thể thay thế cho lớp cha mà không làm thay đổi tính đúng đắn của chương trình.
 
-- Ví dụ: `MySQLConnection` có thể thay thế cho `DatabaseConnection` mà không làm thay đổi cách thức hoạt động của chương trình.
+    - Ví dụ: `MySQLConnection` có thể thay thế cho `DatabaseConnection` mà không làm thay đổi cách thức hoạt động của chương trình.
 
 - I: Interface Segregation Principle (ISP): Không nên ép buộc một lớp phải triển khai các phương thức mà nó không sử dụng.
 
-- Ví dụ: `DatabaseConnection` chỉ định nghĩa các phương thức cần thiết cho việc kết nối cơ sở dữ liệu.
+    - Ví dụ: `DatabaseConnection` chỉ định nghĩa các phương thức cần thiết cho việc kết nối cơ sở dữ liệu.
 
 - D: Dependency Inversion Principle (DIP): Các lớp cao cấp không nên phụ thuộc vào các lớp thấp cấp. Cả hai nên phụ thuộc vào các abstraction.
 
-- Ví dụ: `FlightService` phụ thuộc vào `FlightRepository` thông qua interface `RepositoryInterface`, không phụ thuộc vào lớp cụ thể.
+    - Ví dụ: `FlightService` phụ thuộc vào `FlightRepository` thông qua interface `RepositoryInterface`, không phụ thuộc vào lớp cụ thể.
 
 #### 3.4. Design Patterns
 
