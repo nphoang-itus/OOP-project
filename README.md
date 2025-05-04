@@ -451,12 +451,174 @@ Chúng em đã sử dụng "Feature Branch Workflow" để quản lý mã nguồ
 
 #### 5.2. Mô hình hoá bằng mermaid
 ##### a. Class Diagram
-*(NOTE: Bổ sung)*
+```mermaid
+classDiagram
+  direction TD
 
-##### b. Sơ đồ Use-case
-*(NOTE: Bổ sung)*
+  class Flight {
+    -int _id
+    -string _no
+    -string _name
+    -string _from
+    -string _destination
+    -string _departureTime
+    -string _leaveTime
+    -string _arrivalTime
+    -double _amount
+    -bool _availability
+    +Flight()
+    +Flight(string no, string name, string from, string destination, string departureTime, string leaveTime, string arrivalTime, double amount, bool availability)
+    +int getId()
+    +string getNo()
+    +string getName()
+    +string getFrom()
+    +string getDestination()
+    +string getDepartureTime()
+    +string getLeaveTime()
+    +string getArrivalTime()
+    +double getAmount()
+    +bool getAvailability()
+    +void setId(int id)
+    +void setNo(string no)
+    +void setName(string name)
+    +void setFrom(string from)
+    +void setDestination(string destination)
+    +void setDepartureTime(string departureTime)
+    +void setLeaveTime(string leaveTime)
+    +void setArrivalTime(string arrivalTime)
+    +void setAmount(double amount)
+    +void setAvailability(bool availability)
+  }
 
-##### c. Lược đồ ER
+  class Passenger {
+    -int _id
+    -string _name
+    -string _phone
+    -string _passport
+    -string _address
+    +Passenger()
+    +Passenger(string name, string phone, string passport, string address)
+    +int getId()
+    +string getName()
+    +string getPhone()
+    +string getPassport()
+    +string getAddress()
+    +void setId(int id)
+    +void setName(string name)
+    +void setPhone(string phone)
+    +void setPassport(string passport)
+    +void setAddress(string address)
+  }
+
+  class Reservation {
+    -int _id
+    -string _ticketNo
+    -shared_ptr~Flight~ _flight
+    -shared_ptr~Passenger~ _passenger
+    +Reservation()
+    +Reservation(string ticketNo, shared_ptr~Flight~ flight, shared_ptr~Passenger~ passenger)
+    +int getId()
+    +string getTicketNo()
+    +shared_ptr~Flight~ getFlight()
+    +shared_ptr~Passenger~ getPassenger()
+    +void setId(int id)
+    +void setTicketNo(string ticketNo)
+    +void setFlight(shared_ptr~Flight~ flight)
+    +void setPassenger(shared_ptr~Passenger~ passenger)
+  }
+
+  class FlightService {
+    +vector~Flight~ getAllFlights()
+    +vector~Flight~ getAvailableFlights()
+    +optional~Flight~ getFlightById(int id)
+    +optional~Flight~ getFlightByFlightNo(string flightNo)
+    +vector~Flight~ getFlightsByRoute(string origin, string destination)
+    +bool addFlight(Flight flight)
+    +bool updateFlight(Flight flight)
+    +bool deleteFlight(int id)
+    +bool updateFlightAvailability(int id, bool available)
+  }
+
+  class PassengerService {
+    // -PassengerRepository passengerRepo
+    +vector~Passenger~ getAllPassengers()
+    +optional~Passenger~ getPassengerById(int id)
+    +optional~Passenger~ getPassengerByPassportNo(string passportNo)
+    +vector~Passenger~ getPassengersByName(string name)
+    +bool addPassenger(Passenger passenger)
+    +bool updatePassenger(Passenger passenger)
+    +bool deletePassenger(int id)
+  }
+
+  class ReservationService {
+    // -ReservationRepository reservationRepo
+    // -FlightRepository flightRepo
+    // -PassengerRepository passengerRepo
+    -string _generateTicketNumber() // Private method
+    +vector~Reservation~ getAllReservations()
+    +optional~Reservation~ getReservationById(int id)
+    +optional~Reservation~ getReservationByTicketNo(const string& ticketNo)
+    +vector~Reservation~ getReservationsByPassportNo(const string& passportNo)
+    +vector~Reservation~ getReservationsByFlightNo(const string& flightNo)
+    +optional~Reservation~ createReservation(int passengerId, int flightId)
+    +bool updateReservation(const Reservation& reservation)
+    +bool cancelReservation(int id)
+  }
+
+  class FlightRepo {
+    // +optional<Flight> findById(int id)
+    // +vector<Flight> findAll()
+    // +bool save(Flight flight)
+    // ...
+  }
+
+  class PassengerRepo {
+    // ...
+  }
+
+  class ReservationRepo {
+    // ...
+  }
+
+  class Database {
+    // Connection details, etc.
+  }
+
+  class UI {
+    // +void showMainMenu()
+    // +Flight promptEnterFlightInfo()
+    // +void displayFlights(vector<Flight> flights)
+    // ...
+  }
+
+  class Main {
+    // +static void main()
+  }
+
+  FlightService ..> Flight : "uses"
+  PassengerService ..> Passenger : "uses"
+  ReservationService ..> Reservation : "uses"
+  ReservationService ..> Flight : "uses"  
+  ReservationService ..> Passenger : "uses"
+
+  FlightService ..> FlightRepo : "uses >"
+  PassengerService ..> PassengerRepo : "uses >"
+  ReservationService ..> ReservationRepo : "uses >"
+  ReservationService ..> FlightRepo : "uses >"     
+  ReservationService ..> PassengerRepo : "uses >"  
+
+  FlightRepo ..> Database : "accesses >"
+  PassengerRepo ..> Database : "accesses >"
+  ReservationRepo ..> Database : "accesses >"
+
+  UI ..> FlightService : "calls >"
+  UI ..> PassengerService : "calls >"
+  UI ..> ReservationService : "calls >"
+
+  Main ..> UI : "starts >"
+```
+
+##### b. Lược đồ ER
 *(NOTE: Bổ sung)*
 
 ### 6. Các chủ đề nâng cao (15%)
