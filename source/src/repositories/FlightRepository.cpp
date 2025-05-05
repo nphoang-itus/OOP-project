@@ -40,10 +40,10 @@ FlightRepository::FlightRepository(std::shared_ptr<IDatabaseConnection> dbConnec
 
     if (!_dbConnection) {
         _logger->error("Database connection is null in FlightRepository constructor");
-         throw std::invalid_argument("Database connection cannot be null");
-     }
-     
-     _logger->info("FlightRepository initialized successfully");
+        throw std::invalid_argument("Database connection cannot be null");
+    }
+    
+    _logger->info("FlightRepository initialized successfully");
 }
 
 std::vector<Flight> FlightRepository::findAll() {

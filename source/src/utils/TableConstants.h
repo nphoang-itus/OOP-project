@@ -90,7 +90,36 @@ namespace Tables {
                    ColumnName[ADDRESS] +
                    " FROM " + NAME_TABLE;
         }
+    };
 
+    namespace Reservation {
+        constexpr const char* NAME_TABLE = "reservation_tb";
+
+        enum ColumnNumber {
+            ID = 0,
+            TICKET_NO,
+            FLIGHT,
+            PASSENGER
+        };
+
+        constexpr const char* ColumnName[] {
+            "r_id",
+            "r_ticketNo",
+            "r_flightNo",
+            "r_passportPassenger"
+        };
+
+        inline std::string getOrderedSelectClause() {
+            std::string query = std::format(
+                "SELECT r.* p.* f.* FROM {} r"
+                "JOIN {} p ON r.{} = p.{} "
+                "JOIN {} f ON r.{} = f.{}",
+                NAME_TABLE,
+                NAME_TABLE, ColumnName[PASSENGER], ColumnName[Passenger::PASSPORT],
+                NAME_TABLE, ColumnName[FLIGHT], ColumnName[Flight::NO]
+            );
+            return query;
+        }
     };
 }
 
