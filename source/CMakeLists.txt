@@ -54,3 +54,53 @@ add_executable(main
 
 # Liên kết thư viện MySQL Connector/C++
 target_link_libraries(main ${MYSQLCPPCONN_LIBRARY})
+
+cmake_minimum_required(VERSION 3.10)
+project(FlightManagementUI)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Tìm wxWidgets
+find_package(wxWidgets REQUIRED COMPONENTS core base xrc html qa)
+if(wxWidgets_FOUND)
+    include(${wxWidgets_USE_FILE})
+    message(STATUS "wxWidgets found: ${wxWidgets_LIBRARIES}")
+else()
+    message(FATAL_ERROR "wxWidgets not found")
+endif()
+
+# Thêm các đường dẫn include
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/ui
+    /opt/homebrew/include/wx-3.2
+    /opt/homebrew/lib/wx/include/osx_cocoa-unicode-3.2
+)
+
+# Thêm đường dẫn thư viện
+link_directories(/opt/homebrew/lib)
+
+# Thêm file nguồn
+set(SOURCES
+    src/main.cpp
+    src/ui/MainUI.cpp
+    src/ui/FlightUI.cpp
+    src/ui/PassengerUI.cpp
+    src/ui/ReservationUI.cpp
+
+    # Thêm các file hiện thực model
+    src/core/Flight.cpp
+    src/core/Passenger.cpp
+    src/core/Reservation.cpp
+
+    # Thêm các file hiện thực service
+    src/services/FlightService.cpp
+    src/services/PassengerService.cpp
+    src/services/ReservationService.cpp
+)
+
+add_executable(FlightManagementUI ${SOURCES})
+
+# Liên kết với wxWidgets
+target_link_libraries(FlightManagementUI PRIVATE ${wxWidgets_LIBRARIES})
