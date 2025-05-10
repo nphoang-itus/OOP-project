@@ -242,13 +242,128 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn chuyến bay cần sửa!", "Thông báo", wxOK | wxICON_INFORMATION);
         return;
     }
-    std::string flightNo = flightList->GetItemText(selectedIndex, 0).ToStdString();
-    auto flightOpt = flightService.getFlightByFlightNo(flightNo);
-    if (flightOpt)
+    int flightId = std::stoi(flightList->GetItemText(selectedIndex, 0).ToStdString());
+    auto flightOpt = flightService.getFlightById(flightId);
+    if (!flightOpt)
     {
-        Flight flight = *flightOpt;
-        // Sửa thông tin (ví dụ sửa giá vé)
-        flight.setAmount(2000000);
+        wxMessageBox("Không tìm thấy chuyến bay!", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    Flight flight = *flightOpt;
+
+    wxDialog dialog(this, wxID_ANY, "Sửa thông tin chuyến bay", wxDefaultPosition, wxSize(400, 500));
+    wxPanel *panel = new wxPanel(&dialog, wxID_ANY);
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+
+    wxBoxSizer *noSizer = new wxBoxSizer(wxHORIZONTAL);
+    noSizer->Add(new wxStaticText(panel, wxID_ANY, "Mã chuyến bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *noCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getNo());
+    noSizer->Add(noCtrl, 1, wxALL, 5);
+    sizer->Add(noSizer, 0, wxEXPAND);
+
+    wxBoxSizer *nameSizer = new wxBoxSizer(wxHORIZONTAL);
+    nameSizer->Add(new wxStaticText(panel, wxID_ANY, "Tên hãng bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getName());
+    nameSizer->Add(nameCtrl, 1, wxALL, 5);
+    sizer->Add(nameSizer, 0, wxEXPAND);
+
+    wxBoxSizer *fromSizer = new wxBoxSizer(wxHORIZONTAL);
+    fromSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *fromCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getFrom());
+    fromSizer->Add(fromCtrl, 1, wxALL, 5);
+    sizer->Add(fromSizer, 0, wxEXPAND);
+
+    wxBoxSizer *destSizer = new wxBoxSizer(wxHORIZONTAL);
+    destSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *destCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getDestination());
+    destSizer->Add(destCtrl, 1, wxALL, 5);
+    sizer->Add(destSizer, 0, wxEXPAND);
+
+    auto formatInputTime = [](const std::tm &t) -> wxString
+    {
+        char buf[20];
+        std::strftime(buf, sizeof(buf), "%H:%M %d/%m/%Y", &t);
+        return wxString::FromUTF8(buf);
+    };
+
+    wxBoxSizer *departSizer = new wxBoxSizer(wxHORIZONTAL);
+    departSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *departCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getDepartureTime()));
+    departSizer->Add(departCtrl, 1, wxALL, 5);
+    sizer->Add(departSizer, 0, wxEXPAND);
+
+    wxBoxSizer *leaveSizer = new wxBoxSizer(wxHORIZONTAL);
+    leaveSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ cất cánh:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *leaveCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getLeaveTime()));
+    leaveSizer->Add(leaveCtrl, 1, wxALL, 5);
+    sizer->Add(leaveSizer, 0, wxEXPAND);
+
+    wxBoxSizer *arrivalSizer = new wxBoxSizer(wxHORIZONTAL);
+    arrivalSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *arrivalCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getArrivalTime()));
+    arrivalSizer->Add(arrivalCtrl, 1, wxALL, 5);
+    sizer->Add(arrivalSizer, 0, wxEXPAND);
+
+    wxBoxSizer *amountSizer = new wxBoxSizer(wxHORIZONTAL);
+    amountSizer->Add(new wxStaticText(panel, wxID_ANY, "Giá vé:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *amountCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", static_cast<int>(flight.getAmount())));
+    amountSizer->Add(amountCtrl, 1, wxALL, 5);
+    sizer->Add(amountSizer, 0, wxEXPAND);
+
+    wxBoxSizer *availSizer = new wxBoxSizer(wxHORIZONTAL);
+    availSizer->Add(new wxStaticText(panel, wxID_ANY, "Trạng thái (A/U):"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *availCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%c", flight.getAvailability()));
+    availSizer->Add(availCtrl, 1, wxALL, 5);
+    sizer->Add(availSizer, 0, wxEXPAND);
+
+    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxButton *okButton = new wxButton(panel, wxID_OK, "Xác nhận");
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Hủy");
+    buttonSizer->Add(okButton, 0, wxALL, 5);
+    buttonSizer->Add(cancelButton, 0, wxALL, 5);
+    sizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxTOP, 15);
+
+    panel->SetSizer(sizer);
+
+    // Validate required fields
+    okButton->Bind(wxEVT_BUTTON, [&](wxCommandEvent &evt)
+                   {
+        if (noCtrl->GetValue().IsEmpty() || 
+            nameCtrl->GetValue().IsEmpty() || 
+            fromCtrl->GetValue().IsEmpty() || 
+            destCtrl->GetValue().IsEmpty() || 
+            departCtrl->GetValue().IsEmpty() || 
+            leaveCtrl->GetValue().IsEmpty() || 
+            arrivalCtrl->GetValue().IsEmpty() || 
+            amountCtrl->GetValue().IsEmpty()) {
+            wxMessageBox("Vui lòng điền đầy đủ thông tin!", "Lỗi", wxICON_ERROR | wxOK);
+            return;
+        }
+        dialog.EndModal(wxID_OK); });
+
+    if (dialog.ShowModal() == wxID_OK)
+    {
+        flight.setNo(noCtrl->GetValue().ToStdString());
+        flight.setName(nameCtrl->GetValue().ToStdString());
+        flight.setFrom(fromCtrl->GetValue().ToStdString());
+        flight.setDestination(destCtrl->GetValue().ToStdString());
+        auto parseTime = [](const std::string &str) -> std::tm
+        {
+            std::tm tm = {};
+            strptime(str.c_str(), "%H:%M %d/%m/%Y", &tm);
+            return tm;
+        };
+        flight.setDepartureTime(parseTime(departCtrl->GetValue().ToStdString()));
+        flight.setLeaveTime(parseTime(leaveCtrl->GetValue().ToStdString()));
+        flight.setArrivalTime(parseTime(arrivalCtrl->GetValue().ToStdString()));
+        long amount;
+        if (amountCtrl->GetValue().ToLong(&amount))
+            flight.setAmount(amount);
+        else
+            flight.setAmount(0);
+        wxString availStr = availCtrl->GetValue();
+        char avail = availStr.IsEmpty() ? 'A' : availStr[0];
+        flight.setAvailability(avail);
         bool ok = flightService.updateFlight(flight);
         if (ok)
             infoLabel->SetLabel("Đã cập nhật chuyến bay!");
@@ -266,18 +381,24 @@ void FlightWindow::OnDeleteFlight(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn chuyến bay cần xóa!", "Thông báo", wxOK | wxICON_INFORMATION);
         return;
     }
-    std::string flightNo = flightList->GetItemText(selectedIndex, 0).ToStdString();
-    auto flightOpt = flightService.getFlightByFlightNo(flightNo);
-    if (flightOpt)
+    int flightId = std::stoi(flightList->GetItemText(selectedIndex, 0).ToStdString());
+    auto flightOpt = flightService.getFlightById(flightId);
+    if (!flightOpt)
     {
-        int id = flightOpt->getId();
-        bool ok = flightService.deleteFlight(id);
-        if (ok)
-            infoLabel->SetLabel("Đã xóa chuyến bay!");
-        else
-            infoLabel->SetLabel("Xóa chuyến bay thất bại!");
-        RefreshFlightList();
+        wxMessageBox("Không tìm thấy chuyến bay!", "Lỗi", wxOK | wxICON_ERROR);
+        return;
     }
+    Flight flight = *flightOpt;
+    wxString msg = wxString::Format("Bạn có chắc chắn muốn xóa chuyến bay %s không?", flight.getNo());
+    int confirm = wxMessageBox(msg, "Xác nhận xóa", wxYES_NO | wxICON_QUESTION);
+    if (confirm != wxYES)
+        return;
+    bool ok = flightService.deleteFlight(flightId);
+    if (ok)
+        infoLabel->SetLabel("Đã xóa chuyến bay!");
+    else
+        infoLabel->SetLabel("Xóa chuyến bay thất bại!");
+    RefreshFlightList();
 }
 
 void FlightWindow::OnListItemSelected(wxListEvent &event)
