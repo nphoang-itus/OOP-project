@@ -17,6 +17,11 @@
 #include <chrono>
 #include <algorithm>
 #include <ctime>
+#include <iostream>
+
+// Khởi tạo biến static
+std::shared_ptr<MySQLXConnection> MySQLXConnection::_instance = nullptr;
+std::mutex MySQLXConnection::_instanceMutex;
 
 // MySQLXResult implementation
 MySQLXResult::MySQLXResult(mysqlx::RowResult rowResult) 
@@ -319,15 +324,26 @@ std::tm MySQLXResult::getDateTime(const std::string& columnName) {
     }
 }
 
-// MySQLXConnection implementation
+// === MySQLXConnection implementation ===
+std::shared_ptr<MySQLXConnection> MySQLXConnection::getInstance() {
+    if (_instance == nullptr) {
+        std::lock_guard<std::mutex> lock(_instanceMutex);
+        if (_instance == nullptr) {
+            // Tạo instance mới trong shared_ptr với deleter tùy chỉnh
+            _instance = std::shared_ptr<MySQLXConnection>(new MySQLXConnection());
+            auto logger = Logger::getInstance();
+            logger->info("MySQLXConnection singleton instance created");
+        }
+    }
+    return _instance;
+}
+
 MySQLXConnection::MySQLXConnection() : _nextStatementId(1) {
     auto logger = Logger::getInstance();
     logger->debug("MySQLXConnection instance created");
 }
 
 MySQLXConnection::~MySQLXConnection() {
-    auto logger = Logger::getInstance();
-    logger->debug("MySQLXConnection instance being destroyed");
     disconnect();
 }
 
@@ -369,28 +385,23 @@ bool MySQLXConnection::connect( const std::string& host, const std::string& user
 }
 
 void MySQLXConnection::disconnect() {
-    auto logger = Logger::getInstance();
-    logger->info("Disconnecting from MySQL database");
-    
     std::lock_guard<std::mutex> lock(_mutex);
     
     try {
         // Clear all prepared statements
         _preparedStatements.clear();
-        logger->debug("Cleared all prepared statements");
         
         // Close the session
         if (_session) {
             _session.reset();
-            logger->info("Successfully disconnected from MySQL database");
-        } else {
-            logger->warning("Disconnect called when no active connection exists");
-        }
+        };
     }
     catch (const std::exception& e) {
         _lastError = e.what();
-        logger->error("Error during disconnect: " + std::string(e.what()));
+        std::cerr << "Error during disconnect: " + std::string(e.what());
     }
+
+    // std::cout << "Disconnect server database\n";
 }
 
 bool MySQLXConnection::execute(const std::string& query) {

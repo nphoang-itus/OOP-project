@@ -28,24 +28,6 @@
  */
 class Flight {
 private:
-<<<<<<< HEAD
-    int _id;
-    std::string _no;
-    std::string _name;
-    std::string _from;
-    std::string _destination;
-    std::string _departureTime;
-    std::string _leaveTime;
-    std::string _arrivalTime;
-    double _amount;
-    char _availability;
-
-public:
-    // Constructor
-    Flight();
-    Flight( const std::string& no, const std::string& name, const std::string& from, const std::string& destination,
-            const std::string& departureTime, const std::string& leaveTime, const std::string& arrivalTime, const double& amount, const char& availability);
-=======
     int _id;                         ///< Mã định danh duy nhất cho chuyến bay
     std::string _no;                 ///< Mã hiệu chuyến bay
     std::string _name;               ///< Tên hãng hàng không hoặc tên chuyến bay
@@ -76,8 +58,6 @@ public:
     /// @name Getter
     /// Các phương thức truy cập thông tin
     /// @{
->>>>>>> develop
-
     int getId() const;
     std::string getNo() const;
     std::string getName() const;
@@ -88,9 +68,6 @@ public:
     std::tm getArrivalTime() const;
     double getAmount() const;
     char getAvailability() const;
-<<<<<<< HEAD
-=======
-
     /// @}
 
     // ====================== Setter ======================
@@ -98,7 +75,6 @@ public:
     /// @name Setter
     /// Các phương thức thiết lập thông tin
     /// @{
->>>>>>> develop
 
     void setId(const int& id);
     void setNo(const std::string& no);
@@ -110,11 +86,8 @@ public:
     void setArrivalTime(const std::tm& arrivalTime);
     void setAmount(const double& amount);
     void setAvailability(const char& availability);
-<<<<<<< HEAD
-=======
 
     /// @}
->>>>>>> develop
 };
 
 #endif

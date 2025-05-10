@@ -74,7 +74,7 @@ std::vector<Passenger> PassengerRepository::findAll() {
 
         _logger->info("Found " + std::to_string(passengers.size()) + " passengers");
     } catch (const std::exception& e) {
-
+        _logger->error("Exception in findAll(): " + std::string(e.what()));
     }
 
     return passengers;

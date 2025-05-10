@@ -35,7 +35,8 @@ Flight FlightRepository::_mapResultToFlight(IDatabaseResult& result) {
     return flight;
 }
 
-FlightRepository::FlightRepository(std::shared_ptr<IDatabaseConnection> dbConnection) : _dbConnection(std::move(dbConnection)), _logger(Logger::getInstance()) {
+FlightRepository::FlightRepository(std::shared_ptr<IDatabaseConnection> dbConnection)
+    : _dbConnection(std::move(dbConnection)), _logger(Logger::getInstance()) {
     _logger->debug("Creating Flight repository object.");
 
     if (!_dbConnection) {

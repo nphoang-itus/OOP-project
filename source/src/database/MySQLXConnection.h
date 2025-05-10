@@ -81,6 +81,9 @@ struct PreparedStatementData {
  */
 class MySQLXConnection : public IDatabaseConnection {
 private:
+    static std::shared_ptr<MySQLXConnection> _instance;
+    static std::mutex _instanceMutex;
+
     std::unique_ptr<mysqlx::Session> _session; ///< Phiên làm việc với MySQL
     std::unordered_map<int, PreparedStatementData> _preparedStatements; ///< Bộ nhớ lưu các statement
     std::string _lastError; ///< Mô tả lỗi gần nhất
@@ -95,16 +98,20 @@ private:
      */
     std::string buildPreparedStatement(const PreparedStatementData& data);
 
-public:
     /**
-     * @brief Hàm khởi tạo.
+     * @brief Hàm khởi tạo theo mẫu Singleton: Không cho tự phép tạo đối tượng.
      */
     MySQLXConnection();
-
+public:
     /**
      * @brief Hàm hủy.
      */
     ~MySQLXConnection() override;
+
+    MySQLXConnection(const MySQLXConnection&) = delete;
+    MySQLXConnection& operator=(const MySQLXConnection&) = delete;
+
+    static std::shared_ptr<MySQLXConnection> getInstance();
 
     bool connect(const std::string& host, const std::string& user,
                  const std::string& password, const std::string& database,

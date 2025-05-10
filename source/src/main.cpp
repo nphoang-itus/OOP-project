@@ -1,133 +1,111 @@
-#include <iostream>
-#include <string>
-#include <memory>
-#include <ctime>
-#include <sstream>
-#include <chrono>
-
+#include "repositories/PassengerRepository.h"
 #include "database/MySQLXConnection.h"
 #include "utils/Logger.h"
+#include "utils/utils.h"
 
-bool usecase_test_databaseconnection() {
-    // Khởi tạo logger
-    auto logger = Logger::getInstance();
-    logger->setMinLevel(LogLevel::DEBUG); // Thiết lập cấp độ log là DEBUG để thấy tất cả thông tin log
-    logger->info("Starting database connection test");
-    
-    try {
-        // Lấy thông tin kết nối từ biến môi trường hoặc sử dụng giá trị mặc định
-        std::string dbHost = std::getenv("DB_HOST") ? std::getenv("DB_HOST") : "localhost";
-        std::string dbUser = std::getenv("DB_USER") ? std::getenv("DB_USER") : "nphoang";
-        std::string dbPassword = std::getenv("DB_PASSWORD") ? std::getenv("DB_PASSWORD") : "phucHoang133205";
-        std::string dbName = std::getenv("DB_NAME") ? std::getenv("DB_NAME") : "airlines_db";
-        int dbPort = std::getenv("DB_PORT") ? std::stoi(std::getenv("DB_PORT")) : 33060;
-
-        logger->info("Connecting to MySQL at " + dbHost + ":" + std::to_string(dbPort) + 
-                     " with user '" + dbUser + "' and database '" + dbName + "'");
-
-        // Tạo kết nối MySQL
-        auto dbConnection = std::make_shared<MySQLXConnection>();
-
-        if (!dbConnection->connect(dbHost, dbUser, dbPassword, dbName, dbPort)) {
-            logger->error("Failed to connect to database: " + dbConnection->getLastError());
-            std::cerr << "Failed to connect to database: " << dbConnection->getLastError() << "\n";
-            return false;
-        }
-
-        logger->info("Connected to database successfully!");
-        std::cout << "Connected to database successfully!" << std::endl;
-
-        // Kiểm tra dữ liệu trong bảng flight_tb
-        std::string query = "SELECT * FROM flight_tb";
-        logger->debug("Executing query: " + query);
-        auto result = dbConnection->executeQuery(query);
-
-        if (!result) {
-            logger->error("Failed to execute query: " + dbConnection->getLastError());
-            std::cerr << "Failed to execute query: " << dbConnection->getLastError() << "\n";
-            return false;
-        }
-
-        logger->info("Query executed successfully");
-        
-        // Menu loop
-        int choice;
-        std::cout << "1. Show flight data\n";
-        std::cout << "0. Exit\n";
-        
-        while (true) {
-            std::cout << "Enter your choice: ";
-            std::cin >> choice;
-            
-            if (choice == 1) {
-                logger->debug("User requested to display flight data");
-                std::cout << "Flight data:" << std::endl;
-                
-                int flightCount = 0;
-                while (result->next()) {
-                    flightCount++;
-                    std::string flightNo = result->getString("f_no");
-                    std::string airline = result->getString("f_name");
-                    std::string from = result->getString("f_from");
-                    std::string to = result->getString("f_destination");
-                    std::chrono::sys_time<std::chrono::seconds> departure = result->getDateTime("f_departureTime");
-
-                    std::time_t time = std::chrono::system_clock::to_time_t(departure);
-                    std::tm tm = *std::localtime(&time);
-
-                    // Format thành chuỗi "YYYY-MM-DD HH:MM:SS"
-                    std::ostringstream oss;
-                    oss << std::put_time(&tm, "%F %T"); // %F = YYYY-MM-DD, %T = HH:MM:SS
-                    std::string formatted = oss.str();
-                    
-                    logger->debug("Retrieved flight: " + flightNo + " from " + from + " to " + to);
-                    
-                    std::cout << "Flight No: " << flightNo
-                              << ", Airline: " << airline
-                              << ", From: " << from
-                              << ", To: " << to
-                              << ", Departure: " << departure
-                              << std::endl;
-                }
-                
-                logger->info("Displayed " + std::to_string(flightCount) + " flights");
-                
-                // Cần reset result để hiển thị lại dữ liệu nếu người dùng chọn 1 lần nữa
-                result = dbConnection->executeQuery(query);
-                if (!result) {
-                    logger->error("Failed to re-execute query: " + dbConnection->getLastError());
-                }
-            } else if (choice == 0) {
-                logger->info("User chose to exit");
-                break;
-            } else {
-                logger->warning("Invalid choice: " + std::to_string(choice));
-                std::cout << "Invalid choice. Please try again.\n";
-            }
-        }
-
-        // Ngắt kết nối cơ sở dữ liệu
-        logger->info("Disconnecting from database");
-        dbConnection->disconnect();
-        logger->info("Database connection closed");
-        
-        std::cout << "Press Enter to exit the program!\n";
-        std::cin.ignore();
-        std::cin.get();
-    }
-    catch (const std::exception& e) {
-        logger->error("Exception occurred: " + std::string(e.what()));
-        std::cerr << "Error: " << e.what() << '\n';
-        return false;
-    }
-
-    logger->info("Database connection test completed");
-    return true;
-}
+#include <iostream>
+#include <memory>
 
 int main() {
-    std::cout << "Testing database connection and log functionality...\n";
-    bool result = usecase_test_databaseconnection();
-    std::cout << "Test " << (result ? "succeeded" : "failed") << ".\n";
-    return result ? 0 : 1;
+    static auto loggerKeepAlive = Logger::getInstance();
+    // Initialize Logger
+    auto logger = Logger::getInstance();
+    logger->setMinLevel(LogLevel::DEBUG);
+    
+    // Initialize Database Connection
+    auto dbConnection = MySQLXConnection::getInstance();
+    if (!dbConnection->connect("localhost", "nphoang", "phucHoang133205", "airlines_db")) {
+        logger->error("Failed to connect to the database: " + dbConnection->getLastError());
+        return 1;
+    }
+
+    // Initialize FlightRepository
+    PassengerRepository passRepo(dbConnection);
+
+    // Test findAll
+    std::cout << "Testing findAll()..." << std::endl;
+    auto passengers = passRepo.findAll();
+    for (const auto& pass : passengers) {
+        std::cout << "Flight ID: " << pass.getId() << ", Name: " << pass.getName() << std::endl;
+    }
+
+    // Test findById
+    // std::cout << "Testing findById()..." << std::endl;
+    // auto passOpt = passRepo.findById(5);
+    // if (passOpt) {
+    //     std::cout << "Found Flight ID: " << passOpt->getId() << ", Name: " << passOpt->getName() << std::endl;
+    // } else {
+    //     std::cout << "Flight not found!" << std::endl;
+    // }
+
+    // Test save
+    // std::cout << "Testing save()..." << std::endl;
+    // std::cout << "\n";
+    // Passenger newPass("Nguyen Phuc Hoang", "0915513951", "067205001201", "TP Thu Duc, TP HCM");
+    // if (passRepo.save(newPass)) {
+    //     std::cout << "New flight saved successfully with name = " << newPass.getName() << std::endl;
+    // } else {
+    //     std::cout << "Failed to save new flight!" << std::endl;
+    // }
+    // std::cout << "\n";
+
+    // // Test findAll
+    // std::cout << "Testing findAll()..." << std::endl;
+    // auto passengers = passRepo.findAll();
+    // for (const auto& pass : passengers) {
+    //     std::cout << "Flight ID: " << pass.getId() << ", Name: " << pass.getName() << std::endl;
+    // }
+
+    // // Test update
+    // std::cout << "\n";
+    // std::cout << "Testing update()..." << std::endl;
+    // newPass.setId(11);
+    // newPass.setName("Khuc Khoang");
+    // if (passRepo.update(newPass)) {
+    //     std::cout << "Flight updated successfully with id = " << newPass.getId() << std::endl;
+    // } else {
+    //     std::cout << "Failed to update flight!" << std::endl;
+    // }
+    // std::cout << "\n";
+
+    // std::cout << "Testing findAll()..." << std::endl;
+    // auto passengers = passRepo.findAll();
+    // for (const auto& pass : passengers) {
+    //     std::cout << "Flight ID: " << pass.getId() << ", Name: " << pass.getName() << std::endl;
+    // }
+
+    // // Test remove
+    // std::cout << "Testing remove()..." << std::endl;
+    // if (passRepo.remove(newPass.getId())) {
+    //     std::cout << "Flight removed successfully!" << std::endl;
+    // } else {
+    //     std::cout << "Failed to remove flight!" << std::endl;
+    // }
+
+    // std::cout << "Testing findAll()..." << std::endl;
+    // auto passengers = passRepo.findAll();
+    // for (const auto& pass : passengers) {
+    //     std::cout << "Flight ID: " << pass.getId() << ", Name: " << pass.getName() << std::endl;
+    // }
+
+    // Test findAvailableFlights
+    // std::cout << "Testing findAvailableFlights()..." << std::endl;
+    // auto findName = passRepo.findByName("Nguyen Thi F");
+    // for (const auto& flight : findName) {
+    //     std::cout << "Available Flight ID: " << flight.getId() << ", Name: " << flight.getName() << std::endl;
+    // }
+
+    // Test findByFlightNo
+    // std::cout << "Testing findByFlightNo()..." << std::endl;
+    // auto flightByNo = passRepo.findByPassport("A12345678");
+    // if (flightByNo) {
+    //     std::cout << "Found Flight No: " << flightByNo->getId() << ", Name: " << flightByNo->getName() << std::endl;
+    // } else {
+    //     std::cout << "Flight not found by No!" << std::endl;
+    // }
+
+    // // Disconnect from database
+    // std::cout << "Disconnected from database." << std::endl;
+
+    return 0;
 }
