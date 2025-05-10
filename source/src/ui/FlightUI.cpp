@@ -105,57 +105,77 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     wxPanel *panel = new wxPanel(&dialog, wxID_ANY);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
+    int labelWidth = 140;
+
     // Tạo các trường nhập liệu
     wxBoxSizer *noSizer = new wxBoxSizer(wxHORIZONTAL);
-    noSizer->Add(new wxStaticText(panel, wxID_ANY, "Mã chuyến bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *noLabel = new wxStaticText(panel, wxID_ANY, "Mã chuyến bay:");
+    noLabel->SetMinSize(wxSize(labelWidth, -1));
+    noSizer->Add(noLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *noCtrl = new wxTextCtrl(panel, wxID_ANY);
     noSizer->Add(noCtrl, 1, wxALL, 5);
     sizer->Add(noSizer, 0, wxEXPAND);
 
     wxBoxSizer *nameSizer = new wxBoxSizer(wxHORIZONTAL);
-    nameSizer->Add(new wxStaticText(panel, wxID_ANY, "Tên hãng bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *nameLabel = new wxStaticText(panel, wxID_ANY, "Tên hãng bay:");
+    nameLabel->SetMinSize(wxSize(labelWidth, -1));
+    nameSizer->Add(nameLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY);
     nameSizer->Add(nameCtrl, 1, wxALL, 5);
     sizer->Add(nameSizer, 0, wxEXPAND);
 
     wxBoxSizer *fromSizer = new wxBoxSizer(wxHORIZONTAL);
-    fromSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *fromLabel = new wxStaticText(panel, wxID_ANY, "Điểm khởi hành:");
+    fromLabel->SetMinSize(wxSize(labelWidth, -1));
+    fromSizer->Add(fromLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *fromCtrl = new wxTextCtrl(panel, wxID_ANY);
     fromSizer->Add(fromCtrl, 1, wxALL, 5);
     sizer->Add(fromSizer, 0, wxEXPAND);
 
     wxBoxSizer *destSizer = new wxBoxSizer(wxHORIZONTAL);
-    destSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *destLabel = new wxStaticText(panel, wxID_ANY, "Điểm đến:");
+    destLabel->SetMinSize(wxSize(labelWidth, -1));
+    destSizer->Add(destLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *destCtrl = new wxTextCtrl(panel, wxID_ANY);
     destSizer->Add(destCtrl, 1, wxALL, 5);
     sizer->Add(destSizer, 0, wxEXPAND);
 
     wxBoxSizer *departSizer = new wxBoxSizer(wxHORIZONTAL);
-    departSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *departLabel = new wxStaticText(panel, wxID_ANY, "Giờ khởi hành:");
+    departLabel->SetMinSize(wxSize(labelWidth, -1));
+    departSizer->Add(departLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *departCtrl = new wxTextCtrl(panel, wxID_ANY, "HH:MM DD/MM/YYYY");
     departSizer->Add(departCtrl, 1, wxALL, 5);
     sizer->Add(departSizer, 0, wxEXPAND);
 
     wxBoxSizer *leaveSizer = new wxBoxSizer(wxHORIZONTAL);
-    leaveSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ cất cánh:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *leaveLabel = new wxStaticText(panel, wxID_ANY, "Giờ cất cánh:");
+    leaveLabel->SetMinSize(wxSize(labelWidth, -1));
+    leaveSizer->Add(leaveLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *leaveCtrl = new wxTextCtrl(panel, wxID_ANY, "HH:MM DD/MM/YYYY");
     leaveSizer->Add(leaveCtrl, 1, wxALL, 5);
     sizer->Add(leaveSizer, 0, wxEXPAND);
 
     wxBoxSizer *arrivalSizer = new wxBoxSizer(wxHORIZONTAL);
-    arrivalSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *arrivalLabel = new wxStaticText(panel, wxID_ANY, "Giờ đến:");
+    arrivalLabel->SetMinSize(wxSize(labelWidth, -1));
+    arrivalSizer->Add(arrivalLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *arrivalCtrl = new wxTextCtrl(panel, wxID_ANY, "HH:MM DD/MM/YYYY");
     arrivalSizer->Add(arrivalCtrl, 1, wxALL, 5);
     sizer->Add(arrivalSizer, 0, wxEXPAND);
 
     wxBoxSizer *amountSizer = new wxBoxSizer(wxHORIZONTAL);
-    amountSizer->Add(new wxStaticText(panel, wxID_ANY, "Giá vé:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *amountLabel = new wxStaticText(panel, wxID_ANY, "Giá vé:");
+    amountLabel->SetMinSize(wxSize(labelWidth, -1));
+    amountSizer->Add(amountLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *amountCtrl = new wxTextCtrl(panel, wxID_ANY);
     amountSizer->Add(amountCtrl, 1, wxALL, 5);
     sizer->Add(amountSizer, 0, wxEXPAND);
 
     wxBoxSizer *availSizer = new wxBoxSizer(wxHORIZONTAL);
-    availSizer->Add(new wxStaticText(panel, wxID_ANY, "Trạng thái (A/U):"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *availLabel = new wxStaticText(panel, wxID_ANY, "Trạng thái (A/U):");
+    availLabel->SetMinSize(wxSize(labelWidth, -1));
+    availSizer->Add(availLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *availCtrl = new wxTextCtrl(panel, wxID_ANY, "A");
     availSizer->Add(availCtrl, 1, wxALL, 5);
     sizer->Add(availSizer, 0, wxEXPAND);
@@ -255,26 +275,36 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     wxPanel *panel = new wxPanel(&dialog, wxID_ANY);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
+    int labelWidth = 140;
+
     wxBoxSizer *noSizer = new wxBoxSizer(wxHORIZONTAL);
-    noSizer->Add(new wxStaticText(panel, wxID_ANY, "Mã chuyến bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *noLabel = new wxStaticText(panel, wxID_ANY, "Mã chuyến bay:");
+    noLabel->SetMinSize(wxSize(labelWidth, -1));
+    noSizer->Add(noLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *noCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getNo());
     noSizer->Add(noCtrl, 1, wxALL, 5);
     sizer->Add(noSizer, 0, wxEXPAND);
 
     wxBoxSizer *nameSizer = new wxBoxSizer(wxHORIZONTAL);
-    nameSizer->Add(new wxStaticText(panel, wxID_ANY, "Tên hãng bay:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *nameLabel = new wxStaticText(panel, wxID_ANY, "Tên hãng bay:");
+    nameLabel->SetMinSize(wxSize(labelWidth, -1));
+    nameSizer->Add(nameLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getName());
     nameSizer->Add(nameCtrl, 1, wxALL, 5);
     sizer->Add(nameSizer, 0, wxEXPAND);
 
     wxBoxSizer *fromSizer = new wxBoxSizer(wxHORIZONTAL);
-    fromSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *fromLabel = new wxStaticText(panel, wxID_ANY, "Điểm khởi hành:");
+    fromLabel->SetMinSize(wxSize(labelWidth, -1));
+    fromSizer->Add(fromLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *fromCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getFrom());
     fromSizer->Add(fromCtrl, 1, wxALL, 5);
     sizer->Add(fromSizer, 0, wxEXPAND);
 
     wxBoxSizer *destSizer = new wxBoxSizer(wxHORIZONTAL);
-    destSizer->Add(new wxStaticText(panel, wxID_ANY, "Điểm đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *destLabel = new wxStaticText(panel, wxID_ANY, "Điểm đến:");
+    destLabel->SetMinSize(wxSize(labelWidth, -1));
+    destSizer->Add(destLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *destCtrl = new wxTextCtrl(panel, wxID_ANY, flight.getDestination());
     destSizer->Add(destCtrl, 1, wxALL, 5);
     sizer->Add(destSizer, 0, wxEXPAND);
@@ -287,31 +317,41 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     };
 
     wxBoxSizer *departSizer = new wxBoxSizer(wxHORIZONTAL);
-    departSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ khởi hành:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *departLabel = new wxStaticText(panel, wxID_ANY, "Giờ khởi hành:");
+    departLabel->SetMinSize(wxSize(labelWidth, -1));
+    departSizer->Add(departLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *departCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getDepartureTime()));
     departSizer->Add(departCtrl, 1, wxALL, 5);
     sizer->Add(departSizer, 0, wxEXPAND);
 
     wxBoxSizer *leaveSizer = new wxBoxSizer(wxHORIZONTAL);
-    leaveSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ cất cánh:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *leaveLabel = new wxStaticText(panel, wxID_ANY, "Giờ cất cánh:");
+    leaveLabel->SetMinSize(wxSize(labelWidth, -1));
+    leaveSizer->Add(leaveLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *leaveCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getLeaveTime()));
     leaveSizer->Add(leaveCtrl, 1, wxALL, 5);
     sizer->Add(leaveSizer, 0, wxEXPAND);
 
     wxBoxSizer *arrivalSizer = new wxBoxSizer(wxHORIZONTAL);
-    arrivalSizer->Add(new wxStaticText(panel, wxID_ANY, "Giờ đến:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *arrivalLabel = new wxStaticText(panel, wxID_ANY, "Giờ đến:");
+    arrivalLabel->SetMinSize(wxSize(labelWidth, -1));
+    arrivalSizer->Add(arrivalLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *arrivalCtrl = new wxTextCtrl(panel, wxID_ANY, formatInputTime(flight.getArrivalTime()));
     arrivalSizer->Add(arrivalCtrl, 1, wxALL, 5);
     sizer->Add(arrivalSizer, 0, wxEXPAND);
 
     wxBoxSizer *amountSizer = new wxBoxSizer(wxHORIZONTAL);
-    amountSizer->Add(new wxStaticText(panel, wxID_ANY, "Giá vé:"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *amountLabel = new wxStaticText(panel, wxID_ANY, "Giá vé:");
+    amountLabel->SetMinSize(wxSize(labelWidth, -1));
+    amountSizer->Add(amountLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *amountCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", static_cast<int>(flight.getAmount())));
     amountSizer->Add(amountCtrl, 1, wxALL, 5);
     sizer->Add(amountSizer, 0, wxEXPAND);
 
     wxBoxSizer *availSizer = new wxBoxSizer(wxHORIZONTAL);
-    availSizer->Add(new wxStaticText(panel, wxID_ANY, "Trạng thái (A/U):"), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxStaticText *availLabel = new wxStaticText(panel, wxID_ANY, "Trạng thái (A/U):");
+    availLabel->SetMinSize(wxSize(labelWidth, -1));
+    availSizer->Add(availLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
     wxTextCtrl *availCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%c", flight.getAvailability()));
     availSizer->Add(availCtrl, 1, wxALL, 5);
     sizer->Add(availSizer, 0, wxEXPAND);
