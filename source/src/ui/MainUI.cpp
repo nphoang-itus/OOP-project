@@ -16,7 +16,7 @@ EVT_BUTTON(ID_EXIT, MainWindow::OnExit)
 END_EVENT_TABLE()
 
 MainWindow::MainWindow(const wxString &title)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600))
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600))
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);

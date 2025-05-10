@@ -21,7 +21,7 @@ EVT_LIST_ITEM_SELECTED(ID_RESERVATION_LIST, ReservationWindow::OnListItemSelecte
 END_EVENT_TABLE()
 
 ReservationWindow::ReservationWindow(const wxString &title)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600))
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600))
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
