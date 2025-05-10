@@ -170,6 +170,25 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
 
     panel->SetSizer(sizer);
 
+    // Xử lý sự kiện khi nhấn nút OK
+    okButton->Bind(wxEVT_BUTTON, [&](wxCommandEvent &evt)
+                   {
+        // Kiểm tra các trường bắt buộc không được để trống
+        if (noCtrl->GetValue().IsEmpty() || 
+            nameCtrl->GetValue().IsEmpty() || 
+            fromCtrl->GetValue().IsEmpty() || 
+            destCtrl->GetValue().IsEmpty() || 
+            departCtrl->GetValue().IsEmpty() || 
+            leaveCtrl->GetValue().IsEmpty() || 
+            arrivalCtrl->GetValue().IsEmpty() || 
+            amountCtrl->GetValue().IsEmpty()) {
+            
+            wxMessageBox("Vui lòng điền đầy đủ thông tin!", "Lỗi", wxICON_ERROR | wxOK);
+            return;
+        }
+        
+        dialog.EndModal(wxID_OK); });
+
     if (dialog.ShowModal() == wxID_OK)
     {
         Flight flight;
