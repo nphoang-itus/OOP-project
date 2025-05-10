@@ -66,3 +66,23 @@ VALUES
 ('Le Thi H', '0978901234', 'H33445566', '222 Phan Chu Trinh, Da Nang'),
 ('Pham Van I', '0989012345', 'I77889900', '333 Bach Dang, Hanoi'),
 ('Hoang Thi J', '0990123456', 'J11224455', '444 Tran Phu, Ho Chi Minh City');
+
+-- Insert sample data into reservation_tb
+INSERT INTO reservation_tb (r_ticketNo, r_flightNo, r_passportPassenger)
+VALUES 
+('TK001-FL007', 'FL007', 'A12345678'),
+('TK002-FL008', 'FL008', 'B87654321'),
+('TK003-FL009', 'FL009', 'C11223344'),
+('TK004-FL012', 'FL012', 'D44332211'),
+('TK005-FL011', 'FL011', 'E55667788'),
+('TK006-FL015', 'FL015', 'F99887766'),
+('TK007-FL014', 'FL014', 'G66554433'),
+('TK008-FL016', 'FL016', 'H33445566'),
+('TK009-FL007', 'FL007', 'I77889900'),
+('TK010-FL009', 'FL009', 'J11224455'),
+('TK011-FL015', 'FL015', 'A12345678'),
+('TK012-FL008', 'FL008', 'C11223344'),
+('TK013-FL012', 'FL012', 'E55667788'),
+('TK014-FL016', 'FL016', 'G66554433'),
+('TK015-FL014', 'FL014', 'I77889900'),
+('TK016-FL014', 'FL014', 'I77889900');
