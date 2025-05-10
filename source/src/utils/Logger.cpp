@@ -1,23 +1,12 @@
-/**
- * @file logger.cpp
- * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
- * @brief 
- * @version 0.1
- * @date 2025-05-01
- * 
- * @copyright Copyright (c) 2025
- * 
- */
-
 #include "Logger.h"
+
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
-
-// Thêm include cần thiết cho xử lý ngoại lệ
 #include <stdexcept>
+#include <memory>
 
-// Thay đổi cách include filesystem tùy thuộc vào compiler
 #if defined(__has_include) && __has_include(<filesystem>)
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -26,31 +15,111 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #else
 namespace fs {
+    inline bool exists(const std::string&) { return true; }
     inline bool create_directory(const std::string&) { return true; }
 }
 #endif
 
-Logger* Logger::_instance = nullptr;
-std::mutex Logger::_mutex;
+std::shared_ptr<Logger> Logger::_instance = nullptr;
+std::mutex Logger::_instanceMutex;
 
-Logger::Logger() : minLevel(LogLevel::INFO) {
+void ConsoleLogHandler::write(LogLevel level, const std::string& timestamp, const std::string& message) {
+    std::string levelStr = "";
+
+    switch (level) {
+        case LogLevel::DEBUG:   levelStr = "DEBUG";     break;
+        case LogLevel::INFO:    levelStr = "INFO";      break;
+        case LogLevel::WARNING: levelStr = "WARNING";   break;
+        case LogLevel::ERROR:   levelStr = "ERROR";     break;
+        case LogLevel::FATAL:   levelStr = "FATAL";     break;
+        default:                levelStr = "UNKNOWN";   break;
+    }
+    
+    // Sử dụng màu sắc cho các mức độ log khác nhau
+    std::string colorCode = "";
+    if (level == LogLevel::DEBUG) {
+        colorCode = "\033[37m"; // White
+    } else if (level == LogLevel::INFO) {
+        colorCode = "\033[32m"; // Green
+    } else if (level == LogLevel::WARNING) {
+        colorCode = "\033[33m"; // Yellow
+    } else if (level == LogLevel::ERROR) {
+        colorCode = "\033[31m"; // Red
+    } else if (level == LogLevel::FATAL) {
+        colorCode = "\033[35m"; // Magenta
+    }
+    
+    std::string resetCode = "\033[0m";
+    
+    // Ghi ra console
+    std::ostream& out = (level >= LogLevel::ERROR) ? std::cerr : std::cout;
+    out << "[" << timestamp << "] " << colorCode << "[" << levelStr << "]" << resetCode << " " << message << std::endl;
+}
+
+FileLogHandler::FileLogHandler(const std::string& filename) {
     try {
         // Tạo thư mục logs nếu chưa tồn tại
-        try {
-            if (!fs::exists("logs")) {
-                if (!fs::create_directory("logs")) {
-                    std::cerr << "Failed to create logs directory\n";
-                }
+        if (!fs::exists("logs")) {
+            if (!fs::create_directory("logs")) {
+                throw std::runtime_error("Failed to create logs directory");
             }
-        } catch (const std::exception& e) {
-            std::cerr << "Error creating logs directory: " << e.what() << "\n";
         }
+        
+        // Mở file log
+        _logFile.open(filename, std::ios::out | std::ios::app);
+        
+        if (!_logFile.is_open()) {
+            throw std::runtime_error("Failed to open log file: " + filename);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error in FileLogHandler constructor: " << e.what() << std::endl;
+        throw;
+    }
+}
+
+FileLogHandler::~FileLogHandler() {
+    try {
+        std::lock_guard<std::mutex> lock(_fileMutex);
+        if (_logFile.is_open()) {
+            _logFile.close();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error in FileLogHandler destructor: " << e.what() << std::endl;
+    }
+}
+
+void FileLogHandler::write(LogLevel level, const std::string& timestamp, const std::string& message) {
+    std::string levelStr;
+    
+    switch (level) {
+        case LogLevel::DEBUG:   levelStr = "DEBUG";     break;
+        case LogLevel::INFO:    levelStr = "INFO";      break;
+        case LogLevel::WARNING: levelStr = "WARNING";   break;
+        case LogLevel::ERROR:   levelStr = "ERROR";     break;
+        case LogLevel::FATAL:   levelStr = "FATAL";     break;
+        default:                levelStr = "UNKNOWN";   break;
+    }
+    
+    try {
+        std::lock_guard<std::mutex> lock(_fileMutex);
+        if (_logFile.is_open()) {
+            _logFile << "[" << timestamp << "] [" << levelStr << "] " << message << std::endl;
+            _logFile.flush();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error writing to log file: " << e.what() << std::endl;
+    }
+}
+
+Logger::Logger() : _minLevel(LogLevel::INFO) {
+    try {
+        // Thêm ConsoleLogHandler mặc định
+        // _handlers.push_back(std::make_shared<ConsoleLogHandler>());
         
         // Tạo tên file log với timestamp
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
         
-        // Sử dụng localtime_s (Windows) hoặc localtime_r (POSIX) thay vì localtime
         std::tm tm_buf;
         #if defined(_WIN32) || defined(_WIN64)
             localtime_s(&tm_buf, &time);
@@ -60,67 +129,46 @@ Logger::Logger() : minLevel(LogLevel::INFO) {
         
         std::ostringstream filename;
         filename << "logs/airlines_";
-        // Tạo định dạng thời gian thủ công để tránh lỗi
+        
         char timebuf[64];
-        std::strftime(timebuf, sizeof(timebuf), "%Y%m%d_%H%M%S", &tm_buf);
+        std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d_%H-%M-%S", &tm_buf);
         filename << timebuf << ".log";
         
-        // Mở file log
-        _logFile.open(filename.str(), std::ios::out | std::ios::app);
+        // Thêm FileLogHandler
+        _handlers.push_back(std::make_shared<FileLogHandler>(filename.str()));
         
-        if (!_logFile.is_open()) {
-            std::cerr << "Failed to open log file: " << filename.str() << "\n";
-        } else {
-            // Chỉ viết thông báo khởi tạo nếu file được mở thành công
-            // Tránh gọi log() từ constructor để tránh deadlock
-            std::string timestamp = _getTimestamp();
-            _logFile << "[" << timestamp << "] [INFO] Logger initialized\n";
-            _logFile.flush();
-            
-            // In ra console (để debugging)
-            std::cout << "[" << timestamp << "] [INFO] Logger initialized\n";
-        }
+        // Ghi thông báo khởi tạo
+        info("Logger initialized");
     } catch (const std::exception& e) {
-        std::cerr << "Logger initialization error: " << e.what() << "\n";
+        std::cerr << "Logger initialization error: " << e.what() << std::endl;
     }
 }
 
 Logger::~Logger() {
     try {
-        if (_logFile.is_open()) {
-            // Tránh gọi log() từ destructor
-            std::string timestamp = _getTimestamp();
-            _logFile << "[" << timestamp << "] [INFO] Logger shutting down\n";
-            _logFile.flush();
-            _logFile.close();
-        }
+        info("Logger shutting down");
+        _handlers.clear();
     } catch (const std::exception& e) {
-        std::cerr << "Logger shutdown error: " << e.what() << "\n";
+        std::cerr << "Logger shutdown error: " << e.what() << std::endl;
     }
 }
 
-Logger* Logger::getInstance() {
-    // Double-checked locking để tránh overhead của mutex
+std::shared_ptr<Logger> Logger::getInstance() {
+    // Double-checked locking
     if (_instance == nullptr) {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::mutex> lock(_instanceMutex);
         if (_instance == nullptr) {
-            try {
-                _instance = new Logger();
-            } catch (const std::exception& e) {
-                std::cerr << "Failed to create Logger instance: " << e.what() << "\n";
-                throw;
-            }
+            _instance = std::shared_ptr<Logger>(new Logger());
         }
     }
     return _instance;
 }
 
-std::string Logger::_getTimestamp() {
+std::string Logger::_getTimestamp() const {
     try {
         auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
         
-        // Sử dụng localtime_s (Windows) hoặc localtime_r (POSIX) thay vì localtime
         std::tm tm_buf;
         #if defined(_WIN32) || defined(_WIN64)
             localtime_s(&tm_buf, &time);
@@ -128,16 +176,24 @@ std::string Logger::_getTimestamp() {
             localtime_r(&time, &tm_buf);
         #endif
         
-        char timebuf[64];
-        std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", &tm_buf);
-        return std::string(timebuf);
+        // Lấy milliseconds
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch() % std::chrono::seconds(1)
+        );
+        
+        std::ostringstream oss;
+        oss << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S");
+        oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+        
+        // std::cout << oss.str() << "\n"; // DEBUG LOG;
+        return oss.str();
     } catch (const std::exception& e) {
-        std::cerr << "Error getting timestamp: " << e.what() << "\n";
+        std::cerr << "Error getting timestamp: " << e.what() << std::endl;
         return "Unknown time";
     }
 }
 
-std::string Logger::_getLevelString(LogLevel level) {
+std::string Logger::_getLevelString(LogLevel level) const {
     switch (level) {
         case LogLevel::DEBUG:   return "DEBUG";
         case LogLevel::INFO:    return "INFO";
@@ -150,55 +206,51 @@ std::string Logger::_getLevelString(LogLevel level) {
 
 void Logger::setMinLevel(LogLevel level) {
     try {
-        std::lock_guard<std::mutex> lock(_mutex);
-        minLevel = level;
+        std::lock_guard<std::mutex> lock(_handlersMutex);
+        _minLevel = level;
         
-        // Tránh gọi log() từ setMinLevel vì nó cũng sử dụng lock
-        if (_logFile.is_open()) {
-            std::string timestamp = _getTimestamp();
-            std::string levelStr = _getLevelString(level);
-            _logFile << "[" << timestamp << "] [INFO] Log level set to " << levelStr << "\n";
-            _logFile.flush();
-            
-            // In ra console (để debugging)
-            std::cout << "[" << timestamp << "] [INFO] Log level set to " << levelStr << "\n";
+        // Thay vì gọi info(), ghi trực tiếp vào các handler
+        std::string timestamp = _getTimestamp();
+        std::string message = "Log level set to " + _getLevelString(level);
+        
+        for (const auto& handler : _handlers) {
+            handler->write(LogLevel::INFO, timestamp, message);
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error setting log level: " << e.what() << "\n";
+        std::cerr << "Error setting log level: " << e.what() << std::endl;
+    }
+}
+
+void Logger::addHandler(std::shared_ptr<ILogHandler> handler) {
+    try {
+        if (handler) {
+            std::lock_guard<std::mutex> lock(_handlersMutex);
+            _handlers.push_back(handler);
+            info("Log handler added");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error adding log handler: " << e.what() << std::endl;
     }
 }
 
 void Logger::log(LogLevel level, const std::string& message) {
     try {
         // Nếu cấp độ log thấp hơn cấp độ tối thiểu, bỏ qua
-        if (level < minLevel) {
+        if (level < _minLevel) {
             return;
         }
         
-        std::lock_guard<std::mutex> lock(_mutex);
-        
+        // std::cout << "Chuẩn bị gọi _getTime\n"; // DEBUG LOG
         std::string timestamp = _getTimestamp();
-        std::string levelStr = _getLevelString(level);
+        // std::cout << timestamp << "\n"; // DEBUG LOG
         
-        // Định dạng: [TIMESTAMP] [LEVEL] MESSAGE
-        std::string logMessage = "[" + timestamp + "] [" + levelStr + "] " + message;
-        
-        // Ghi vào file
-        if (_logFile.is_open()) {
-            _logFile << logMessage << "\n";
-            _logFile.flush();
-        } else {
-            // Nếu file không mở được, in ra console
-            std::cerr << "Log file not open, writing to console: " << logMessage << "\n";
-        }
-        
-        // Ghi ra console cho các cấp độ ERROR và FATAL
-        if (level >= LogLevel::ERROR) {
-            std::cerr << logMessage << "\n";
+        std::lock_guard<std::mutex> lock(_handlersMutex);
+        for (const auto& handler : _handlers) {
+            // std::cout << "Vào for" << "\n"; // DEBUG LOG
+            handler->write(level, timestamp, message);
         }
     } catch (const std::exception& e) {
-        // Sử dụng cerr để tránh đệ quy vô hạn
-        std::cerr << "Error logging message: " << e.what() << "\n";
+        std::cerr << "Error logging message: " << e.what() << std::endl;
     }
 }
 

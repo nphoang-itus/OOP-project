@@ -1,3 +1,12 @@
+/**
+ * @file Passenger.cpp
+ * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
+ * @version 0.1
+ * @date 2025-04-30
+ * 
+ * @brief Triển khai các phương thức của lớp Passenger mô tả thông tin hành khách.
+ */
+
 #include "Passenger.h"
 
 Passenger::Passenger() : _id(0) {}

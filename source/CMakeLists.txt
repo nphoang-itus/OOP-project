@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Tự động tìm tất cả các file header và source
 file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
 file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
+file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/*.cpp)
 file(GLOB_RECURSE UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
 
 # Thêm thư mục chứa file header
@@ -47,6 +48,7 @@ add_executable(main
     src/main.cpp
     ${CORE_SOURCES}
     ${DATABASE_SOURCES}
+    ${REPOSITORY_SOURCES}
     ${UTILS_SOURCES}
 )
 

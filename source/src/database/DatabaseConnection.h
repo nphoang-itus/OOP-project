@@ -1,12 +1,16 @@
 /**
  * @file DatabaseConnection.h
  * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
- * @brief 
+ * @brief Giao diện trừu tượng cho lớp kết nối cơ sở dữ liệu và xử lý kết quả truy vấn.
  * @version 0.1
  * @date 2025-05-01
  * 
  * @copyright Copyright (c) 2025
  * 
+ * Giao diện này định nghĩa các phương thức cần thiết cho việc giao tiếp với cơ sở dữ liệu,
+ * bao gồm thực thi truy vấn, quản lý prepared statement, và xử lý transaction.
+ * Thiết kế tuân theo nguyên lý SOLID, đặc biệt là Dependency Inversion Principle,
+ * giúp tách biệt giữa tầng xử lý nghiệp vụ và tầng dữ liệu.
  */
 
 #ifndef DATABASE_CONNECTION_H
@@ -14,157 +18,142 @@
 
 #include <string>
 #include <memory>
-#include <chrono>
+#include <ctime>
 
+/**
+* @interface IDatabaseResult
+* @brief Đại diện cho kết quả trả về từ truy vấn SELECT trong cơ sở dữ liệu.
+*
+* Cung cấp các phương thức để duyệt dữ liệu hàng loạt và truy xuất các giá trị theo chỉ số hoặc tên cột.
+*/
 class IDatabaseResult {
 public:
     virtual ~IDatabaseResult() = default;
 
     /**
-     * @brief Di chuyển đến hàng tiếp theo trong kết quả
-     * 
-     * @return true Nếu có hàng tiếp theo
-     * @return false Nếu không có hàng tiếp theo (Hết kết quả truy vấn)
-     */
+    * @brief Di chuyển đến hàng tiếp theo trong kết quả truy vấn.
+    * @return true nếu có hàng tiếp theo, false nếu hết kết quả.
+    */
     virtual bool next() = 0;
-    
-    // Lấy giá trị từ cột được chỉ định
-    virtual std::string getString(int columnIndex) = 0;
-    virtual int getInt(int columnIndex) = 0;
-    virtual double getDouble(int columnIndex) = 0;
-    virtual std::chrono::sys_time<std::chrono::seconds> getDateTime(int columnIndex) = 0;
 
-    // Lấy giá trị chuỗi từ tên cột
+    /// @name Truy xuất dữ liệu theo chỉ số cột
+    /// @{
+    virtual std::string getString(const int& columnIndex) = 0;
+    virtual int getInt(const int& columnIndex) = 0;
+    virtual double getDouble(const int& columnIndex) = 0;
+    virtual std::tm getDateTime(const int& columnIndex) = 0;
+    /// @}
+
+    /// @name Truy xuất dữ liệu theo tên cột
+    /// @{
     virtual std::string getString(const std::string& columnName) = 0;
     virtual int getInt(const std::string& columnName) = 0;
     virtual double getDouble(const std::string& columnName) = 0;
-    virtual std::chrono::sys_time<std::chrono::seconds> getDateTime(const std::string& columnName) = 0;
+    virtual std::tm getDateTime(const std::string& columnName) = 0;
+    /// @}
 };
 
+/**
+* @interface IDatabaseConnection
+* @brief Giao diện trừu tượng đại diện cho kết nối đến cơ sở dữ liệu.
+* 
+* Cho phép quản lý truy vấn SQL, transaction, và các thao tác với prepared statement.
+*/
 class IDatabaseConnection {
 public:
     virtual ~IDatabaseConnection() = default;
 
     /**
-      * @brief Kết nối đến cơ sở dữ liệu
-      * @param host Tên máy chủ
-      * @param user Tên người dùng
-      * @param password Mật khẩu
-      * @param database Tên cơ sở dữ liệu
-      * @param port Cổng (mặc định kết nối tới MySQL là 3306)
-      * @return true nếu kết nối thành công, false nếu không
-      */
-    virtual bool connect(const std::string& host, const std::string& user, 
-                         const std::string& password, const std::string& database, 
-                         int port = 3306) = 0;
+    * @brief Thiết lập kết nối đến cơ sở dữ liệu.
+    * @param host Tên máy chủ
+    * @param user Tên người dùng
+    * @param password Mật khẩu
+    * @param database Tên cơ sở dữ liệu
+    * @param port Cổng kết nối (mặc định là 33060 cho XAPIDev của MySQL)
+    * @return true nếu kết nối thành công, false nếu thất bại
+    */
+    virtual bool connect(const std::string& host, const std::string& user,
+                         const std::string& password, const std::string& database,
+                         const int& port = 33060) = 0;
 
     /**
-    * @brief Ngắt kết nối từ cơ sở dữ liệu
+    * @brief Ngắt kết nối hiện tại khỏi cơ sở dữ liệu.
     */
     virtual void disconnect() = 0;
 
     /**
-    * @brief Thực thi truy vấn không trả về kết quả (INSERT, UPDATE, DELETE)
-    * @param query Chuỗi truy vấn SQL
-    * @return true nếu thực thi thành công, false nếu không
+    * @brief Thực thi câu lệnh SQL không có kết quả trả về (INSERT, UPDATE, DELETE).
+    * @param query Câu truy vấn SQL
+    * @return true nếu thực thi thành công, false nếu lỗi
     */
     virtual bool execute(const std::string& query) = 0;
 
     /**
-    * @brief Thực thi truy vấn trả về kết quả (SELECT)
-    * @param query Chuỗi truy vấn SQL
-    * @return Con trỏ đến đối tượng DatabaseResult
+    * @brief Thực thi truy vấn SQL có kết quả trả về (SELECT).
+    * @param query Câu truy vấn SQL
+    * @return Con trỏ tới đối tượng kết quả
     */
     virtual std::unique_ptr<IDatabaseResult> executeQuery(const std::string& query) = 0;
 
     /**
-    * @brief Tạo prepared statement - Query với các dấu placeholders(? hoặc :paramName)
-    * @param query Chuỗi truy vấn SQL với placeholders
-    * @return ID của prepared statement
+    * @brief Tạo prepared statement với các placeholder (? hoặc :param).
+    * @param query Chuỗi SQL có placeholder
+    * @return ID định danh của prepared statement
     */
     virtual int prepareStatement(const std::string& query) = 0;
 
+    /// @name Gán giá trị tham số cho prepared statement
+    /// @{
+    virtual void setString(const int& statementId, const int& paramIndex, const std::string& value) = 0;
+    virtual void setInt(const int& statementId, const int& paramIndex, const int& value) = 0;
+    virtual void setDouble(const int& statementId, const int& paramIndex, const double& value) = 0;
+    virtual void setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) = 0;
+    /// @}
+
     /**
-    * @brief Thiết lập tham số chuỗi cho prepared statement
-    * @param statementId ID của prepared statement
-    * @param paramIndex Chỉ số tham số (bắt đầu từ 1)
-    * @param value Giá trị chuỗi
+    * @brief Thực thi prepared statement không trả về kết quả.
+    * @param statementId ID của statement
+    * @return true nếu thành công, false nếu lỗi
     */
-    virtual void setString(int statementId, int paramIndex, const std::string& value) = 0;
+    virtual bool executeStatement(const int& statementId) = 0;
 
     /**
-    * @brief Thiết lập tham số số nguyên cho prepared statement
-    * @param statementId ID của prepared statement
-    * @param paramIndex Chỉ số tham số (bắt đầu từ 1)
-    * @param value Giá trị số nguyên
+    * @brief Thực thi prepared statement có trả về kết quả.
+    * @param statementId ID của statement
+    * @return Con trỏ tới kết quả trả về
     */
-    virtual void setInt(int statementId, int paramIndex, int value) = 0;
+    virtual std::unique_ptr<IDatabaseResult> executeQueryStatement(const int& statementId) = 0;
 
     /**
-    * @brief Thiết lập tham số số thực cho prepared statement
-    * @param statementId ID của prepared statement
-    * @param paramIndex Chỉ số tham số (bắt đầu từ 1)
-    * @param value Giá trị số thực
+    * @brief Giải phóng tài nguyên của prepared statement.
+    * @param statementId ID của statement
     */
-    virtual void setDouble(int statementId, int paramIndex, double value) = 0;
-
-    virtual void setDateTime(int statementId, int paramIndex, const std::chrono::sys_time<std::chrono::seconds>& value) = 0;
+    virtual void freeStatement(const int& statementId) = 0;
 
     /**
-    * @brief Thực thi prepared statement không trả về kết quả
-    * @param statementId ID của prepared statement
-    * @return true nếu thực thi thành công, false nếu không
-    */
-    virtual bool executeStatement(int statementId) = 0;
-
-    /**
-    * @brief Thực thi prepared statement trả về kết quả
-    * @param statementId ID của prepared statement
-    * @return Con trỏ đến đối tượng DatabaseResult
-    */
-    virtual std::unique_ptr<IDatabaseResult> executeQueryStatement(int statementId) = 0;
-
-    /**
-    * @brief Giải phóng prepared statement
-    * @param statementId ID của prepared statement
-    */
-    virtual void freeStatement(int statementId) = 0;
-
-    /**
-    * @brief Lấy ID của bản ghi được chèn gần nhất
-    * @return ID của bản ghi
+    * @brief Lấy ID của bản ghi được chèn gần nhất.
+    * @return ID của bản ghi vừa thêm
     */
     virtual int getLastInsertId() = 0;
 
     /**
-    * @brief Kiểm tra trạng thái kết nối
-    * @return true nếu đã kết nối, false nếu không
+    * @brief Kiểm tra trạng thái kết nối.
+    * @return true nếu đã kết nối, false nếu ngắt kết nối
     */
     virtual bool isConnected() const = 0;
 
     /**
-    * @brief Lấy thông báo lỗi gần nhất
-    * @return Chuỗi thông báo lỗi
+    * @brief Trả về thông báo lỗi gần nhất.
+    * @return Chuỗi mô tả lỗi
     */
     virtual std::string getLastError() const = 0;
 
-    /**
-    * @brief Bắt đầu một transaction
-    * @return true nếu thành công, false nếu không
-    */
+    /// @name Transaction Control
+    /// @{
     virtual bool beginTransaction() = 0;
-
-    /**
-    * @brief Commit một transaction
-    * @return true nếu thành công, false nếu không
-    */
     virtual bool commitTransaction() = 0;
-
-    /**
-    * @brief Rollback một transaction (Huỷ giao dịch khi đang thực hiện, xảy ra khi một giao dịch đơn lẻ bị lỗi)
-    * @return true nếu thành công, false nếu không
-    */
     virtual bool rollbackTransaction() = 0;
+    /// @}
 };
 
-#endif
+#endif 

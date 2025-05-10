@@ -1,9 +1,12 @@
 /**
  * @file MySQLXConnection.cpp
- * @author Your Name
- * @brief Implementation of MySQLXConnection class
+ * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
+ * @brief Cài đặt các hàm phục vụ chức năng kết nối và trả về kết quả từ Database sử dụng XAPIDev của MySQL
  * @version 0.1
  * @date 2025-05-02
+ * 
+ * @copyright Copyright (c) 2025
+ * 
  */
 
 #include "MySQLXConnection.h"
@@ -13,6 +16,7 @@
 #include <iomanip>
 #include <chrono>
 #include <algorithm>
+#include <ctime>
 
 // MySQLXResult implementation
 MySQLXResult::MySQLXResult(mysqlx::RowResult rowResult) 
@@ -77,7 +81,7 @@ bool MySQLXResult::next() {
     }
 }
 
-std::string MySQLXResult::getString(int columnIndex) {
+std::string MySQLXResult::getString(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -103,7 +107,7 @@ std::string MySQLXResult::getString(int columnIndex) {
     }
 }
 
-int MySQLXResult::getInt(int columnIndex) {
+int MySQLXResult::getInt(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -130,7 +134,7 @@ int MySQLXResult::getInt(int columnIndex) {
     }
 }
 
-double MySQLXResult::getDouble(int columnIndex) {
+double MySQLXResult::getDouble(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -157,7 +161,7 @@ double MySQLXResult::getDouble(int columnIndex) {
     }
 }
 
-std::chrono::sys_time<std::chrono::seconds> MySQLXResult::getDateTime(int columnIndex) {
+std::tm MySQLXResult::getDateTime(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -198,8 +202,7 @@ std::chrono::sys_time<std::chrono::seconds> MySQLXResult::getDateTime(int column
             throw std::runtime_error("Invalid datetime components");
         }
 
-        auto time_point = std::chrono::system_clock::from_time_t(time_c);
-        return std::chrono::time_point_cast<std::chrono::seconds>(time_point);
+        return tm_time;
     }
     catch (const std::exception& e) {
         logger->error("Error getting double data from column " + std::to_string(columnIndex) + 
@@ -289,7 +292,7 @@ double MySQLXResult::getDouble(const std::string& columnName) {
     }
 }
 
-std::chrono::sys_time<std::chrono::seconds> MySQLXResult::getDateTime(const std::string& columnName) {
+std::tm MySQLXResult::getDateTime(const std::string& columnName) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
@@ -328,9 +331,9 @@ MySQLXConnection::~MySQLXConnection() {
     disconnect();
 }
 
-bool MySQLXConnection::connect(const std::string& host, const std::string& user, 
-                            const std::string& password, const std::string& database, 
-                            int port) {
+bool MySQLXConnection::connect( const std::string& host, const std::string& user, 
+                                const std::string& password, const std::string& database, 
+                                const int& port) {
     auto logger = Logger::getInstance();
     logger->info("Attempting to connect to MySQL server at " + host + ":" + std::to_string(port) + 
                 " with user '" + user + "' and database '" + database + "'");
@@ -486,7 +489,7 @@ int MySQLXConnection::prepareStatement(const std::string& query) {
     }
 }
 
-void MySQLXConnection::setString(int statementId, int paramIndex, const std::string& value) {
+void MySQLXConnection::setString(const int& statementId, const int& paramIndex, const std::string& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding string parameter at index " + std::to_string(paramIndex) + 
                 " for statement ID " + std::to_string(statementId));
@@ -512,7 +515,7 @@ void MySQLXConnection::setString(int statementId, int paramIndex, const std::str
     }
 }
 
-void MySQLXConnection::setInt(int statementId, int paramIndex, int value) {
+void MySQLXConnection::setInt(const int& statementId, const int& paramIndex, const int& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding integer parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -538,7 +541,7 @@ void MySQLXConnection::setInt(int statementId, int paramIndex, int value) {
     }
 }
 
-void MySQLXConnection::setDouble(int statementId, int paramIndex, double value) {
+void MySQLXConnection::setDouble(const int& statementId, const int& paramIndex, const double& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding double parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -564,10 +567,10 @@ void MySQLXConnection::setDouble(int statementId, int paramIndex, double value) 
     }
 }
 
-void MySQLXConnection::setDateTime(int statementId, int paramIndex, const std::chrono::sys_time<std::chrono::seconds>& value) {
+void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) {
     auto logger = Logger::getInstance();
-    logger->debug("Binding datetime parameter at index " + std::to_string(paramIndex) +
-                " for statement ID " + std::to_string(statementId));
+    logger->debug(  "Binding datetime parameter at index " + std::to_string(paramIndex) +
+                    " for statement ID " + std::to_string(statementId));
     
     try {
         std::lock_guard<std::mutex> lock(_mutex);
@@ -579,13 +582,9 @@ void MySQLXConnection::setDateTime(int statementId, int paramIndex, const std::c
             return;
         }
 
-        // Chuyển sys_time -> time_t -> std::tm
-        std::time_t time = std::chrono::system_clock::to_time_t(value);
-        std::tm tm = *std::localtime(&time);
-
         // Format thành chuỗi "YYYY-MM-DD HH:MM:SS"
         std::ostringstream oss;
-        oss << std::put_time(&tm, "%F %T"); // %F = YYYY-MM-DD, %T = HH:MM:SS
+        oss << std::put_time(&value, "%Y-%m-%d %H:%M:%S");
         std::string formatted = oss.str();
 
         // Store parameter value
@@ -600,33 +599,55 @@ void MySQLXConnection::setDateTime(int statementId, int paramIndex, const std::c
 }
 
 std::string MySQLXConnection::buildPreparedStatement(const PreparedStatementData& data) {
+    auto logger = Logger::getInstance();
     std::string query = data.query;
+    logger->debug("Building prepared statement from: " + query);
     
-    // Replace ? with actual values
+    // Đếm số lượng parameters (dấu ?) trong query
+    int questionMarkCount = std::count(query.begin(), query.end(), '?');
+    int maxParamIndex = 0;
+    
     for (const auto& param : data.paramValues) {
-        int index = param.first;
-        std::string value = param.second;
+        maxParamIndex = std::max(maxParamIndex, param.first);
+    }
+    
+    if (maxParamIndex > questionMarkCount) {
+        logger->warning("Query has fewer placeholders than parameters provided");
+    }
+    
+    // Replace ? with actual values từ cuối lên đầu để tránh việc thay đổi chỉ số
+    for (int i = maxParamIndex; i >= 1; i--) {
+        auto paramIt = data.paramValues.find(i);
+        if (paramIt == data.paramValues.end()) {
+            logger->warning("Missing parameter for index " + std::to_string(i));
+            continue;
+        }
         
-        // Find the nth occurrence of ?
+        std::string value = paramIt->second;
+        
+        // Tìm dấu ? thứ i trong query
         size_t pos = 0;
-        for (int i = 0; i < index; i++) {
+        for (int j = 0; j < i; j++) {
             pos = query.find('?', pos);
             if (pos == std::string::npos) {
                 break;
             }
-            pos++;
+            if (j < i - 1) {
+                pos++;
+            }
         }
         
         if (pos != std::string::npos) {
-            // Replace ? with value (we need to quote string values)
+            // Thay thế ? với giá trị được quote
             query.replace(pos, 1, "'" + value + "'");
         }
     }
     
+    logger->debug("Built final query: " + query);
     return query;
 }
 
-bool MySQLXConnection::executeStatement(int statementId) {
+bool MySQLXConnection::executeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing prepared statement with ID: " + std::to_string(statementId));
     
@@ -640,12 +661,15 @@ bool MySQLXConnection::executeStatement(int statementId) {
             return false;
         }
         
-        // Build the statement with parameters
-        std::string finalQuery = buildPreparedStatement(it->second);
+        const PreparedStatementData& data = it->second;
+        
+        // Xây dựng câu lệnh SQL cuối cùng từ prepared statement
+        std::string finalQuery = buildPreparedStatement(data);
         logger->debug("Executing prepared statement: " + finalQuery);
         
-        // Execute the statement
+        // Thực thi câu lệnh SQL đã xây dựng trực tiếp
         _session->sql(finalQuery).execute();
+        
         logger->debug("Statement executed successfully");
         return true;
     }
@@ -661,7 +685,7 @@ bool MySQLXConnection::executeStatement(int statementId) {
     }
 }
 
-std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(int statementId) {
+std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing query prepared statement with ID: " + std::to_string(statementId));
     
@@ -703,7 +727,7 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(int sta
     }
 }
 
-void MySQLXConnection::freeStatement(int statementId) {
+void MySQLXConnection::freeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Freeing prepared statement with ID: " + std::to_string(statementId));
     
