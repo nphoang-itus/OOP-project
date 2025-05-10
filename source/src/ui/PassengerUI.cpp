@@ -1,4 +1,6 @@
 #include "PassengerUI.h"
+#include <iomanip>
+#include <sstream>
 
 enum
 {
@@ -40,10 +42,16 @@ PassengerWindow::PassengerWindow(const wxString &title)
     // Create passenger list
     passengerList = new wxListCtrl(panel, ID_PASSENGER_LIST, wxDefaultPosition, wxSize(700, 300),
                                    wxLC_REPORT | wxLC_SINGLE_SEL);
-    passengerList->InsertColumn(0, "Mã hành khách");
+    passengerList->InsertColumn(0, "ID");
     passengerList->InsertColumn(1, "Tên");
     passengerList->InsertColumn(2, "Số điện thoại");
-    passengerList->InsertColumn(3, "Email");
+    passengerList->InsertColumn(3, "Số hộ chiếu");
+    passengerList->InsertColumn(4, "Địa chỉ");
+
+    for (int i = 0; i < 5; ++i)
+    {
+        passengerList->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
+    }
 
     // Create info label
     infoLabel = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxSize(600, 50));
@@ -79,17 +87,86 @@ void PassengerWindow::OnShowPassengers(wxCommandEvent &event)
 
 void PassengerWindow::OnAddPassenger(wxCommandEvent &event)
 {
-    Passenger p;
-    p.setName("Nguyen Van A");
-    p.setPhone("0123456789");
-    p.setPassport("B1234567");
-    p.setAddress("HCM");
-    bool ok = passengerService.addPassenger(p);
-    if (ok)
-        infoLabel->SetLabel("Đã thêm hành khách mới!");
-    else
-        infoLabel->SetLabel("Thêm hành khách thất bại!");
-    RefreshPassengerList();
+    wxDialog dialog(this, wxID_ANY, "Thêm hành khách mới", wxDefaultPosition, wxSize(400, 500));
+
+    wxPanel *panel = new wxPanel(&dialog, wxID_ANY);
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+
+    int labelWidth = 120;
+
+    // Tạo các trường nhập liệu
+    wxBoxSizer *nameSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *nameLabel = new wxStaticText(panel, wxID_ANY, "Tên:");
+    nameLabel->SetMinSize(wxSize(labelWidth, -1));
+    nameSizer->Add(nameLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY);
+    nameSizer->Add(nameCtrl, 1, wxALL, 5);
+    sizer->Add(nameSizer, 0, wxEXPAND);
+
+    wxBoxSizer *phoneSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *phoneLabel = new wxStaticText(panel, wxID_ANY, "Số điện thoại:");
+    phoneLabel->SetMinSize(wxSize(labelWidth, -1));
+    phoneSizer->Add(phoneLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *phoneCtrl = new wxTextCtrl(panel, wxID_ANY);
+    phoneSizer->Add(phoneCtrl, 1, wxALL, 5);
+    sizer->Add(phoneSizer, 0, wxEXPAND);
+
+    wxBoxSizer *passportSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *passportLabel = new wxStaticText(panel, wxID_ANY, "Số hộ chiếu:");
+    passportLabel->SetMinSize(wxSize(labelWidth, -1));
+    passportSizer->Add(passportLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *passportCtrl = new wxTextCtrl(panel, wxID_ANY);
+    passportSizer->Add(passportCtrl, 1, wxALL, 5);
+    sizer->Add(passportSizer, 0, wxEXPAND);
+
+    wxBoxSizer *addressSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *addressLabel = new wxStaticText(panel, wxID_ANY, "Địa chỉ:");
+    addressLabel->SetMinSize(wxSize(labelWidth, -1));
+    addressSizer->Add(addressLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *addressCtrl = new wxTextCtrl(panel, wxID_ANY);
+    addressSizer->Add(addressCtrl, 1, wxALL, 5);
+    sizer->Add(addressSizer, 0, wxEXPAND);
+
+    // Nút xác nhận và hủy
+    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxButton *okButton = new wxButton(panel, wxID_OK, "Xác nhận");
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Hủy");
+    buttonSizer->Add(okButton, 0, wxALL, 5);
+    buttonSizer->Add(cancelButton, 0, wxALL, 5);
+    sizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxTOP, 15);
+
+    panel->SetSizer(sizer);
+
+    // Xử lý sự kiện khi nhấn nút OK
+    okButton->Bind(wxEVT_BUTTON, [&](wxCommandEvent &evt)
+                   {
+        // Kiểm tra các trường bắt buộc không được để trống
+        if (nameCtrl->GetValue().IsEmpty() || 
+            phoneCtrl->GetValue().IsEmpty() || 
+            passportCtrl->GetValue().IsEmpty()) {
+            
+            wxMessageBox("Vui lòng điền đầy đủ thông tin bắt buộc (Tên, Số điện thoại, Số hộ chiếu)!", "Lỗi", wxICON_ERROR | wxOK);
+            return;
+        }
+        
+        dialog.EndModal(wxID_OK); });
+
+    if (dialog.ShowModal() == wxID_OK)
+    {
+        Passenger passenger;
+        passenger.setName(nameCtrl->GetValue().ToStdString());
+        passenger.setPhone(phoneCtrl->GetValue().ToStdString());
+        passenger.setPassport(passportCtrl->GetValue().ToStdString());
+        passenger.setAddress(addressCtrl->GetValue().ToStdString());
+
+        bool ok = passengerService.addPassenger(passenger);
+        if (ok)
+            infoLabel->SetLabel("Đã thêm hành khách mới!");
+        else
+            infoLabel->SetLabel("Thêm hành khách thất bại!");
+
+        RefreshPassengerList();
+    }
 }
 
 void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
@@ -100,23 +177,81 @@ void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn hành khách cần sửa!", "Thông báo", wxOK | wxICON_INFORMATION);
         return;
     }
-    std::string idStr = passengerList->GetItemText(selectedIndex, 0).ToStdString();
-    int id = 0;
-    try
+    int passengerId = std::stoi(passengerList->GetItemText(selectedIndex, 0).ToStdString());
+    auto passengerOpt = passengerService.getPassengerById(passengerId);
+    if (!passengerOpt)
     {
-        id = std::stoi(idStr);
-    }
-    catch (...)
-    {
-        infoLabel->SetLabel("ID hành khách không hợp lệ!");
+        wxMessageBox("Không tìm thấy hành khách!", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
-    auto passengerOpt = passengerService.getPassengerById(id);
-    if (passengerOpt)
+    Passenger passenger = *passengerOpt;
+
+    wxDialog dialog(this, wxID_ANY, "Sửa thông tin hành khách", wxDefaultPosition, wxSize(400, 500));
+    wxPanel *panel = new wxPanel(&dialog, wxID_ANY);
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+
+    int labelWidth = 120;
+
+    wxBoxSizer *nameSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *nameLabel = new wxStaticText(panel, wxID_ANY, "Tên:");
+    nameLabel->SetMinSize(wxSize(labelWidth, -1));
+    nameSizer->Add(nameLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY, passenger.getName());
+    nameSizer->Add(nameCtrl, 1, wxALL, 5);
+    sizer->Add(nameSizer, 0, wxEXPAND);
+
+    wxBoxSizer *phoneSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *phoneLabel = new wxStaticText(panel, wxID_ANY, "Số điện thoại:");
+    phoneLabel->SetMinSize(wxSize(labelWidth, -1));
+    phoneSizer->Add(phoneLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *phoneCtrl = new wxTextCtrl(panel, wxID_ANY, passenger.getPhone());
+    phoneSizer->Add(phoneCtrl, 1, wxALL, 5);
+    sizer->Add(phoneSizer, 0, wxEXPAND);
+
+    wxBoxSizer *passportSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *passportLabel = new wxStaticText(panel, wxID_ANY, "Số hộ chiếu:");
+    passportLabel->SetMinSize(wxSize(labelWidth, -1));
+    passportSizer->Add(passportLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *passportCtrl = new wxTextCtrl(panel, wxID_ANY, passenger.getPassport());
+    passportSizer->Add(passportCtrl, 1, wxALL, 5);
+    sizer->Add(passportSizer, 0, wxEXPAND);
+
+    wxBoxSizer *addressSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText *addressLabel = new wxStaticText(panel, wxID_ANY, "Địa chỉ:");
+    addressLabel->SetMinSize(wxSize(labelWidth, -1));
+    addressSizer->Add(addressLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+    wxTextCtrl *addressCtrl = new wxTextCtrl(panel, wxID_ANY, passenger.getAddress());
+    addressSizer->Add(addressCtrl, 1, wxALL, 5);
+    sizer->Add(addressSizer, 0, wxEXPAND);
+
+    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxButton *okButton = new wxButton(panel, wxID_OK, "Xác nhận");
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Hủy");
+    buttonSizer->Add(okButton, 0, wxALL, 5);
+    buttonSizer->Add(cancelButton, 0, wxALL, 5);
+    sizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxTOP, 15);
+
+    panel->SetSizer(sizer);
+
+    // Validate required fields
+    okButton->Bind(wxEVT_BUTTON, [&](wxCommandEvent &evt)
+                   {
+        if (nameCtrl->GetValue().IsEmpty() || 
+            phoneCtrl->GetValue().IsEmpty() || 
+            passportCtrl->GetValue().IsEmpty()) {
+            wxMessageBox("Vui lòng điền đầy đủ thông tin bắt buộc (Tên, Số điện thoại, Số hộ chiếu)!", "Lỗi", wxICON_ERROR | wxOK);
+            return;
+        }
+        dialog.EndModal(wxID_OK); });
+
+    if (dialog.ShowModal() == wxID_OK)
     {
-        Passenger p = *passengerOpt;
-        p.setName("Nguyen Van B");
-        bool ok = passengerService.updatePassenger(p);
+        passenger.setName(nameCtrl->GetValue().ToStdString());
+        passenger.setPhone(phoneCtrl->GetValue().ToStdString());
+        passenger.setPassport(passportCtrl->GetValue().ToStdString());
+        passenger.setAddress(addressCtrl->GetValue().ToStdString());
+
+        bool ok = passengerService.updatePassenger(passenger);
         if (ok)
             infoLabel->SetLabel("Đã cập nhật hành khách!");
         else
@@ -133,18 +268,19 @@ void PassengerWindow::OnDeletePassenger(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn hành khách cần xóa!", "Thông báo", wxOK | wxICON_INFORMATION);
         return;
     }
-    std::string idStr = passengerList->GetItemText(selectedIndex, 0).ToStdString();
-    int id = 0;
-    try
+    int passengerId = std::stoi(passengerList->GetItemText(selectedIndex, 0).ToStdString());
+    auto passengerOpt = passengerService.getPassengerById(passengerId);
+    if (!passengerOpt)
     {
-        id = std::stoi(idStr);
-    }
-    catch (...)
-    {
-        infoLabel->SetLabel("ID hành khách không hợp lệ!");
+        wxMessageBox("Không tìm thấy hành khách!", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
-    bool ok = passengerService.deletePassenger(id);
+    Passenger passenger = *passengerOpt;
+    wxString msg = wxString::Format("Bạn có chắc chắn muốn xóa hành khách %s không?", passenger.getName());
+    int confirm = wxMessageBox(msg, "Xác nhận xóa", wxYES_NO | wxICON_QUESTION);
+    if (confirm != wxYES)
+        return;
+    bool ok = passengerService.deletePassenger(passengerId);
     if (ok)
         infoLabel->SetLabel("Đã xóa hành khách!");
     else
@@ -154,7 +290,7 @@ void PassengerWindow::OnDeletePassenger(wxCommandEvent &event)
 
 void PassengerWindow::OnListItemSelected(wxListEvent &event)
 {
-    RefreshPassengerList();
+    // Do nothing for now
 }
 
 void PassengerWindow::RefreshPassengerList()
@@ -168,6 +304,7 @@ void PassengerWindow::RefreshPassengerList()
         passengerList->SetItem(index, 1, wxString::FromUTF8(p.getName().c_str()));
         passengerList->SetItem(index, 2, wxString::FromUTF8(p.getPhone().c_str()));
         passengerList->SetItem(index, 3, wxString::FromUTF8(p.getPassport().c_str()));
+        passengerList->SetItem(index, 4, wxString::FromUTF8(p.getAddress().c_str()));
         index++;
     }
     infoLabel->SetLabel("Danh sách hành khách đã được cập nhật");
