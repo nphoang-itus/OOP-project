@@ -12,9 +12,11 @@
 #ifndef RESERVATION_REPOSITORY_H
 #define RESERVATION_REPOSITORY_H
 
-#include "../core/Reservation.h"
 #include "RepositoryInterface.h"
+#include "../core/Reservation.h"
 #include "../database/DatabaseConnection.h"
+#include "../repositories/FlightRepository.h"
+#include "../repositories/PassengerRepository.h"
 #include "../utils/Logger.h"
 
 #include <string>

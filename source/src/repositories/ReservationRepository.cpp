@@ -39,7 +39,8 @@ Reservation ReservationRepository::_mapResultToReservation(IDatabaseResult& resu
     return reservation;
 }
 
-explicit ReservationRepository::ReservationRepository(std::shared_ptr<IDatabaseConnection> dbConnection) : _dbConnection(std::move(dbConnection)){
+ReservationRepository::ReservationRepository(std::shared_ptr<IDatabaseConnection> dbConnection)
+    : _dbConnection(std::move(dbConnection)), _logger(Logger::getInstance()) {
     _logger->debug("Create Reservation Repository Object.");
 
     if (!_dbConnection) {
@@ -77,7 +78,6 @@ std::vector<Reservation> ReservationRepository::findAll() {
     return reservations;
 }
 
-
 std::optional<Reservation> ReservationRepository::findById(const int& id) {
     try {
         _logger->debug("Finding reservation by ID: " + std::to_string(id));
@@ -114,8 +114,18 @@ bool ReservationRepository::save(Reservation& reservation) {
     try {
         _logger->debug("Saving reservation: " + reservation.getTicketNo());
         
-        // Begin transaction
+        // Bắt đầu giao dịch
         _dbConnection->beginTransaction();
+
+        // Kiểm tra chuyến bay có tồn tại trong cơ sở dữ liệu không
+        auto flight = reservation.getFlight();
+        FlightRepository flightRepo(_dbConnection);
+        auto existingFlight = flightRepo.findByFlightNo(flight->getNo());
+        if (!existingFlight) {
+            _logger->error("Flight does not exist: " + flight->getNo());
+            _dbConnection->rollbackTransaction();
+            return false;
+        }
 
         // Lưu khách hàng nếu chưa tồn tại
         auto passenger = reservation.getPassenger();
@@ -123,19 +133,22 @@ bool ReservationRepository::save(Reservation& reservation) {
 
         auto existingPassenger = passengerRepo.findByPassport(passenger->getPassport());
         if (!existingPassenger) {
+            _logger->debug("Passenger does not exist, proceed to add passenger");
             // Chưa có khách hàng -> Lưu
             if (!passengerRepo.save(*passenger)) {
+                _logger->error("Failed to save new passenger");
                 _dbConnection->rollbackTransaction();
                 return false;
             }
         } else {
             // Nếu tồn tại khách hàng
             passenger->setId(existingPassenger->getId());
+            _logger->debug("Passenger exists in the passenger repository");
         }
 
         // Lưu đặt chỗ
         std::string query = std::format(
-            "INSERT INTO {} ({}, {}, {})"
+            "INSERT INTO {} ({}, {}, {}) "
             "VALUES (?, ?, ?)",
             RT::NAME_TABLE,
             RT::ColumnName[RT::TICKET_NO],
@@ -154,19 +167,33 @@ bool ReservationRepository::save(Reservation& reservation) {
         if (result) {
             reservation.setId(_dbConnection->getLastInsertId());
             _dbConnection->commitTransaction();
+            _logger->info("Reservation saved successfully with ID: " + std::to_string(reservation.getId()));
         } else {
+            _logger->error("Failed to save reservation: " + _dbConnection->getLastError());
             _dbConnection->rollbackTransaction();
+            return false;
         }
         
         _dbConnection->freeStatement(stmtId);
+        
         return result;
     } catch (const std::exception& e) {
-
+        _logger->error("Exception in save(): " + std::string(e.what()));
+        // Đảm bảo rollback giao dịch trong trường hợp xảy ra ngoại lệ
+        try {
+            _dbConnection->rollbackTransaction();
+        } catch (...) {
+            // Bỏ qua ngoại lệ khi rollback
+        }
     }
+
+    return false;
 }
 
 bool ReservationRepository::update(const Reservation& reservation) {
     try {
+        _logger->debug("Updating reservation with ID: " + std::to_string(reservation.getId()));
+        
         // Bắt đầu transaction
         _dbConnection->beginTransaction();
         
@@ -180,9 +207,9 @@ bool ReservationRepository::update(const Reservation& reservation) {
         }
         
         std::string query = std::format (
-            "UPDATE {}"
-            "SET {} = ?, {} = ?, {} = ?"
-            "WHERE {} = ?",
+            "UPDATE {} "
+            "SET {} = ?, {} = ?, {} = ? "
+            "WHERE {} = ? ",
             RT::NAME_TABLE,
             RT::ColumnName[RT::TICKET_NO], RT::ColumnName[RT::FLIGHT], RT::ColumnName[RT::PASSENGER],
             RT::ColumnName[RT::ID]
@@ -200,14 +227,16 @@ bool ReservationRepository::update(const Reservation& reservation) {
         
         if (result) {
             _dbConnection->commitTransaction();
+            _logger->info("Reservation updated successfully with ID: " + std::to_string(reservation.getId()));
         } else {
             _dbConnection->rollbackTransaction();
+            _logger->error("Failed to update reservation: " + _dbConnection->getLastError());
         }
         
         _dbConnection->freeStatement(stmtId);
         return result;
     } catch (const std::exception& e) {
-
+        _logger->error("Exception in update(): " + std::string(e.what()));
     }
     
     return false;

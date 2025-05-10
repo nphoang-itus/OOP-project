@@ -111,12 +111,12 @@ namespace Tables {
 
         inline std::string getOrderedSelectClause() {
             std::string query = std::format(
-                "SELECT r.* p.* f.* FROM {} r"
+                "SELECT r.*, p.*, f.* FROM {} r "
                 "JOIN {} p ON r.{} = p.{} "
-                "JOIN {} f ON r.{} = f.{}",
+                "JOIN {} f ON r.{} = f.{} ",
                 NAME_TABLE,
-                NAME_TABLE, ColumnName[PASSENGER], ColumnName[Passenger::PASSPORT],
-                NAME_TABLE, ColumnName[FLIGHT], ColumnName[Flight::NO]
+                Passenger::NAME_TABLE , ColumnName[PASSENGER], Passenger::ColumnName[Passenger::PASSPORT],
+                Flight::NAME_TABLE, ColumnName[FLIGHT], Flight::ColumnName[Flight::NO]
             );
             return query;
         }

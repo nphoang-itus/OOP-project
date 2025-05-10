@@ -599,29 +599,51 @@ void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex
 }
 
 std::string MySQLXConnection::buildPreparedStatement(const PreparedStatementData& data) {
+    auto logger = Logger::getInstance();
     std::string query = data.query;
+    logger->debug("Building prepared statement from: " + query);
     
-    // Replace ? with actual values
+    // Đếm số lượng parameters (dấu ?) trong query
+    int questionMarkCount = std::count(query.begin(), query.end(), '?');
+    int maxParamIndex = 0;
+    
     for (const auto& param : data.paramValues) {
-        int index = param.first;
-        std::string value = param.second;
+        maxParamIndex = std::max(maxParamIndex, param.first);
+    }
+    
+    if (maxParamIndex > questionMarkCount) {
+        logger->warning("Query has fewer placeholders than parameters provided");
+    }
+    
+    // Replace ? with actual values từ cuối lên đầu để tránh việc thay đổi chỉ số
+    for (int i = maxParamIndex; i >= 1; i--) {
+        auto paramIt = data.paramValues.find(i);
+        if (paramIt == data.paramValues.end()) {
+            logger->warning("Missing parameter for index " + std::to_string(i));
+            continue;
+        }
         
-        // Find the nth occurrence of ?
+        std::string value = paramIt->second;
+        
+        // Tìm dấu ? thứ i trong query
         size_t pos = 0;
-        for (int i = 0; i < index; i++) {
+        for (int j = 0; j < i; j++) {
             pos = query.find('?', pos);
             if (pos == std::string::npos) {
                 break;
             }
-            pos++;
+            if (j < i - 1) {
+                pos++;
+            }
         }
         
         if (pos != std::string::npos) {
-            // Replace ? with value (we need to quote string values)
+            // Thay thế ? với giá trị được quote
             query.replace(pos, 1, "'" + value + "'");
         }
     }
     
+    logger->debug("Built final query: " + query);
     return query;
 }
 
@@ -639,12 +661,15 @@ bool MySQLXConnection::executeStatement(const int& statementId) {
             return false;
         }
         
-        // Build the statement with parameters
-        std::string finalQuery = buildPreparedStatement(it->second);
+        const PreparedStatementData& data = it->second;
+        
+        // Xây dựng câu lệnh SQL cuối cùng từ prepared statement
+        std::string finalQuery = buildPreparedStatement(data);
         logger->debug("Executing prepared statement: " + finalQuery);
         
-        // Execute the statement
+        // Thực thi câu lệnh SQL đã xây dựng trực tiếp
         _session->sql(finalQuery).execute();
+        
         logger->debug("Statement executed successfully");
         return true;
     }
