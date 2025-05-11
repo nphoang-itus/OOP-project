@@ -1,5 +1,5 @@
-#ifndef RESERVATION_WINDOW_H
-#define RESERVATION_WINDOW_H
+#ifndef RESERVATION_UI_H
+#define RESERVATION_UI_H
 
 #include <wx/wx.h>
 #include <wx/listctrl.h>
@@ -18,6 +18,10 @@ private:
     void OnAddReservation(wxCommandEvent &event);
     void OnEditReservation(wxCommandEvent &event);
     void OnDeleteReservation(wxCommandEvent &event);
+    void OnSearchById(wxCommandEvent &event);
+    void OnSearchByTicketNo(wxCommandEvent &event);
+    void OnSearchByPassport(wxCommandEvent &event);
+    void OnSearchByFlightNo(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshReservationList();
 
@@ -28,6 +32,10 @@ private:
     wxButton *addButton;
     wxButton *editButton;
     wxButton *deleteButton;
+    wxButton *searchByIdButton;
+    wxButton *searchByTicketNoButton;
+    wxButton *searchByPassportButton;
+    wxButton *searchByFlightNoButton;
     wxListCtrl *reservationList;
     wxStaticText *infoLabel;
 
@@ -36,4 +44,4 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
-#endif // RESERVATION_WINDOW_H
+#endif // RESERVATION_UI_H

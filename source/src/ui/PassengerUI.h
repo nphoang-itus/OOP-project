@@ -1,5 +1,5 @@
-#ifndef PASSENGER_WINDOW_H
-#define PASSENGER_WINDOW_H
+#ifndef PASSENGER_UI_H
+#define PASSENGER_UI_H
 
 #include <wx/wx.h>
 #include <wx/listctrl.h>
@@ -18,6 +18,9 @@ private:
     void OnAddPassenger(wxCommandEvent &event);
     void OnEditPassenger(wxCommandEvent &event);
     void OnDeletePassenger(wxCommandEvent &event);
+    void OnSearchById(wxCommandEvent &event);
+    void OnSearchByName(wxCommandEvent &event);
+    void OnSearchByPassport(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshPassengerList();
 
@@ -28,6 +31,9 @@ private:
     wxButton *addButton;
     wxButton *editButton;
     wxButton *deleteButton;
+    wxButton *searchByIdButton;
+    wxButton *searchByNameButton;
+    wxButton *searchByPassportButton;
     wxListCtrl *passengerList;
     wxStaticText *infoLabel;
 
@@ -36,4 +42,4 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
-#endif // PASSENGER_WINDOW_H
+#endif // PASSENGER_UI_H

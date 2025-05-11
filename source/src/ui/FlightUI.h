@@ -1,5 +1,5 @@
-#ifndef FLIGHT_WINDOW_H
-#define FLIGHT_WINDOW_H
+#ifndef FLIGHT_UI_H
+#define FLIGHT_UI_H
 
 #include <wx/wx.h>
 #include <wx/listctrl.h>
@@ -18,6 +18,8 @@ private:
     void OnAddFlight(wxCommandEvent &event);
     void OnEditFlight(wxCommandEvent &event);
     void OnDeleteFlight(wxCommandEvent &event);
+    void OnSearchById(wxCommandEvent &event);
+    void OnSearchByRoute(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshFlightList();
 
@@ -28,6 +30,8 @@ private:
     wxButton *addButton;
     wxButton *editButton;
     wxButton *deleteButton;
+    wxButton *searchByIdButton;
+    wxButton *searchByRouteButton;
     wxListCtrl *flightList;
     wxStaticText *infoLabel;
 
@@ -36,4 +40,4 @@ private:
     DECLARE_EVENT_TABLE()
 };
 
-#endif // FLIGHT_WINDOW_H
+#endif // FLIGHT_UI_H
