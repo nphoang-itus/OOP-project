@@ -10,7 +10,7 @@
 class ReservationWindow : public wxFrame
 {
 public:
-    ReservationWindow(const wxString &title);
+    ReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -39,7 +39,7 @@ private:
     wxListCtrl *reservationList;
     wxStaticText *infoLabel;
 
-    ReservationService reservationService;
+    std::shared_ptr<ReservationService> reservationService;
 
     DECLARE_EVENT_TABLE()
 };

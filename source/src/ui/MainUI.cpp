@@ -1,4 +1,7 @@
 #include "MainUI.h"
+#include "FlightUI.h"
+#include "PassengerUI.h"
+#include "ReservationUI.h"
 
 enum
 {
@@ -15,8 +18,14 @@ EVT_BUTTON(ID_RESERVATION, MainWindow::OnReservationService)
 EVT_BUTTON(ID_EXIT, MainWindow::OnExit)
 END_EVENT_TABLE()
 
-MainWindow::MainWindow(const wxString &title)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600))
+MainWindow::MainWindow(const wxString &title,
+                       std::shared_ptr<FlightService> flightService,
+                       std::shared_ptr<PassengerService> passengerService,
+                       std::shared_ptr<ReservationService> reservationService)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)),
+      flightService(flightService),
+      passengerService(passengerService),
+      reservationService(reservationService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -41,21 +50,21 @@ MainWindow::MainWindow(const wxString &title)
 
 void MainWindow::OnFlightService(wxCommandEvent &event)
 {
-    FlightWindow *flightWindow = new FlightWindow("Dịch vụ chuyến bay");
+    auto flightWindow = UIWindowFactory::createFlightWindow("Dịch vụ chuyến bay", flightService);
     flightWindow->Show();
     this->Hide();
 }
 
 void MainWindow::OnPassengerService(wxCommandEvent &event)
 {
-    PassengerWindow *passengerWindow = new PassengerWindow("Dịch vụ hành khách");
+    auto passengerWindow = UIWindowFactory::createPassengerWindow("Dịch vụ hành khách", passengerService);
     passengerWindow->Show();
     this->Hide();
 }
 
 void MainWindow::OnReservationService(wxCommandEvent &event)
 {
-    ReservationWindow *reservationWindow = new ReservationWindow("Dịch vụ đặt chỗ");
+    auto reservationWindow = UIWindowFactory::createReservationWindow("Dịch vụ đặt chỗ", reservationService);
     reservationWindow->Show();
     this->Hide();
 }
@@ -63,4 +72,20 @@ void MainWindow::OnReservationService(wxCommandEvent &event)
 void MainWindow::OnExit(wxCommandEvent &event)
 {
     Close(true);
+}
+
+// UIWindowFactory implementations
+std::unique_ptr<FlightWindow> UIWindowFactory::createFlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService)
+{
+    return std::make_unique<FlightWindow>(title, flightService);
+}
+
+std::unique_ptr<PassengerWindow> UIWindowFactory::createPassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService)
+{
+    return std::make_unique<PassengerWindow>(title, passengerService);
+}
+
+std::unique_ptr<ReservationWindow> UIWindowFactory::createReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService)
+{
+    return std::make_unique<ReservationWindow>(title, reservationService);
 }

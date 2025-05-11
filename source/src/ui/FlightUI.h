@@ -10,7 +10,7 @@
 class FlightWindow : public wxFrame
 {
 public:
-    FlightWindow(const wxString &title);
+    FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -22,6 +22,10 @@ private:
     void OnSearchByRoute(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshFlightList();
+    void ShowFlights(const std::vector<Flight> &flights);
+    void ShowFlight(const Flight &flight);
+    bool ShowInputDialog(const wxString &title, const wxString &label, wxString &outValue);
+    bool ShowInputDialog2(const wxString &title, const wxString &label1, wxString &out1, const wxString &label2, wxString &out2);
 
     wxPanel *panel;
     wxBoxSizer *mainSizer;
@@ -35,7 +39,7 @@ private:
     wxListCtrl *flightList;
     wxStaticText *infoLabel;
 
-    FlightService flightService;
+    std::shared_ptr<FlightService> flightService;
 
     DECLARE_EVENT_TABLE()
 };

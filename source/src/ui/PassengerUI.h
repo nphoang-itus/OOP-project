@@ -10,7 +10,7 @@
 class PassengerWindow : public wxFrame
 {
 public:
-    PassengerWindow(const wxString &title);
+    PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -37,7 +37,7 @@ private:
     wxListCtrl *passengerList;
     wxStaticText *infoLabel;
 
-    PassengerService passengerService;
+    std::shared_ptr<PassengerService> passengerService;
 
     DECLARE_EVENT_TABLE()
 };

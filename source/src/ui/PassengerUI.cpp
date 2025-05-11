@@ -27,8 +27,8 @@ EVT_BUTTON(ID_SEARCH_PASSPORT, PassengerWindow::OnSearchByPassport)
 EVT_LIST_ITEM_SELECTED(ID_PASSENGER_LIST, PassengerWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
-PassengerWindow::PassengerWindow(const wxString &title)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600))
+PassengerWindow::PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), passengerService(passengerService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -94,8 +94,16 @@ PassengerWindow::PassengerWindow(const wxString &title)
 void PassengerWindow::OnBack(wxCommandEvent &event)
 {
     this->Close();
-    MainWindow *mainWindow = new MainWindow("Menu chính");
-    mainWindow->Show();
+    // Get the services from the parent window
+    auto parent = dynamic_cast<MainWindow *>(GetParent());
+    if (parent)
+    {
+        auto mainWindow = new MainWindow("Menu chính",
+                                         parent->getFlightService(),
+                                         parent->getPassengerService(),
+                                         parent->getReservationService());
+        mainWindow->Show();
+    }
 }
 
 void PassengerWindow::OnShowPassengers(wxCommandEvent &event)
@@ -177,7 +185,7 @@ void PassengerWindow::OnAddPassenger(wxCommandEvent &event)
         passenger.setPassport(passportCtrl->GetValue().ToStdString());
         passenger.setAddress(addressCtrl->GetValue().ToStdString());
 
-        bool ok = passengerService.addPassenger(passenger);
+        bool ok = passengerService->save(passenger);
         if (ok)
             infoLabel->SetLabel("Đã thêm hành khách mới!");
         else
@@ -196,7 +204,7 @@ void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
         return;
     }
     int passengerId = std::stoi(passengerList->GetItemText(selectedIndex, 0).ToStdString());
-    auto passengerOpt = passengerService.getPassengerById(passengerId);
+    auto passengerOpt = passengerService->findById(passengerId);
     if (!passengerOpt)
     {
         wxMessageBox("Không tìm thấy hành khách!", "Lỗi", wxOK | wxICON_ERROR);
@@ -269,7 +277,7 @@ void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
         passenger.setPassport(passportCtrl->GetValue().ToStdString());
         passenger.setAddress(addressCtrl->GetValue().ToStdString());
 
-        bool ok = passengerService.updatePassenger(passenger);
+        bool ok = passengerService->update(passenger);
         if (ok)
             infoLabel->SetLabel("Đã cập nhật hành khách!");
         else
@@ -287,7 +295,7 @@ void PassengerWindow::OnDeletePassenger(wxCommandEvent &event)
         return;
     }
     int passengerId = std::stoi(passengerList->GetItemText(selectedIndex, 0).ToStdString());
-    auto passengerOpt = passengerService.getPassengerById(passengerId);
+    auto passengerOpt = passengerService->findById(passengerId);
     if (!passengerOpt)
     {
         wxMessageBox("Không tìm thấy hành khách!", "Lỗi", wxOK | wxICON_ERROR);
@@ -298,7 +306,7 @@ void PassengerWindow::OnDeletePassenger(wxCommandEvent &event)
     int confirm = wxMessageBox(msg, "Xác nhận xóa", wxYES_NO | wxICON_QUESTION);
     if (confirm != wxYES)
         return;
-    bool ok = passengerService.deletePassenger(passengerId);
+    bool ok = passengerService->remove(passengerId);
     if (ok)
         infoLabel->SetLabel("Đã xóa hành khách!");
     else
@@ -314,7 +322,7 @@ void PassengerWindow::OnListItemSelected(wxListEvent &event)
 void PassengerWindow::RefreshPassengerList()
 {
     passengerList->DeleteAllItems();
-    std::vector<Passenger> passengers = passengerService.getAllPassengers();
+    std::vector<Passenger> passengers = passengerService->findAll();
     long index = 0;
     for (const auto &p : passengers)
     {
@@ -356,7 +364,7 @@ void PassengerWindow::OnSearchById(wxCommandEvent &event)
         long id;
         if (idCtrl->GetValue().ToLong(&id))
         {
-            auto passengerOpt = passengerService.getPassengerById(static_cast<int>(id));
+            auto passengerOpt = passengerService->findById(static_cast<int>(id));
             passengerList->DeleteAllItems();
             if (passengerOpt)
             {
@@ -411,7 +419,7 @@ void PassengerWindow::OnSearchByName(wxCommandEvent &event)
             wxMessageBox("Vui lòng nhập tên!", "Lỗi", wxICON_ERROR | wxOK);
             return;
         }
-        std::vector<Passenger> results = passengerService.getPassengersByName(name.ToStdString());
+        std::vector<Passenger> results = passengerService->findByName(name.ToStdString());
         passengerList->DeleteAllItems();
         long index = 0;
         for (const auto &p : results)
@@ -461,7 +469,7 @@ void PassengerWindow::OnSearchByPassport(wxCommandEvent &event)
             wxMessageBox("Vui lòng nhập số hộ chiếu!", "Lỗi", wxICON_ERROR | wxOK);
             return;
         }
-        auto passengerOpt = passengerService.getPassengerByPassportNo(passport.ToStdString());
+        auto passengerOpt = passengerService->findByPassport(passport.ToStdString());
         passengerList->DeleteAllItems();
         if (passengerOpt)
         {
