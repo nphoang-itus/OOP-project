@@ -6,11 +6,13 @@
 #include "MainUI.h"
 #include "core/Reservation.h"
 #include "services/ReservationService.h"
+#include "services/FlightService.h"
+#include "services/PassengerService.h"
 
 class ReservationWindow : public wxFrame
 {
 public:
-    ReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService);
+    ReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService, std::shared_ptr<FlightService> flightService, std::shared_ptr<PassengerService> passengerService, wxWindow *parent = nullptr);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -24,6 +26,7 @@ private:
     void OnSearchByFlightNo(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshReservationList();
+    void ShowReservations(const std::vector<Reservation> &reservations);
 
     wxPanel *panel;
     wxBoxSizer *mainSizer;
@@ -40,6 +43,8 @@ private:
     wxStaticText *infoLabel;
 
     std::shared_ptr<ReservationService> reservationService;
+    std::shared_ptr<FlightService> flightService;
+    std::shared_ptr<PassengerService> passengerService;
 
     DECLARE_EVENT_TABLE()
 };

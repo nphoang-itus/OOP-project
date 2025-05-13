@@ -50,21 +50,21 @@ MainWindow::MainWindow(const wxString &title,
 
 void MainWindow::OnFlightService(wxCommandEvent &event)
 {
-    auto flightWindow = UIWindowFactory::createFlightWindow("Dịch vụ chuyến bay", flightService);
+    auto flightWindow = UIWindowFactory::createFlightWindow("Dịch vụ chuyến bay", flightService, this);
     flightWindow->Show();
     this->Hide();
 }
 
 void MainWindow::OnPassengerService(wxCommandEvent &event)
 {
-    auto passengerWindow = UIWindowFactory::createPassengerWindow("Dịch vụ hành khách", passengerService);
+    auto passengerWindow = UIWindowFactory::createPassengerWindow("Dịch vụ hành khách", passengerService, this);
     passengerWindow->Show();
     this->Hide();
 }
 
 void MainWindow::OnReservationService(wxCommandEvent &event)
 {
-    auto reservationWindow = UIWindowFactory::createReservationWindow("Dịch vụ đặt chỗ", reservationService);
+    auto reservationWindow = UIWindowFactory::createReservationWindow("Dịch vụ đặt chỗ", reservationService, flightService, passengerService, this);
     reservationWindow->Show();
     this->Hide();
 }
@@ -75,17 +75,17 @@ void MainWindow::OnExit(wxCommandEvent &event)
 }
 
 // UIWindowFactory implementations
-std::unique_ptr<FlightWindow> UIWindowFactory::createFlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService)
+FlightWindow *UIWindowFactory::createFlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService, wxWindow *parent)
 {
-    return std::make_unique<FlightWindow>(title, flightService);
+    return new FlightWindow(title, flightService, parent);
 }
 
-std::unique_ptr<PassengerWindow> UIWindowFactory::createPassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService)
+PassengerWindow *UIWindowFactory::createPassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService, wxWindow *parent)
 {
-    return std::make_unique<PassengerWindow>(title, passengerService);
+    return new PassengerWindow(title, passengerService, parent);
 }
 
-std::unique_ptr<ReservationWindow> UIWindowFactory::createReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService)
+ReservationWindow *UIWindowFactory::createReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService, std::shared_ptr<FlightService> flightService, std::shared_ptr<PassengerService> passengerService, wxWindow *parent)
 {
-    return std::make_unique<ReservationWindow>(title, reservationService);
+    return new ReservationWindow(title, reservationService, flightService, passengerService, parent);
 }

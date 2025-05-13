@@ -10,7 +10,7 @@
 class PassengerWindow : public wxFrame
 {
 public:
-    PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService);
+    PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService, wxWindow *parent = nullptr);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -23,6 +23,7 @@ private:
     void OnSearchByPassport(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshPassengerList();
+    void ShowPassengers(const std::vector<Passenger> &passengers);
 
     wxPanel *panel;
     wxBoxSizer *mainSizer;

@@ -49,9 +49,9 @@ private:
 class UIWindowFactory
 {
 public:
-    static std::unique_ptr<FlightWindow> createFlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService);
-    static std::unique_ptr<PassengerWindow> createPassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService);
-    static std::unique_ptr<ReservationWindow> createReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService);
+    static FlightWindow *createFlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService, wxWindow *parent = nullptr);
+    static PassengerWindow *createPassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService, wxWindow *parent = nullptr);
+    static ReservationWindow *createReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService, std::shared_ptr<FlightService> flightService, std::shared_ptr<PassengerService> passengerService, wxWindow *parent = nullptr);
 };
 
 #endif // MAIN_WINDOW_H

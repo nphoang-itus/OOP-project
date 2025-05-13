@@ -10,7 +10,7 @@
 class FlightWindow : public wxFrame
 {
 public:
-    FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService);
+    FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService, wxWindow *parent = nullptr);
 
 private:
     void OnBack(wxCommandEvent &event);

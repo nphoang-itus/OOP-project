@@ -29,8 +29,8 @@ EVT_BUTTON(ID_SEARCH_FLIGHT, ReservationWindow::OnSearchByFlightNo)
 EVT_LIST_ITEM_SELECTED(ID_RESERVATION_LIST, ReservationWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
-ReservationWindow::ReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), reservationService(reservationService)
+ReservationWindow::ReservationWindow(const wxString &title, std::shared_ptr<ReservationService> reservationService, std::shared_ptr<FlightService> flightService, std::shared_ptr<PassengerService> passengerService, wxWindow *parent)
+    : wxFrame(parent, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), reservationService(reservationService), flightService(flightService), passengerService(passengerService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -97,17 +97,9 @@ ReservationWindow::ReservationWindow(const wxString &title, std::shared_ptr<Rese
 
 void ReservationWindow::OnBack(wxCommandEvent &event)
 {
-    this->Close();
-    // Get the services from the parent window
-    auto parent = dynamic_cast<MainWindow *>(GetParent());
-    if (parent)
-    {
-        auto mainWindow = new MainWindow("Menu chính",
-                                         parent->getFlightService(),
-                                         parent->getPassengerService(),
-                                         parent->getReservationService());
-        mainWindow->Show();
-    }
+    if (GetParent())
+        GetParent()->Show();
+    this->Destroy();
 }
 
 void ReservationWindow::OnShowReservations(wxCommandEvent &event)
@@ -169,15 +161,25 @@ void ReservationWindow::OnAddReservation(wxCommandEvent &event)
         int flightId = std::stoi(flightIdCtrl->GetValue().ToStdString());
         int passengerId = std::stoi(passengerIdCtrl->GetValue().ToStdString());
 
-        auto reservationOpt = reservationService->createReservation(flightId, passengerId);
-        if (reservationOpt)
+        // Lấy flightNo và Passenger object
+        auto flightOpt = flightService->findById(flightId);
+        auto passengerOpt = passengerService->findById(passengerId);
+        if (flightOpt && passengerOpt)
         {
-            infoLabel->SetLabel("Đã thêm đặt chỗ mới!");
-            RefreshReservationList();
+            auto reservationOpt = reservationService->createReservation(flightOpt->getNo(), *passengerOpt);
+            if (reservationOpt)
+            {
+                infoLabel->SetLabel("Đã thêm đặt chỗ mới!");
+                RefreshReservationList();
+            }
+            else
+            {
+                infoLabel->SetLabel("Thêm đặt chỗ thất bại!");
+            }
         }
         else
         {
-            infoLabel->SetLabel("Thêm đặt chỗ thất bại!");
+            infoLabel->SetLabel("Không tìm thấy chuyến bay hoặc hành khách!");
         }
     }
 }
@@ -301,19 +303,45 @@ void ReservationWindow::OnListItemSelected(wxListEvent &event)
 
 void ReservationWindow::RefreshReservationList()
 {
-    reservationList->DeleteAllItems();
-    std::vector<Reservation> reservations = reservationService->findAll();
-    long index = 0;
-    for (const auto &r : reservations)
+    try
     {
-        reservationList->InsertItem(index, std::to_string(r.getId()));
-        reservationList->SetItem(index, 1, wxString::FromUTF8(r.getTicketNo().c_str()));
-        reservationList->SetItem(index, 2, wxString::FromUTF8(r.getFlight() ? r.getFlight()->getNo().c_str() : ""));
-        reservationList->SetItem(index, 3, wxString::FromUTF8(r.getPassenger() ? r.getPassenger()->getName().c_str() : ""));
-        reservationList->SetItem(index, 4, wxString::FromUTF8(r.getPassenger() ? r.getPassenger()->getPassport().c_str() : ""));
-        index++;
+        wxLogMessage("Starting to refresh reservation list...");
+        std::vector<Reservation> reservations = reservationService->findAll();
+        wxLogMessage("Found %d reservations in database", reservations.size());
+
+        ShowReservations(reservations);
+        infoLabel->SetLabel("Danh sách đặt chỗ đã được cập nhật");
+        wxLogMessage("Reservation list refresh completed successfully");
     }
-    infoLabel->SetLabel("Danh sách đặt chỗ đã được cập nhật");
+    catch (const std::exception &e)
+    {
+        wxLogError("Error loading reservations: %s", e.what());
+        infoLabel->SetLabel("Lỗi khi tải danh sách đặt chỗ!");
+    }
+}
+
+void ReservationWindow::ShowReservations(const std::vector<Reservation> &reservations)
+{
+    wxLogMessage("Displaying %d reservations in the list", reservations.size());
+    reservationList->DeleteAllItems();
+    long index = 0;
+    for (const auto &reservation : reservations)
+    {
+        try
+        {
+            reservationList->InsertItem(index, std::to_string(reservation.getId()));
+            reservationList->SetItem(index, 1, wxString::FromUTF8(reservation.getTicketNo().c_str()));
+            reservationList->SetItem(index, 2, wxString::FromUTF8(reservation.getFlight() ? reservation.getFlight()->getNo().c_str() : ""));
+            reservationList->SetItem(index, 3, wxString::FromUTF8(reservation.getPassenger() ? reservation.getPassenger()->getName().c_str() : ""));
+            reservationList->SetItem(index, 4, wxString::FromUTF8(reservation.getPassenger() ? reservation.getPassenger()->getPassport().c_str() : ""));
+            index++;
+        }
+        catch (const std::exception &e)
+        {
+            wxLogError("Error displaying reservation at index %d: %s", index, e.what());
+        }
+    }
+    wxLogMessage("Finished displaying reservations in the list");
 }
 
 void ReservationWindow::OnSearchById(wxCommandEvent &event)

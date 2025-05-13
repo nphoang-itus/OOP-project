@@ -33,8 +33,8 @@ static std::string formatTime(const std::tm &t)
     return std::string(buf);
 }
 
-FlightWindow::FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), flightService(flightService)
+FlightWindow::FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService, wxWindow *parent)
+    : wxFrame(parent, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), flightService(flightService)
 {
     // Tạo giao diện
     panel = new wxPanel(this, wxID_ANY);
@@ -99,17 +99,9 @@ FlightWindow::FlightWindow(const wxString &title, std::shared_ptr<FlightService>
 
 void FlightWindow::OnBack(wxCommandEvent &event)
 {
-    this->Close();
-    // Get the services from the parent window
-    auto parent = dynamic_cast<MainWindow *>(GetParent());
-    if (parent)
-    {
-        auto mainWindow = new MainWindow("Menu chính",
-                                         parent->getFlightService(),
-                                         parent->getPassengerService(),
-                                         parent->getReservationService());
-        mainWindow->Show();
-    }
+    if (GetParent())
+        GetParent()->Show();
+    this->Destroy();
 }
 
 void FlightWindow::OnShowFlights(wxCommandEvent &event)
@@ -384,29 +376,50 @@ void FlightWindow::OnListItemSelected(wxListEvent &event)
 
 void FlightWindow::RefreshFlightList()
 {
-    std::vector<Flight> flights = flightService->findAll();
-    ShowFlights(flights);
-    infoLabel->SetLabel("Danh sách chuyến bay đã được cập nhật");
+    try
+    {
+        wxLogMessage("Starting to refresh flight list...");
+        std::vector<Flight> flights = flightService->findAll();
+        wxLogMessage("Found %d flights in database", flights.size());
+
+        ShowFlights(flights);
+        infoLabel->SetLabel("Danh sách chuyến bay đã được cập nhật");
+        wxLogMessage("Flight list refresh completed successfully");
+    }
+    catch (const std::exception &e)
+    {
+        wxLogError("Error loading flights: %s", e.what());
+        infoLabel->SetLabel("Lỗi khi tải danh sách chuyến bay!");
+    }
 }
 
 void FlightWindow::ShowFlights(const std::vector<Flight> &flights)
 {
+    wxLogMessage("Displaying %d flights in the list", flights.size());
     flightList->DeleteAllItems();
     long index = 0;
     for (const auto &flight : flights)
     {
-        flightList->InsertItem(index, std::to_string(flight.getId()));
-        flightList->SetItem(index, 1, wxString::FromUTF8(flight.getNo().c_str()));
-        flightList->SetItem(index, 2, wxString::FromUTF8(flight.getName().c_str()));
-        flightList->SetItem(index, 3, wxString::FromUTF8(flight.getFrom().c_str()));
-        flightList->SetItem(index, 4, wxString::FromUTF8(flight.getDestination().c_str()));
-        flightList->SetItem(index, 5, wxString::FromUTF8(formatTime(flight.getDepartureTime()).c_str()));
-        flightList->SetItem(index, 6, wxString::FromUTF8(formatTime(flight.getLeaveTime()).c_str()));
-        flightList->SetItem(index, 7, wxString::FromUTF8(formatTime(flight.getArrivalTime()).c_str()));
-        flightList->SetItem(index, 8, std::to_string(static_cast<int>(flight.getAmount())));
-        flightList->SetItem(index, 9, wxString::FromUTF8(std::string(1, flight.getAvailability())));
-        index++;
+        try
+        {
+            flightList->InsertItem(index, std::to_string(flight.getId()));
+            flightList->SetItem(index, 1, wxString::FromUTF8(flight.getNo().c_str()));
+            flightList->SetItem(index, 2, wxString::FromUTF8(flight.getName().c_str()));
+            flightList->SetItem(index, 3, wxString::FromUTF8(flight.getFrom().c_str()));
+            flightList->SetItem(index, 4, wxString::FromUTF8(flight.getDestination().c_str()));
+            flightList->SetItem(index, 5, wxString::FromUTF8(formatTime(flight.getDepartureTime()).c_str()));
+            flightList->SetItem(index, 6, wxString::FromUTF8(formatTime(flight.getLeaveTime()).c_str()));
+            flightList->SetItem(index, 7, wxString::FromUTF8(formatTime(flight.getArrivalTime()).c_str()));
+            flightList->SetItem(index, 8, std::to_string(static_cast<int>(flight.getAmount())));
+            flightList->SetItem(index, 9, wxString::FromUTF8(std::string(1, flight.getAvailability())));
+            index++;
+        }
+        catch (const std::exception &e)
+        {
+            wxLogError("Error displaying flight at index %d: %s", index, e.what());
+        }
     }
+    wxLogMessage("Finished displaying flights in the list");
 }
 
 void FlightWindow::ShowFlight(const Flight &flight)

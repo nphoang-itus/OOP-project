@@ -27,8 +27,8 @@ EVT_BUTTON(ID_SEARCH_PASSPORT, PassengerWindow::OnSearchByPassport)
 EVT_LIST_ITEM_SELECTED(ID_PASSENGER_LIST, PassengerWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
-PassengerWindow::PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), passengerService(passengerService)
+PassengerWindow::PassengerWindow(const wxString &title, std::shared_ptr<PassengerService> passengerService, wxWindow *parent)
+    : wxFrame(parent, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), passengerService(passengerService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -321,19 +321,45 @@ void PassengerWindow::OnListItemSelected(wxListEvent &event)
 
 void PassengerWindow::RefreshPassengerList()
 {
-    passengerList->DeleteAllItems();
-    std::vector<Passenger> passengers = passengerService->findAll();
-    long index = 0;
-    for (const auto &p : passengers)
+    try
     {
-        passengerList->InsertItem(index, std::to_string(p.getId()));
-        passengerList->SetItem(index, 1, wxString::FromUTF8(p.getName().c_str()));
-        passengerList->SetItem(index, 2, wxString::FromUTF8(p.getPhone().c_str()));
-        passengerList->SetItem(index, 3, wxString::FromUTF8(p.getPassport().c_str()));
-        passengerList->SetItem(index, 4, wxString::FromUTF8(p.getAddress().c_str()));
-        index++;
+        wxLogMessage("Starting to refresh passenger list...");
+        std::vector<Passenger> passengers = passengerService->findAll();
+        wxLogMessage("Found %d passengers in database", passengers.size());
+
+        ShowPassengers(passengers);
+        infoLabel->SetLabel("Danh sách hành khách đã được cập nhật");
+        wxLogMessage("Passenger list refresh completed successfully");
     }
-    infoLabel->SetLabel("Danh sách hành khách đã được cập nhật");
+    catch (const std::exception &e)
+    {
+        wxLogError("Error loading passengers: %s", e.what());
+        infoLabel->SetLabel("Lỗi khi tải danh sách hành khách!");
+    }
+}
+
+void PassengerWindow::ShowPassengers(const std::vector<Passenger> &passengers)
+{
+    wxLogMessage("Displaying %d passengers in the list", passengers.size());
+    passengerList->DeleteAllItems();
+    long index = 0;
+    for (const auto &passenger : passengers)
+    {
+        try
+        {
+            passengerList->InsertItem(index, std::to_string(passenger.getId()));
+            passengerList->SetItem(index, 1, wxString::FromUTF8(passenger.getName().c_str()));
+            passengerList->SetItem(index, 2, wxString::FromUTF8(passenger.getPhone().c_str()));
+            passengerList->SetItem(index, 3, wxString::FromUTF8(passenger.getPassport().c_str()));
+            passengerList->SetItem(index, 4, wxString::FromUTF8(passenger.getAddress().c_str()));
+            index++;
+        }
+        catch (const std::exception &e)
+        {
+            wxLogError("Error displaying passenger at index %d: %s", index, e.what());
+        }
+    }
+    wxLogMessage("Finished displaying passengers in the list");
 }
 
 void PassengerWindow::OnSearchById(wxCommandEvent &event)
