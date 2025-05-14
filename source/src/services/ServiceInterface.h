@@ -18,7 +18,7 @@
 template <typename T, typename IdType = int>
 class IService {
 public:
-    virtual ~IService = default;
+    virtual ~IService() = default;
     
     virtual std::vector<T> findAll() = 0;
     virtual std::optional<T> findById(const IdType& id) = 0;
