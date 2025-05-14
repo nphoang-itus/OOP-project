@@ -33,6 +33,10 @@
 
 # Other
 .temp/
+.vscode/
+source/build/
+source/docs/
+source/Doxyfile
 
 # macOS system files
 .DS_Store
