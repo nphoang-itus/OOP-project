@@ -975,6 +975,7 @@ CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.o:
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/exceptions/ValidationResult.h \
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClass.h \
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClassMap.h \
+  /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClassMapFormatter.h \
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClassMapParser.h \
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClassMapValidator.h \
   /Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/tests/core/value_objects/BaseValueObjectTest.h \
@@ -2970,6 +2971,8 @@ CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.o:
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_uintptr_t.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/ranges_none_of.h:
+
+/Users/nphoang/Drive\ của\ tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/core/value_objects/seat_class_map/SeatClassMapFormatter.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/allocation_guard.h:
 
