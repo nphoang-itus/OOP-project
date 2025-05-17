@@ -5,6 +5,7 @@
 #include <regex>
 #include <unordered_map>
 #include <algorithm>
+#include <cctype>
 
 #include "../../exceptions/ValidationResult.h"
 #include "SeatClass.h"
@@ -135,8 +136,13 @@ private:
                 return;
             }
 
+            // Convert to uppercase for validation
+            std::string uppercaseClassName = className;
+            std::transform(uppercaseClassName.begin(), uppercaseClassName.end(), 
+                          uppercaseClassName.begin(), ::toupper);
+
             // Validate class name
-            if (!stringToSeatClass(className)) {
+            if (!SeatClassRegistry::getByName(uppercaseClassName)) {
                 SeatClassMapErrorHelper::addError(result, SeatClassMapError::INVALID_SEAT_TYPE);
             }
 

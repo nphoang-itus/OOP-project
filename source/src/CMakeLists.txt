@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}_test
     tests/core/value_objects/BaseValueObjectTest.h
     # tests/core/value_objects/AircraftSerialTest.cpp
     tests/core/value_objects/SeatClassMapTest.cpp
+    tests/core/value_objects/ContactInfoTest.cpp
 )
 
 # Link test executable with GTest

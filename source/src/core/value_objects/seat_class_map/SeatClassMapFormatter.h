@@ -14,7 +14,7 @@ public:
         bool first = true;
         for (const auto& [seatClass, count] : classMap) {
             if (!first) ss << ",";
-            ss << seatClassToString(seatClass) << ":" << count;
+            ss << seatClass.getName() << ":" << count;
             first = false;
         }
         return ss.str();
@@ -26,7 +26,7 @@ public:
         bool first = true;
         for (const auto& [seatClass, count] : classMap) {
             if (!first) ss << separator;
-            ss << seatClassToString(seatClass) << ":" << count;
+            ss << seatClass.getName() << ":" << count;
             first = false;
         }
         return ss.str();
@@ -34,13 +34,13 @@ public:
 
     // Format SeatClassMap to string with custom formatting
     static std::string toString(const std::unordered_map<SeatClass, int>& classMap, 
-                              const std::string& separator,
-                              const std::string& keyValueSeparator) {
+                                const std::string& separator,
+                                const std::string& keyValueSeparator) {
         std::stringstream ss;
         bool first = true;
         for (const auto& [seatClass, count] : classMap) {
             if (!first) ss << separator;
-            ss << seatClassToString(seatClass) << keyValueSeparator << count;
+            ss << seatClass.getName() << keyValueSeparator << count;
             first = false;
         }
         return ss.str();

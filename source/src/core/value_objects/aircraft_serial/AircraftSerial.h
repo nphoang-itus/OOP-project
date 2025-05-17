@@ -21,6 +21,18 @@ public:
     }
 
     const std::string& value() const { return _value; }
+
+    bool operator==(const AircraftSerial& other) const {
+        return _value == other._value;
+    }
+
+    bool operator!=(const AircraftSerial& other) const {
+        return !(*this == other);
+    }
+
+    std::string toString() const {
+        return _value;
+    }
 };
 
 #endif 

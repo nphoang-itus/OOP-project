@@ -36,14 +36,14 @@ protected:
             {"V3", {"FIRST:10", "FIRST:10", "", "", "single first class"}},
             
             // Multiple classes
-            {"V4", {"ECONOMY:100,BUSINESS:50", "BUSINESS:50, ECONOMY:100", "", "", "two classes"}},
-            {"V5", {"ECONOMY:100,BUSINESS:50,FIRST:10", "FIRST:10, BUSINESS:50, ECONOMY:100", "", "", "three classes"}},
+            {"V4", {"ECONOMY:100,BUSINESS:50", "BUSINESS:50,ECONOMY:100", "", "", "two classes"}},
+            {"V5", {"ECONOMY:100,BUSINESS:50,FIRST:10", "FIRST:10,BUSINESS:50,ECONOMY:100", "", "", "three classes"}},
             {"V6", {"first:10", "FIRST:10", "", "", "lowercase name type"}},
             
             // Edge cases
             {"E1", {"ECONOMY:1", "ECONOMY:1", "", "", "minimum seats"}},
             {"E2", {"ECONOMY:999", "ECONOMY:999", "", "", "large number of seats"}},
-            {"E3", {"ECONOMY:100,BUSINESS:1,FIRST:1", "FIRST:1, BUSINESS:1, ECONOMY:100", "", "", "mixed seat counts"}}
+            {"E3", {"ECONOMY:100,BUSINESS:1,FIRST:1", "FIRST:1,BUSINESS:1,ECONOMY:100", "", "", "mixed seat counts"}}
         };
 
         // Setup invalid test cases

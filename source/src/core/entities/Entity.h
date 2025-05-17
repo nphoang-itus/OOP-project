@@ -2,18 +2,22 @@
 #define ENTITY_H
 
 #include <string>
+#include <memory>
 
 class Entity {
-protected:
-    std::string _id;
-
 public:
-    Entity() = default;
-    explicit Entity(std::string id) : _id(std::move(id)) {}
     virtual ~Entity() = default;
 
-    const std::string& getId() const { return _id; }
-    void setId(const std::string& newId) { _id = newId; }
+    virtual std::string getId() const = 0;
+    virtual std::string toString() const = 0;
+
+    virtual bool equals(const Entity& other) const = 0;
+    virtual std::unique_ptr<Entity> clone() const = 0;
+
+protected:
+    Entity() = default;
 };
+
+using EntityPtr = std::unique_ptr<Entity>;
 
 #endif
