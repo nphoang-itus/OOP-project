@@ -139,6 +139,30 @@ OOP_Project_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/build
 .PHONY : OOP_Project_test/fast
 
+tests/core/value_objects/ContactInfoTest.o: tests/core/value_objects/ContactInfoTest.cpp.o
+.PHONY : tests/core/value_objects/ContactInfoTest.o
+
+# target to build an object file
+tests/core/value_objects/ContactInfoTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/ContactInfoTest.cpp.o
+.PHONY : tests/core/value_objects/ContactInfoTest.cpp.o
+
+tests/core/value_objects/ContactInfoTest.i: tests/core/value_objects/ContactInfoTest.cpp.i
+.PHONY : tests/core/value_objects/ContactInfoTest.i
+
+# target to preprocess a source file
+tests/core/value_objects/ContactInfoTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/ContactInfoTest.cpp.i
+.PHONY : tests/core/value_objects/ContactInfoTest.cpp.i
+
+tests/core/value_objects/ContactInfoTest.s: tests/core/value_objects/ContactInfoTest.cpp.s
+.PHONY : tests/core/value_objects/ContactInfoTest.s
+
+# target to generate assembly for a file
+tests/core/value_objects/ContactInfoTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/ContactInfoTest.cpp.s
+.PHONY : tests/core/value_objects/ContactInfoTest.cpp.s
+
 tests/core/value_objects/SeatClassMapTest.o: tests/core/value_objects/SeatClassMapTest.cpp.o
 .PHONY : tests/core/value_objects/SeatClassMapTest.o
 
@@ -173,6 +197,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... OOP_Project_test"
+	@echo "... tests/core/value_objects/ContactInfoTest.o"
+	@echo "... tests/core/value_objects/ContactInfoTest.i"
+	@echo "... tests/core/value_objects/ContactInfoTest.s"
 	@echo "... tests/core/value_objects/SeatClassMapTest.o"
 	@echo "... tests/core/value_objects/SeatClassMapTest.i"
 	@echo "... tests/core/value_objects/SeatClassMapTest.s"

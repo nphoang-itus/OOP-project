@@ -85,12 +85,12 @@ clean: CMakeFiles/OOP_Project_test.dir/clean
 CMakeFiles/OOP_Project_test.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" --progress-num=1,2 "Built target OOP_Project_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" --progress-num=1,2,3 "Built target OOP_Project_test"
 .PHONY : CMakeFiles/OOP_Project_test.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/OOP_Project_test.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" 2
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/OOP_Project_test.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" 0
 .PHONY : CMakeFiles/OOP_Project_test.dir/rule
@@ -102,7 +102,7 @@ OOP_Project_test: CMakeFiles/OOP_Project_test.dir/rule
 # codegen rule for target.
 CMakeFiles/OOP_Project_test.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" --progress-num=1,2 "Finished codegen for target OOP_Project_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/nphoang/Drive của tôi/HCMUS/24-25/sem2/OOP/LY_THUYET/Project/OOP-project/source/src/build/CMakeFiles" --progress-num=1,2,3 "Finished codegen for target OOP_Project_test"
 .PHONY : CMakeFiles/OOP_Project_test.dir/codegen
 
 # clean rule for target.

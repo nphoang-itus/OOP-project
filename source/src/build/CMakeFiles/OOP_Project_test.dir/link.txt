@@ -1,1 +1,1 @@
-/usr/bin/c++ -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.o -o OOP_Project_test  /usr/local/lib/libgtest_main.a -lpthread /usr/local/lib/libgtest.a
+/usr/bin/c++ -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.o CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/ContactInfoTest.cpp.o -o OOP_Project_test  /usr/local/lib/libgtest_main.a -lpthread /usr/local/lib/libgtest.a
