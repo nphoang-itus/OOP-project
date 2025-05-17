@@ -35,15 +35,16 @@ Flight FlightRepository::_mapResultToFlight(IDatabaseResult& result) {
     return flight;
 }
 
-FlightRepository::FlightRepository(std::shared_ptr<IDatabaseConnection> dbConnection) : _dbConnection(std::move(dbConnection)), _logger(Logger::getInstance()) {
+FlightRepository::FlightRepository(std::shared_ptr<IDatabaseConnection> dbConnection)
+    : _dbConnection(std::move(dbConnection)), _logger(Logger::getInstance()) {
     _logger->debug("Creating Flight repository object.");
 
     if (!_dbConnection) {
         _logger->error("Database connection is null in FlightRepository constructor");
-         throw std::invalid_argument("Database connection cannot be null");
-     }
-     
-     _logger->info("FlightRepository initialized successfully");
+        throw std::invalid_argument("Database connection cannot be null");
+    }
+    
+    _logger->info("FlightRepository initialized successfully");
 }
 
 std::vector<Flight> FlightRepository::findAll() {

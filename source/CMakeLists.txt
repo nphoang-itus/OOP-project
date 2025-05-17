@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
 file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
 file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/*.cpp)
+file(GLOB_RECURSE SERVICE_SOURCES ${CMAKE_SOURCE_DIR}/src/services/*.cpp)
 file(GLOB_RECURSE UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
 
 # Thêm thư mục chứa file header
@@ -50,6 +51,7 @@ add_executable(main
     ${DATABASE_SOURCES}
     ${REPOSITORY_SOURCES}
     ${UTILS_SOURCES}
+    ${SERVICE_SOURCES}
 )
 
 # Liên kết thư viện MySQL Connector/C++

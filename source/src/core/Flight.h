@@ -58,7 +58,6 @@ public:
     /// @name Getter
     /// Các phương thức truy cập thông tin
     /// @{
-
     int getId() const;
     std::string getNo() const;
     std::string getName() const;
@@ -69,7 +68,6 @@ public:
     std::tm getArrivalTime() const;
     double getAmount() const;
     char getAvailability() const;
-
     /// @}
 
     // ====================== Setter ======================

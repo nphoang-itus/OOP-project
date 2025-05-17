@@ -17,6 +17,11 @@
 #include <chrono>
 #include <algorithm>
 #include <ctime>
+#include <iostream>
+
+// Khởi tạo biến static
+std::shared_ptr<MySQLXConnection> MySQLXConnection::_instance = nullptr;
+std::mutex MySQLXConnection::_instanceMutex;
 
 // MySQLXResult implementation
 MySQLXResult::MySQLXResult(mysqlx::RowResult rowResult) 
@@ -319,15 +324,26 @@ std::tm MySQLXResult::getDateTime(const std::string& columnName) {
     }
 }
 
-// MySQLXConnection implementation
+// === MySQLXConnection implementation ===
+std::shared_ptr<MySQLXConnection> MySQLXConnection::getInstance() {
+    if (_instance == nullptr) {
+        std::lock_guard<std::mutex> lock(_instanceMutex);
+        if (_instance == nullptr) {
+            // Tạo instance mới trong shared_ptr với deleter tùy chỉnh
+            _instance = std::shared_ptr<MySQLXConnection>(new MySQLXConnection());
+            auto logger = Logger::getInstance();
+            logger->info("MySQLXConnection singleton instance created");
+        }
+    }
+    return _instance;
+}
+
 MySQLXConnection::MySQLXConnection() : _nextStatementId(1) {
     auto logger = Logger::getInstance();
     logger->debug("MySQLXConnection instance created");
 }
 
 MySQLXConnection::~MySQLXConnection() {
-    auto logger = Logger::getInstance();
-    logger->debug("MySQLXConnection instance being destroyed");
     disconnect();
 }
 
@@ -369,28 +385,23 @@ bool MySQLXConnection::connect( const std::string& host, const std::string& user
 }
 
 void MySQLXConnection::disconnect() {
-    auto logger = Logger::getInstance();
-    logger->info("Disconnecting from MySQL database");
-    
     std::lock_guard<std::mutex> lock(_mutex);
     
     try {
         // Clear all prepared statements
         _preparedStatements.clear();
-        logger->debug("Cleared all prepared statements");
         
         // Close the session
         if (_session) {
             _session.reset();
-            logger->info("Successfully disconnected from MySQL database");
-        } else {
-            logger->warning("Disconnect called when no active connection exists");
-        }
+        };
     }
     catch (const std::exception& e) {
         _lastError = e.what();
-        logger->error("Error during disconnect: " + std::string(e.what()));
+        std::cerr << "Error during disconnect: " + std::string(e.what());
     }
+
+    // std::cout << "Disconnect server database\n";
 }
 
 bool MySQLXConnection::execute(const std::string& query) {
@@ -599,29 +610,51 @@ void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex
 }
 
 std::string MySQLXConnection::buildPreparedStatement(const PreparedStatementData& data) {
+    auto logger = Logger::getInstance();
     std::string query = data.query;
+    logger->debug("Building prepared statement from: " + query);
     
-    // Replace ? with actual values
+    // Đếm số lượng parameters (dấu ?) trong query
+    int questionMarkCount = std::count(query.begin(), query.end(), '?');
+    int maxParamIndex = 0;
+    
     for (const auto& param : data.paramValues) {
-        int index = param.first;
-        std::string value = param.second;
+        maxParamIndex = std::max(maxParamIndex, param.first);
+    }
+    
+    if (maxParamIndex > questionMarkCount) {
+        logger->warning("Query has fewer placeholders than parameters provided");
+    }
+    
+    // Replace ? with actual values từ cuối lên đầu để tránh việc thay đổi chỉ số
+    for (int i = maxParamIndex; i >= 1; i--) {
+        auto paramIt = data.paramValues.find(i);
+        if (paramIt == data.paramValues.end()) {
+            logger->warning("Missing parameter for index " + std::to_string(i));
+            continue;
+        }
         
-        // Find the nth occurrence of ?
+        std::string value = paramIt->second;
+        
+        // Tìm dấu ? thứ i trong query
         size_t pos = 0;
-        for (int i = 0; i < index; i++) {
+        for (int j = 0; j < i; j++) {
             pos = query.find('?', pos);
             if (pos == std::string::npos) {
                 break;
             }
-            pos++;
+            if (j < i - 1) {
+                pos++;
+            }
         }
         
         if (pos != std::string::npos) {
-            // Replace ? with value (we need to quote string values)
+            // Thay thế ? với giá trị được quote
             query.replace(pos, 1, "'" + value + "'");
         }
     }
     
+    logger->debug("Built final query: " + query);
     return query;
 }
 
@@ -639,12 +672,15 @@ bool MySQLXConnection::executeStatement(const int& statementId) {
             return false;
         }
         
-        // Build the statement with parameters
-        std::string finalQuery = buildPreparedStatement(it->second);
+        const PreparedStatementData& data = it->second;
+        
+        // Xây dựng câu lệnh SQL cuối cùng từ prepared statement
+        std::string finalQuery = buildPreparedStatement(data);
         logger->debug("Executing prepared statement: " + finalQuery);
         
-        // Execute the statement
+        // Thực thi câu lệnh SQL đã xây dựng trực tiếp
         _session->sql(finalQuery).execute();
+        
         logger->debug("Statement executed successfully");
         return true;
     }
