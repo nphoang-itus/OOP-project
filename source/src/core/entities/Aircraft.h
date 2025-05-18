@@ -62,7 +62,7 @@ public:
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::make_unique<Aircraft>(_serial, _model, _seatLayout);
+        return std::unique_ptr<Aircraft>(new Aircraft(_serial, _model, _seatLayout));
     }
 
     const AircraftSerial& getSerial() const { return _serial; }

@@ -15,7 +15,15 @@ add_executable(${PROJECT_NAME}_test
     # src/tests/core/value_objects/SeatClassMapTest.cpp
     # src/tests/core/value_objects/PassportNumberTest.cpp
     # src/tests/core/value_objects/FlightNumberTest.cpp
-    src/tests/core/value_objects/RouteTest.cpp
+    # src/tests/core/value_objects/RouteTest.cpp
+    # src/tests/core/value_objects/ScheduleTest.cpp
+    # src/tests/core/value_objects/SeatNumberTest.cpp
+    # src/tests/core/value_objects/TicketNumberTest.cpp
+    # src/tests/core/value_objects/PriceTest.cpp
+    
+    ## Entities Test
+    # src/tests/core/entities/AircraftTest.cpp
+    src/tests/core/entities/FlightTest.cpp
 )
 
 # Link test executable with GTest

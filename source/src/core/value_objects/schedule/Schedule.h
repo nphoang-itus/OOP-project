@@ -10,6 +10,7 @@
 #include "ScheduleValidator.h"
 #include "ScheduleParser.h"
 #include "ScheduleFormatter.h"
+#include <functional>
 
 class Schedule {
 private:
@@ -41,8 +42,15 @@ private:
     }
 
 public:
+    Schedule() = default;
+
     static Result<Schedule> create(const std::string& value) {
         return createInternal(value);    
+    }
+
+    static Result<Schedule> create(const std::string& departure, const std::string& arrival) {
+        std::string combined = departure + "|" + arrival;
+        return createInternal(combined);
     }
 
     static Result<Schedule> create(const std::tm& departure, const std::tm& arrival) {
@@ -65,5 +73,14 @@ public:
         return !(*this == other);
     }
 };
+
+namespace std {
+    template<>
+    struct hash<Schedule> {
+        size_t operator()(const Schedule& schedule) const {
+            return hash<string>()(schedule.toString());
+        }
+    };
+}
 
 #endif

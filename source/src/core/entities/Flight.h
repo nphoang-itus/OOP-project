@@ -115,7 +115,7 @@ public:
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::make_unique<Flight>(_flightNumber, _route, _schedule, _aircraft);
+        return std::unique_ptr<Flight>(new Flight(_flightNumber, _route, _schedule, _aircraft));
     }
 
     // Getters

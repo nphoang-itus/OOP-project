@@ -44,6 +44,8 @@ private:
     }
 
 public:
+    Route() = default;
+    
     static Result<Route> create(const std::string& value) {
         return createInternal(value);    
     }
@@ -71,5 +73,14 @@ public:
         return !(*this == other);
     }
 };
+
+namespace std {
+    template<>
+    struct hash<Route> {
+        size_t operator()(const Route& route) const {
+            return hash<string>()(route.toString());
+        }
+    };
+}
 
 #endif

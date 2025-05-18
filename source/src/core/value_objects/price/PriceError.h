@@ -31,7 +31,7 @@ struct PriceErrorHelper {
     static std::string getMessage(PriceError error) {
         static const std::unordered_map<PriceError, std::string> messageMap = {
             {PriceError::EMPTY_PRICE, "Price cannot be empty"},
-            {PriceError::INVALID_FORMAT, "Price must be in format 'AMOUNT:CURRENCY'"},
+            {PriceError::INVALID_FORMAT, "Price must be in format 'AMOUNT CURRENCY' (amount can use . or , as decimal separator)"},
             {PriceError::INVALID_CURRENCY, "Currency must be one of: " + getSupportedCurrencies()},
             {PriceError::INVALID_AMOUNT, "Amount must be a valid number"},
             {PriceError::NEGATIVE_AMOUNT, "Amount cannot be negative"}

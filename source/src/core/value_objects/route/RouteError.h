@@ -26,17 +26,17 @@ struct RouteErrorHelper {
 
     static std::string getMessage(RouteError error) {
         switch (error) {
-            case RouteError::EMPTY_ROUTE: return "route: Route cannot be empty";
-            case RouteError::INVALID_FORMAT: return "route: Route must be in format 'ORIGIN(ORIGIN_CODE)-DESTINATION(DESTINATION_CODE)'";
-            case RouteError::INVALID_ORIGIN_CODE: return "route: Origin code must be a valid 3-letter IATA code";
-            case RouteError::INVALID_DESTINATION_CODE: return "route: Destination code must be a valid 3-letter IATA code";
-            case RouteError::SAME_ORIGIN_DESTINATION: return "route: Origin and destination cannot be the same";
-            default: return "route: Unknown error";
+            case RouteError::EMPTY_ROUTE: return "Route cannot be empty";
+            case RouteError::INVALID_FORMAT: return "Route must be in format 'ORIGIN(ORIGIN_CODE)-DESTINATION(DESTINATION_CODE)'";
+            case RouteError::INVALID_ORIGIN_CODE: return "Origin code must be a valid 3-letter IATA code";
+            case RouteError::INVALID_DESTINATION_CODE: return "Destination code must be a valid 3-letter IATA code";
+            case RouteError::SAME_ORIGIN_DESTINATION: return "Origin and destination cannot be the same";
+            default: return "Unknown error";
         }
     }
 
     static void addError(ValidationResult& result, RouteError error) {
-        result.addError(toString(error), getMessage(error));
+        result.addError("route", getMessage(error), toString(error));
     }
 };
 

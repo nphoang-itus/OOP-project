@@ -34,6 +34,9 @@ private:
     }
 
 public:
+    // Default constructor
+    SeatClassMap() = default;
+
     // Public factory methods that delegate to internal template method
     static Result<SeatClassMap> create(const std::string& value) {
         return createInternal(value);
@@ -49,6 +52,14 @@ public:
 
     std::string toString() const {
         return SeatClassMapFormatter::toString(_seatCounts);
+    }
+
+    bool operator==(const SeatClassMap& other) const {
+        return toString() == other.toString();
+    }
+
+    bool operator!=(const SeatClassMap& other) const {
+        return !(*this == other);
     }
 };
 

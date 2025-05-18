@@ -61,8 +61,8 @@ private:
         if (_initialized) return;
 
         // Register default seat classes
-        registerSeatClass("ECONOMY", "Y");
-        registerSeatClass("BUSINESS", "J");
+        registerSeatClass("ECONOMY", "E");
+        registerSeatClass("BUSINESS", "B");
         registerSeatClass("FIRST", "F");
 
         _initialized = true;

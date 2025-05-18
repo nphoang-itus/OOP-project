@@ -5,6 +5,8 @@
 #include <memory>
 #include <utility>
 #include <optional>
+#include <functional>
+
 #include "../../exceptions/ValidationResult.h"
 #include "SeatNumberValidator.h"
 #include "../seat_class_map/SeatClassMap.h"
@@ -46,5 +48,14 @@ public:
         return !(*this == other);
     }
 };
+
+namespace std {
+    template<>
+    struct hash<SeatNumber> {
+        size_t operator()(const SeatNumber& seatNumber) const {
+            return hash<string>()(seatNumber.toString());
+        }
+    };
+}
 
 #endif

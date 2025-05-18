@@ -26,7 +26,7 @@ private:
     }
 
 public:
-    // Validate combined string format (YYYY-MM-DD HH:mm-YYYY-MM-DD HH:mm)
+    // Validate combined string format (YYYY-MM-DD HH:mm|YYYY-MM-DD HH:mm)
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
         
@@ -37,7 +37,7 @@ public:
         }
 
         // Split into departure and arrival
-        size_t dashPos = value.find('-');
+        size_t dashPos = value.find('|');
         if (dashPos == std::string::npos) {
             ScheduleErrorHelper::addError(result, ScheduleError::INVALID_FORMAT);
             return result;

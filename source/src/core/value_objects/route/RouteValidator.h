@@ -31,38 +31,36 @@ public:
             return result;
         }
 
-        // Validate format
-        std::regex pattern("^[A-Za-z ]+\\([A-Z]{3}\\)-[A-Za-z ]+\\([A-Z]{3}\\)$");
-        if (!std::regex_match(value, pattern)) {
+        // Validate format and extract components using regex
+        std::regex pattern("^([A-Za-z0-9 ]+)\\(([A-Za-z0-9 ]+)\\)-([A-Za-z0-9 ]+)\\(([A-Za-z0-9 ]+)\\)$");
+        std::smatch matches;
+        
+        if (!std::regex_match(value, matches, pattern)) {
             RouteErrorHelper::addError(result, RouteError::INVALID_FORMAT);
             return result;
         }
 
-        // Extract and validate components
-        size_t dashPos = value.find('-');
-        if (dashPos != std::string::npos) {
-            std::string originPart = value.substr(0, dashPos);
-            std::string destPart = value.substr(dashPos + 1);
+        // matches[0] contains the full match
+        // matches[1] contains the origin city name
+        // matches[2] contains the origin code
+        // matches[3] contains the destination city name
+        // matches[4] contains the destination code
 
-            // Extract origin code
-            size_t originCodeStart = originPart.find('(');
-            size_t originCodeEnd = originPart.find(')');
-            if (originCodeStart != std::string::npos && originCodeEnd != std::string::npos) {
-                std::string originCode = originPart.substr(originCodeStart + 1, 3);
-                if (!isValidAirportCode(originCode)) {
-                    RouteErrorHelper::addError(result, RouteError::INVALID_ORIGIN_CODE);
-                }
-            }
+        std::string originCode = matches[2].str();
+        std::string destinationCode = matches[4].str();
 
-            // Extract destination code
-            size_t destCodeStart = destPart.find('(');
-            size_t destCodeEnd = destPart.find(')');
-            if (destCodeStart != std::string::npos && destCodeEnd != std::string::npos) {
-                std::string destCode = destPart.substr(destCodeStart + 1, 3);
-                if (!isValidAirportCode(destCode)) {
-                    RouteErrorHelper::addError(result, RouteError::INVALID_DESTINATION_CODE);
-                }
-            }
+        // Validate airport codes
+        if (!isValidAirportCode(originCode)) {
+            RouteErrorHelper::addError(result, RouteError::INVALID_ORIGIN_CODE);
+        }
+
+        if (!isValidAirportCode(destinationCode)) {
+            RouteErrorHelper::addError(result, RouteError::INVALID_DESTINATION_CODE);
+        }
+
+        // Check if origin and destination are the same
+        if (originCode == destinationCode) {
+            RouteErrorHelper::addError(result, RouteError::SAME_ORIGIN_DESTINATION);
         }
         
         return result;

@@ -4,6 +4,7 @@
 #include <string>
 #include <regex>
 #include <algorithm>
+#include <sstream>
 #include "../../exceptions/ValidationResult.h"
 #include "PriceError.h"
 #include "CurrencyRegistry.h"
@@ -22,8 +23,14 @@ private:
         return amount >= 0;
     }
 
+    static std::string normalizeDecimalSeparator(const std::string& value) {
+        std::string result = value;
+        std::replace(result.begin(), result.end(), ',', '.');
+        return result;
+    }
+
 public:
-    // Validate combined string format (AMOUNT:CURRENCY)
+    // Validate combined string format (AMOUNT CURRENCY)
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
         
@@ -33,31 +40,30 @@ public:
             return result;
         }
 
-        // Validate format (AMOUNT:CURRENCY)
-        std::regex pattern("^[0-9]+(\\.[0-9]+)?:[A-Z]{3}$");
+        // Validate format (AMOUNT CURRENCY)
+        // Support both dot and comma as decimal separators
+        std::regex pattern("^-?[0-9]+([.,][0-9]+)?\\s+[A-Za-z]+$");
         if (!std::regex_match(value, pattern)) {
             PriceErrorHelper::addError(result, PriceError::INVALID_FORMAT);
             return result;
         }
 
         // Split and validate components
-        size_t colonPos = value.find(':');
-        if (colonPos != std::string::npos) {
-            try {
-                std::string amountStr = value.substr(0, colonPos);
-                std::string currency = value.substr(colonPos + 1);
-                double amount = std::stod(amountStr);
-
-                if (!isValidAmount(amount)) {
-                    PriceErrorHelper::addError(result, PriceError::NEGATIVE_AMOUNT);
-                }
-
-                if (!isValidCurrency(currency)) {
-                    PriceErrorHelper::addError(result, PriceError::INVALID_CURRENCY);
-                }
-            } catch (...) {
-                PriceErrorHelper::addError(result, PriceError::INVALID_AMOUNT);
+        std::string normalizedValue = normalizeDecimalSeparator(value);
+        std::istringstream iss(normalizedValue);
+        double amount;
+        std::string currency;
+        
+        if (iss >> amount >> currency) {
+            if (!isValidAmount(amount)) {
+                PriceErrorHelper::addError(result, PriceError::NEGATIVE_AMOUNT);
             }
+
+            if (!isValidCurrency(currency)) {
+                PriceErrorHelper::addError(result, PriceError::INVALID_CURRENCY);
+            }
+        } else {
+            PriceErrorHelper::addError(result, PriceError::INVALID_AMOUNT);
         }
         
         return result;

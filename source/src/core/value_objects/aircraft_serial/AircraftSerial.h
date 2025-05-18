@@ -12,6 +12,8 @@ private:
     explicit AircraftSerial(std::string value) : _value(std::move(value)) {}
 
 public:
+    AircraftSerial() = default;
+
     static Result<AircraftSerial> create(const std::string& value) {
         auto validationResult = AircraftSerialValidator::validate(value);
         if (!validationResult.isValid()) {

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 class CurrencyRegistry {
 private:
@@ -30,20 +31,22 @@ private:
         _initialized = true;
     }
 
+    static std::string toUpperCase(const std::string& str) {
+        std::string result = str;
+        std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+        return result;
+    }
+
 public:
     // Register a new currency
     static void registerCurrency(const std::string& code, const std::string& name) {
-        std::string upperCode = code;
-        std::transform(upperCode.begin(), upperCode.end(), upperCode.begin(), ::toupper);
-        _registry[upperCode] = name;
+        _registry[toUpperCase(code)] = name;
     }
 
     // Get currency name by code
     static std::optional<std::string> getName(const std::string& code) {
         initialize();
-        std::string upperCode = code;
-        std::transform(upperCode.begin(), upperCode.end(), upperCode.begin(), ::toupper);
-        auto it = _registry.find(upperCode);
+        auto it = _registry.find(toUpperCase(code));
         if (it != _registry.end()) {
             return it->second;
         }
@@ -64,9 +67,7 @@ public:
     // Check if currency code is valid
     static bool isValidCurrency(const std::string& code) {
         initialize();
-        std::string upperCode = code;
-        std::transform(upperCode.begin(), upperCode.end(), upperCode.begin(), ::toupper);
-        return _registry.find(upperCode) != _registry.end();
+        return _registry.find(toUpperCase(code)) != _registry.end();
     }
 };
 

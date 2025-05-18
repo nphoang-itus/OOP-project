@@ -4,6 +4,7 @@
 #include <string>
 #include "../../exceptions/Result.h"
 #include "FlightNumberValidator.h"
+#include <functional>
 
 class FlightNumber {
 private:
@@ -12,6 +13,8 @@ private:
     explicit FlightNumber(std::string value) : _value(std::move(value)) {}
 
 public:
+    FlightNumber() = default;
+
     static Result<FlightNumber> create(const std::string& value) {
         auto validationResult = FlightNumberValidator::validate(value);
         if (!validationResult.isValid()) {
@@ -34,5 +37,14 @@ public:
         return _value;
     }
 };
+
+namespace std {
+    template<>
+    struct hash<FlightNumber> {
+        size_t operator()(const FlightNumber& flightNumber) const {
+            return hash<string>()(flightNumber.toString());
+        }
+    };
+}
 
 #endif

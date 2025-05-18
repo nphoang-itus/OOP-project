@@ -20,14 +20,18 @@ struct TicketNumberErrorHelper {
 
     static std::string getMessage(TicketNumberError error) {
         switch (error) {
-            case TicketNumberError::EMPTY_TICKET_NUMBER: return "ticketNumber: Ticket number cannot be empty";
-            case TicketNumberError::INVALID_FORMAT: return "ticketNumber: Ticket number must be in format 'MCB-YYYYMMDD-XXXX'";
-            default: return "ticketNumber: Unknown error";
+            case TicketNumberError::EMPTY_TICKET_NUMBER: return "Ticket number cannot be empty";
+            case TicketNumberError::INVALID_FORMAT: return "Ticket number must be in format 'MCB-YYYYMMDD-XXXX'";
+            default: return "Unknown error";
         }
     }
 
     static void addError(ValidationResult& result, TicketNumberError error) {
-        result.addError(toString(error), getMessage(error));
+        result.addError(
+            "ticketNumber",
+            getMessage(error),
+            toString(error)
+        );
     }
 };
 

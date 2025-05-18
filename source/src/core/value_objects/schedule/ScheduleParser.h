@@ -9,7 +9,7 @@
 class ScheduleParser {
 public:
     static std::optional<std::tuple<std::tm, std::tm>> parse(const std::string& value) {
-        size_t dashPos = value.find('-');
+        size_t dashPos = value.find('|');
         if (dashPos == std::string::npos) return std::nullopt;
 
         std::string departureStr = value.substr(0, dashPos);

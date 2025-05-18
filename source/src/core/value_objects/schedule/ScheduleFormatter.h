@@ -18,7 +18,7 @@ public:
            << std::setw(2) << departure.tm_hour << ":"
            << std::setw(2) << departure.tm_min;
         
-        ss << "-";
+        ss << "|";
         
         // Format arrival time
         ss << std::setfill('0') << std::setw(4) << (arrival.tm_year + 1900) << "-"

@@ -115,113 +115,113 @@ TEST_F(RouteTest, ValidRoutes) {
     runAllValidTests();
 }
 
-// // Test all invalid cases
-// TEST_F(RouteTest, InvalidRoutes) {
-//     runAllInvalidTests();
-// }
+// Test all invalid cases
+TEST_F(RouteTest, InvalidRoutes) {
+    runAllInvalidTests();
+}
 
-// // Test create with individual parameters
-// TEST_F(RouteTest, CreateWithIndividualParams) {
-//     // Valid cases
-//     testCreateWithIndividualParams(
-//         "Ho Chi Minh City",
-//         "SGN",
-//         "Ha Noi",
-//         "HAN",
-//         true
-//     );
+// Test create with individual parameters
+TEST_F(RouteTest, CreateWithIndividualParams) {
+    // Valid cases
+    testCreateWithIndividualParams(
+        "Ho Chi Minh City",
+        "SGN",
+        "Ha Noi",
+        "HAN",
+        true
+    );
 
-//     testCreateWithIndividualParams(
-//         "Da Nang",
-//         "DAD",
-//         "Hai Phong",
-//         "HPH",
-//         true
-//     );
+    testCreateWithIndividualParams(
+        "Da Nang",
+        "DAD",
+        "Hai Phong",
+        "HPH",
+        true
+    );
 
-//     // Invalid cases - Empty fields
-//     testCreateWithIndividualParams(
-//         "",
-//         "SGN",
-//         "Ha Noi",
-//         "HAN",
-//         false,
-//         EMPTY_ROUTE,
-//         EMPTY_MESSAGE
-//     );
+    // Invalid cases - Empty fields
+    testCreateWithIndividualParams(
+        "",
+        "SGN",
+        "Ha Noi",
+        "HAN",
+        false,
+        EMPTY_ROUTE,
+        EMPTY_MESSAGE
+    );
 
-//     testCreateWithIndividualParams(
-//         "Ho Chi Minh City",
-//         "",
-//         "Ha Noi",
-//         "HAN",
-//         false,
-//         EMPTY_ROUTE,
-//         EMPTY_MESSAGE
-//     );
+    testCreateWithIndividualParams(
+        "Ho Chi Minh City",
+        "",
+        "Ha Noi",
+        "HAN",
+        false,
+        EMPTY_ROUTE,
+        EMPTY_MESSAGE
+    );
 
-//     // Invalid cases - Invalid airport codes
-//     testCreateWithIndividualParams(
-//         "Ho Chi Minh City",
-//         "SG",
-//         "Ha Noi",
-//         "HAN",
-//         false,
-//         INVALID_ORIGIN_CODE,
-//         ORIGIN_CODE_MESSAGE
-//     );
+    // Invalid cases - Invalid airport codes
+    testCreateWithIndividualParams(
+        "Ho Chi Minh City",
+        "SG",
+        "Ha Noi",
+        "HAN",
+        false,
+        INVALID_ORIGIN_CODE,
+        ORIGIN_CODE_MESSAGE
+    );
 
-//     testCreateWithIndividualParams(
-//         "Ho Chi Minh City",
-//         "SGN",
-//         "Ha Noi",
-//         "HA",
-//         false,
-//         INVALID_DESTINATION_CODE,
-//         DESTINATION_CODE_MESSAGE
-//     );
+    testCreateWithIndividualParams(
+        "Ho Chi Minh City",
+        "SGN",
+        "Ha Noi",
+        "HA",
+        false,
+        INVALID_DESTINATION_CODE,
+        DESTINATION_CODE_MESSAGE
+    );
 
-//     // Invalid cases - Same origin and destination
-//     testCreateWithIndividualParams(
-//         "Ho Chi Minh City",
-//         "SGN",
-//         "Ho Chi Minh City",
-//         "SGN",
-//         false,
-//         SAME_ORIGIN_DESTINATION,
-//         SAME_ORIGIN_DESTINATION_MESSAGE
-//     );
-// }
+    // Invalid cases - Same origin and destination
+    testCreateWithIndividualParams(
+        "Ho Chi Minh City",
+        "SGN",
+        "Ho Chi Minh City",
+        "SGN",
+        false,
+        SAME_ORIGIN_DESTINATION,
+        SAME_ORIGIN_DESTINATION_MESSAGE
+    );
+}
 
-// // Test formatting variations
-// TEST_F(RouteTest, FormattingVariations) {
-//     auto result = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
-//     ASSERT_TRUE(result.has_value());
-//     const Route& route = *result;
+// Test formatting variations
+TEST_F(RouteTest, FormattingVariations) {
+    auto result = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
+    ASSERT_TRUE(result.has_value());
+    const Route& route = *result;
 
-//     // Test default format
-//     EXPECT_EQ(route.toString(), "Ho Chi Minh City(SGN)-Ha Noi(HAN)");
+    // Test default format
+    EXPECT_EQ(route.toString(), "Ho Chi Minh City(SGN)-Ha Noi(HAN)");
 
-//     // Test getters
-//     EXPECT_EQ(route.getOrigin(), "Ho Chi Minh City");
-//     EXPECT_EQ(route.getOriginCode(), "SGN");
-//     EXPECT_EQ(route.getDestination(), "Ha Noi");
-//     EXPECT_EQ(route.getDestinationCode(), "HAN");
-// }
+    // Test getters
+    EXPECT_EQ(route.getOrigin(), "Ho Chi Minh City");
+    EXPECT_EQ(route.getOriginCode(), "SGN");
+    EXPECT_EQ(route.getDestination(), "Ha Noi");
+    EXPECT_EQ(route.getDestinationCode(), "HAN");
+}
 
-// // Test value object operations
-// TEST_F(RouteTest, ValueObjectOperations) {
-//     auto result1 = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
-//     auto result2 = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
-//     auto result3 = Route::create("Da Nang", "DAD", "Hai Phong", "HPH");
+// Test value object operations
+TEST_F(RouteTest, ValueObjectOperations) {
+    auto result1 = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
+    auto result2 = Route::create("Ho Chi Minh City", "SGN", "Ha Noi", "HAN");
+    auto result3 = Route::create("Da Nang", "DAD", "Hai Phong", "HPH");
 
-//     ASSERT_TRUE(result1.has_value() && result2.has_value() && result3.has_value());
+    ASSERT_TRUE(result1.has_value() && result2.has_value() && result3.has_value());
 
-//     // Test equality
-//     EXPECT_TRUE(*result1 == *result2);
-//     EXPECT_FALSE(*result1 == *result3);
+    // Test equality
+    EXPECT_TRUE(*result1 == *result2);
+    EXPECT_FALSE(*result1 == *result3);
 
-//     // Test inequality
-//     EXPECT_FALSE(*result1 != *result2);
-//     EXPECT_TRUE(*result1 != *result3);
-// } 
+    // Test inequality
+    EXPECT_FALSE(*result1 != *result2);
+    EXPECT_TRUE(*result1 != *result3);
+} 

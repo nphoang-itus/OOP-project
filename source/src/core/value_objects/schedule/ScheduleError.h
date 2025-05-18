@@ -26,17 +26,21 @@ struct ScheduleErrorHelper {
 
     static std::string getMessage(ScheduleError error) {
         switch (error) {
-            case ScheduleError::EMPTY_SCHEDULE: return "schedule: Schedule cannot be empty";
-            case ScheduleError::INVALID_FORMAT: return "schedule: Schedule must be in format 'YYYY-MM-DD HH:mm'";
-            case ScheduleError::INVALID_DEPARTURE_TIME: return "schedule: Invalid departure time";
-            case ScheduleError::INVALID_ARRIVAL_TIME: return "schedule: Invalid arrival time";
-            case ScheduleError::ARRIVAL_BEFORE_DEPARTURE: return "schedule: Arrival time must be after departure time";
-            default: return "schedule: Unknown error";
+            case ScheduleError::EMPTY_SCHEDULE: return "Schedule cannot be empty";
+            case ScheduleError::INVALID_FORMAT: return "Schedule must be in format 'YYYY-MM-DD HH:mm'";
+            case ScheduleError::INVALID_DEPARTURE_TIME: return "Invalid departure time";
+            case ScheduleError::INVALID_ARRIVAL_TIME: return "Invalid arrival time";
+            case ScheduleError::ARRIVAL_BEFORE_DEPARTURE: return "Arrival time must be after departure time";
+            default: return "Unknown error";
         }
     }
 
     static void addError(ValidationResult& result, ScheduleError error) {
-        result.addError(toString(error), getMessage(error));
+        result.addError(
+            "schedule",
+            getMessage(error),
+            toString(error)
+        );
     }
 };
 
