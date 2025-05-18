@@ -43,7 +43,6 @@ public:
 
         return Success(Aircraft(*serialResult, model, *seatLayoutResult));
     }
-
     
     std::string getId() const override {
         return _serial.toString();
