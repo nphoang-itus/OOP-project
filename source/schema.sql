@@ -1,6 +1,6 @@
 -- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS airlines_db;
-USE airlines_db;
+CREATE DATABASE IF NOT EXISTS cuogne;
+USE cuogne;
 
 -- Flight details table
 CREATE TABLE IF NOT EXISTS flight_tb (
