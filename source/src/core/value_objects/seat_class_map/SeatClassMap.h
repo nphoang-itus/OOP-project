@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "SeatClass.h"
 #include "SeatClassMapValidator.h"
 #include "SeatClassMapParser.h"
@@ -11,16 +12,16 @@
 
 class SeatClassMap {
 private:
-    std::unordered_map<SeatClass, int> _seats;
+    std::unordered_map<SeatClass, int> _seatCounts;
 
     // Private constructor for string input
     explicit SeatClassMap(const std::string& value) {
-        _seats = SeatClassMapParser::parse(value);
+        _seatCounts = SeatClassMapParser::parse(value);
     }
 
     // Private constructor for map input
-    explicit SeatClassMap(std::unordered_map<SeatClass, int> seats)
-        : _seats(std::move(seats)) {}
+    explicit SeatClassMap(std::unordered_map<SeatClass, int> seatCounts)
+        : _seatCounts(std::move(seatCounts)) {}
 
     // Template method for creation process
     template<typename InputType>
@@ -42,12 +43,12 @@ public:
         return createInternal(classMap);
     }
 
-    const std::unordered_map<SeatClass, int>& getClassMap() const {
-        return _seats;
+    const std::unordered_map<SeatClass, int>& getSeatCounts() const {
+        return _seatCounts;
     }
 
     std::string toString() const {
-        return SeatClassMapFormatter::toString(_seats);
+        return SeatClassMapFormatter::toString(_seatCounts);
     }
 };
 

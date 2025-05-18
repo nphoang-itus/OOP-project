@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/app_test.dir/tests/AircraftSerialTest.cpp.o -o app_test  /usr/local/lib/libgtest_main.a -lpthread /usr/local/lib/libgtest.a

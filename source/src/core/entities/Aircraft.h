@@ -1,14 +1,14 @@
 #ifndef AIRCRAFT_H
 #define AIRCRAFT_H
 
-#include "Entity.h"
+#include "IEntity.h"
 #include "../value_objects/aircraft_serial/AircraftSerial.h"
 #include "../value_objects/seat_class_map/SeatClassMap.h"
 #include "../exceptions/Result.h"
 
 using AircraftModel = std::string;
 
-class Aircraft : public Entity {
+class Aircraft : public IEntity {
 protected:
     AircraftSerial _serial;
     AircraftModel _model;
@@ -54,14 +54,14 @@ public:
                ", seatLayout=" + _seatLayout.toString() + "}";
     }
 
-    bool equals(const Entity& other) const override {
+    bool equals(const IEntity& other) const override {
         if (const auto* aircraft = dynamic_cast<const Aircraft*>(&other)) {
             return _serial == aircraft->_serial;
         }
         return false;
     }
 
-    std::unique_ptr<Entity> clone() const override {
+    std::unique_ptr<IEntity> clone() const override {
         return std::make_unique<Aircraft>(_serial, _model, _seatLayout);
     }
 

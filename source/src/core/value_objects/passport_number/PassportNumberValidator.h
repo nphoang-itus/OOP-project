@@ -30,7 +30,7 @@ public:
     // Validate combined string format (COUNTRY:NUMBER)
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
-
+        
         // Check empty input
         if (isEmpty(value)) {
             PassportNumberErrorHelper::addError(result, PassportNumberError::EMPTY_PASSPORT_NUMBER);
@@ -38,7 +38,7 @@ public:
         }
 
         // Validate format (COUNTRY:NUMBER)
-        std::regex pattern("^[A-Za-z0-9]{1,3}:[0-9]+$");
+        std::regex pattern("^[A-Za-z0-9]{2,3}:[0-9]+$");
         if (!std::regex_match(value, pattern)) {
             PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_FORMAT);
             return result;

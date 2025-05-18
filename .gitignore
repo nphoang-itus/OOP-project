@@ -38,6 +38,8 @@ source/build/
 source/docs/
 source/Doxyfile
 
+source/CMakeLists.txt
+
 # macOS system files
 .DS_Store
 .AppleDouble
