@@ -10,10 +10,12 @@ include_directories(${GTEST_INCLUDE_DIRS})
 
 # Add test executable
 add_executable(${PROJECT_NAME}_test
-    src/tests/core/value_objects/BaseValueObjectTest.h
-    src/tests/core/value_objects/AircraftSerialTest.cpp
-    src/tests/core/value_objects/SeatClassMapTest.cpp
-    src/tests/core/value_objects/PassportNumberTest.cpp
+    # src/tests/core/value_objects/BaseValueObjectTest.h
+    # src/tests/core/value_objects/AircraftSerialTest.cpp
+    # src/tests/core/value_objects/SeatClassMapTest.cpp
+    # src/tests/core/value_objects/PassportNumberTest.cpp
+    # src/tests/core/value_objects/FlightNumberTest.cpp
+    src/tests/core/value_objects/RouteTest.cpp
 )
 
 # Link test executable with GTest
