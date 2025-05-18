@@ -139,6 +139,7 @@ OOP_Project_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/build
 .PHONY : OOP_Project_test/fast
 
+<<<<<<< HEAD
 tests/core/value_objects/ContactInfoTest.o: tests/core/value_objects/ContactInfoTest.cpp.o
 .PHONY : tests/core/value_objects/ContactInfoTest.o
 
@@ -165,27 +166,31 @@ tests/core/value_objects/ContactInfoTest.cpp.s:
 
 tests/core/value_objects/SeatClassMapTest.o: tests/core/value_objects/SeatClassMapTest.cpp.o
 .PHONY : tests/core/value_objects/SeatClassMapTest.o
+=======
+tests/core/value_objects/PassportNumberTest.o: tests/core/value_objects/PassportNumberTest.cpp.o
+.PHONY : tests/core/value_objects/PassportNumberTest.o
+>>>>>>> b1aac63 (implement vo/passportnumber)
 
 # target to build an object file
-tests/core/value_objects/SeatClassMapTest.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.o
-.PHONY : tests/core/value_objects/SeatClassMapTest.cpp.o
+tests/core/value_objects/PassportNumberTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/PassportNumberTest.cpp.o
+.PHONY : tests/core/value_objects/PassportNumberTest.cpp.o
 
-tests/core/value_objects/SeatClassMapTest.i: tests/core/value_objects/SeatClassMapTest.cpp.i
-.PHONY : tests/core/value_objects/SeatClassMapTest.i
+tests/core/value_objects/PassportNumberTest.i: tests/core/value_objects/PassportNumberTest.cpp.i
+.PHONY : tests/core/value_objects/PassportNumberTest.i
 
 # target to preprocess a source file
-tests/core/value_objects/SeatClassMapTest.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.i
-.PHONY : tests/core/value_objects/SeatClassMapTest.cpp.i
+tests/core/value_objects/PassportNumberTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/PassportNumberTest.cpp.i
+.PHONY : tests/core/value_objects/PassportNumberTest.cpp.i
 
-tests/core/value_objects/SeatClassMapTest.s: tests/core/value_objects/SeatClassMapTest.cpp.s
-.PHONY : tests/core/value_objects/SeatClassMapTest.s
+tests/core/value_objects/PassportNumberTest.s: tests/core/value_objects/PassportNumberTest.cpp.s
+.PHONY : tests/core/value_objects/PassportNumberTest.s
 
 # target to generate assembly for a file
-tests/core/value_objects/SeatClassMapTest.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/SeatClassMapTest.cpp.s
-.PHONY : tests/core/value_objects/SeatClassMapTest.cpp.s
+tests/core/value_objects/PassportNumberTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OOP_Project_test.dir/build.make CMakeFiles/OOP_Project_test.dir/tests/core/value_objects/PassportNumberTest.cpp.s
+.PHONY : tests/core/value_objects/PassportNumberTest.cpp.s
 
 # Help Target
 help:
@@ -197,12 +202,18 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... OOP_Project_test"
+<<<<<<< HEAD
 	@echo "... tests/core/value_objects/ContactInfoTest.o"
 	@echo "... tests/core/value_objects/ContactInfoTest.i"
 	@echo "... tests/core/value_objects/ContactInfoTest.s"
 	@echo "... tests/core/value_objects/SeatClassMapTest.o"
 	@echo "... tests/core/value_objects/SeatClassMapTest.i"
 	@echo "... tests/core/value_objects/SeatClassMapTest.s"
+=======
+	@echo "... tests/core/value_objects/PassportNumberTest.o"
+	@echo "... tests/core/value_objects/PassportNumberTest.i"
+	@echo "... tests/core/value_objects/PassportNumberTest.s"
+>>>>>>> b1aac63 (implement vo/passportnumber)
 .PHONY : help
 
 

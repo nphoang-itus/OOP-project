@@ -2,19 +2,21 @@
 #define PASSPORT_NUMBER_FORMATTER_H
 
 #include <string>
-#include "PassportNumber.h"
+#include <algorithm>
 
 class PassportNumberFormatter {
 public:
-    // Format PassportNumber to string
-    static std::string toString(const PassportNumber& passport) {
-        return passport.getNumber() + " (" + passport.getIssuingCountry() + ")";
-    }
-
-    // Format PassportNumber to string with custom separator
-    static std::string toString(const PassportNumber& passport, const std::string& separator) {
-        return passport.getNumber() + separator + passport.getIssuingCountry();
+    static std::string toString(const std::string& countryCode, const std::string& number) {
+        // Tạo bản sao của countryCode để không thay đổi tham số gốc
+        std::string upperCountryCode = countryCode;
+        
+        // Chuyển đổi countryCode thành chữ hoa
+        std::transform(upperCountryCode.begin(), upperCountryCode.end(), upperCountryCode.begin(),
+                      [](unsigned char c) { return std::toupper(c); });
+        
+        // Nối với number và trả về kết quả
+        return upperCountryCode + ":" + number;
     }
 };
 
-#endif 
+#endif

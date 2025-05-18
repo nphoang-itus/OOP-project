@@ -3,88 +3,88 @@
 
 #include <string>
 #include <regex>
-#include <unordered_map>
+#include <algorithm>
 #include "../../exceptions/ValidationResult.h"
-#include "PassportNumber.h"
-#include "PassportNumberRegistry.h"
-
-enum class PassportNumberError {
-    EMPTY_PASSPORT_NUMBER,
-    INVALID_FORMAT,
-    INVALID_ISSUING_COUNTRY,
-    INVALID_NUMBER_FORMAT
-};
-
-struct PassportNumberErrorHelper {
-    static std::string toString(PassportNumberError error) {
-        static const std::unordered_map<PassportNumberError, std::string> errorMap = {
-            {PassportNumberError::EMPTY_PASSPORT_NUMBER, "EMPTY_PASSPORT_NUMBER"},
-            {PassportNumberError::INVALID_FORMAT, "INVALID_FORMAT"},
-            {PassportNumberError::INVALID_ISSUING_COUNTRY, "INVALID_ISSUING_COUNTRY"},
-            {PassportNumberError::INVALID_NUMBER_FORMAT, "INVALID_NUMBER_FORMAT"}
-        };
-        
-        auto it = errorMap.find(error);
-        return it != errorMap.end() ? it->second : "UNKNOWN_ERROR";
-    }
-    
-    static std::string getMessage(PassportNumberError error) {
-        static const std::unordered_map<PassportNumberError, std::string> messageMap = {
-            {PassportNumberError::EMPTY_PASSPORT_NUMBER, "Passport number cannot be empty"},
-            {PassportNumberError::INVALID_FORMAT, "Passport number must be in format 'NUMBER (COUNTRY)' or 'NUMBER,COUNTRY'"},
-            {PassportNumberError::INVALID_ISSUING_COUNTRY, "Invalid issuing country code"},
-            {PassportNumberError::INVALID_NUMBER_FORMAT, "Invalid passport number format"}
-        };
-        
-        auto it = messageMap.find(error);
-        return it != messageMap.end() ? it->second : "Unknown error occurred";
-    }
-
-    static void addError(ValidationResult& result, PassportNumberError error) {
-        result.addError(
-            "passportNumber",
-            getMessage(error),
-            toString(error)
-        );
-    }
-};
+#include "PassportNumberError.h"
 
 class PassportNumberValidator {
+private:
+    static bool isEmpty(const std::string& value) {
+        return value.empty();
+    }
+
+    static bool isValidCountryCode(const std::string& countryCode) {
+        // Check if it's a 2,3-letter country code
+        if (countryCode.length() != 2) return false;
+        std::regex countryPattern("^[A-Za-z]{2,3}$");
+        return std::regex_match(countryCode, countryPattern);
+    }
+
+    static bool isValidPassportNumber(const std::string& number) {
+        // Check if it's 6-9 digits
+        std::regex numberPattern("^[0-9]{6,9}$");
+        return std::regex_match(number, numberPattern);
+    }
+
 public:
+    // Validate combined string format (COUNTRY:NUMBER)
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
-        
+
         // Check empty input
-        if (value.empty()) {
+        if (isEmpty(value)) {
             PassportNumberErrorHelper::addError(result, PassportNumberError::EMPTY_PASSPORT_NUMBER);
             return result;
         }
 
-        // Validate format
-        std::regex pattern("^([A-Z0-9]+)\\s*[,(]\\s*([A-Z]+)[)]?$");
+        // Validate format (COUNTRY:NUMBER)
+        std::regex pattern("^[A-Za-z0-9]{1,3}:[0-9]+$");
         if (!std::regex_match(value, pattern)) {
             PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_FORMAT);
             return result;
         }
 
-        // Extract number and country
-        std::smatch matches;
-        std::regex_match(value, matches, pattern);
-        std::string number = matches[1];
-        std::string country = matches[2];
+        // Split and validate components
+        size_t colonPos = value.find(':');
+        if (colonPos != std::string::npos) {
+            std::string countryCode = value.substr(0, colonPos);
+            std::string number = value.substr(colonPos + 1);
 
-        // Validate number format (example: must be alphanumeric and 6-9 characters)
-        if (number.length() < 6 || number.length() > 9) {
-            PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_NUMBER_FORMAT);
+            if (!isValidCountryCode(countryCode)) {
+                PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_ISSUING_COUNTRY);
+            }
+
+            if (!isValidPassportNumber(number)) {
+                PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_NUMBER_LENGTH);
+            }
+        }
+        
+        return result;
+    }
+
+    // Validate separate country code and number
+    static ValidationResult validate(const std::pair<std::string, std::string>& input) {
+        ValidationResult result;
+        const auto& [countryCode, number] = input;
+        
+        // Check empty inputs
+        if (isEmpty(countryCode) || isEmpty(number)) {
+            PassportNumberErrorHelper::addError(result, PassportNumberError::EMPTY_PASSPORT_NUMBER);
+            return result;
         }
 
-        // Validate issuing country
-        if (!PassportNumberRegistry::getByIssuingCountry(country)) {
+        // Validate country code
+        if (!isValidCountryCode(countryCode)) {
             PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_ISSUING_COUNTRY);
         }
 
+        // Validate passport number
+        if (!isValidPassportNumber(number)) {
+            PassportNumberErrorHelper::addError(result, PassportNumberError::INVALID_NUMBER_LENGTH);
+        }
+        
         return result;
     }
 };
 
-#endif 
+#endif
