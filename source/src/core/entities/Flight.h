@@ -7,6 +7,7 @@
 #include "../value_objects/route/Route.h"
 #include "../value_objects/schedule/Schedule.h"
 #include "../value_objects/seat_class_map/SeatClassMap.h"
+#include "../value_objects/seat_number/SeatNumber.h"
 #include "../exceptions/Result.h"
 #include <unordered_map>
 #include <memory>
@@ -20,11 +21,11 @@ protected:
     Route _route;
     Schedule _schedule;
     std::shared_ptr<Aircraft> _aircraft;
-    std::unordered_map<std::string, bool> _seatAvailability;
+    std::unordered_map<SeatNumber, bool> _seatAvailability;
 
     // Helper function to generate seat numbers based on class and count
-    static std::vector<std::string> generateSeatNumbers(const std::string& classCode, int count) {
-        std::vector<std::string> seats;
+    static std::vector<SeatNumber> generateSeatNumbers(const std::string& classCode, int count, const SeatClassMap& seatLayout) {
+        std::vector<SeatNumber> seats;
         seats.reserve(count);
         
         // Determine padding based on count
@@ -33,7 +34,10 @@ protected:
         for (int i = 1; i <= count; i++) {
             std::stringstream ss;
             ss << classCode << std::setfill('0') << std::setw(padding) << i;
-            seats.push_back(ss.str());
+            auto seatNumberResult = SeatNumber::create(ss.str(), seatLayout);
+            if (seatNumberResult) {
+                seats.push_back(*seatNumberResult);
+            }
         }
         return seats;
     }
@@ -42,7 +46,7 @@ protected:
     void initializeSeats() {
         const auto& seatLayout = _aircraft->getSeatLayout();
         for (const auto& [seatClass, count] : seatLayout.getSeatCounts()) {
-            auto seatNumbers = generateSeatNumbers(seatClass.getCode(), count);
+            auto seatNumbers = generateSeatNumbers(seatClass.getCode(), count, seatLayout);
             for (const auto& seatNumber : seatNumbers) {
                 _seatAvailability[seatNumber] = true; // true means available
             }
@@ -119,15 +123,25 @@ public:
     const Route& getRoute() const { return _route; }
     const Schedule& getSchedule() const { return _schedule; }
     const std::shared_ptr<Aircraft>& getAircraft() const { return _aircraft; }
-    const std::unordered_map<std::string, bool>& getSeatAvailability() const { return _seatAvailability; }
+    const std::unordered_map<SeatNumber, bool>& getSeatAvailability() const { return _seatAvailability; }
 
     // Seat management methods
-    bool isSeatAvailable(const std::string& seatNumber) const {
+    bool isSeatAvailable(const std::string& seatNumberStr) const {
+        auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
+        if (!seatNumberResult) {
+            return false;
+        }
+        const SeatNumber& seatNumber = *seatNumberResult;
         auto it = _seatAvailability.find(seatNumber);
         return it != _seatAvailability.end() && it->second;
     }
 
-    bool reserveSeat(const std::string& seatNumber) {
+    bool reserveSeat(const std::string& seatNumberStr) {
+        auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
+        if (!seatNumberResult) {
+            return false;
+        }
+        const SeatNumber& seatNumber = *seatNumberResult;
         auto it = _seatAvailability.find(seatNumber);
         if (it != _seatAvailability.end() && it->second) {
             it->second = false;
@@ -136,7 +150,12 @@ public:
         return false;
     }
 
-    bool releaseSeat(const std::string& seatNumber) {
+    bool releaseSeat(const std::string& seatNumberStr) {
+        auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
+        if (!seatNumberResult) {
+            return false;
+        }
+        const SeatNumber& seatNumber = *seatNumberResult;
         auto it = _seatAvailability.find(seatNumber);
         if (it != _seatAvailability.end() && !it->second) {
             it->second = true;
