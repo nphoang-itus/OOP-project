@@ -8,6 +8,7 @@
 #include "../value_objects/schedule/Schedule.h"
 #include "../value_objects/seat_class_map/SeatClassMap.h"
 #include "../value_objects/seat_number/SeatNumber.h"
+#include "../value_objects/flight_status/FlightStatus.h"
 #include "../exceptions/Result.h"
 #include <unordered_map>
 #include <memory>
@@ -22,6 +23,7 @@ protected:
     Schedule _schedule;
     std::shared_ptr<Aircraft> _aircraft;
     std::unordered_map<SeatNumber, bool> _seatAvailability;
+    FlightStatus _status;
 
     // Helper function to generate seat numbers based on class and count
     static std::vector<SeatNumber> generateSeatNumbers(const std::string& classCode, int count, const SeatClassMap& seatLayout) {
@@ -57,7 +59,8 @@ protected:
         : _flightNumber(std::move(flightNumber))
         , _route(std::move(route))
         , _schedule(std::move(schedule))
-        , _aircraft(std::move(aircraft)) {
+        , _aircraft(std::move(aircraft))
+        , _status(FlightStatus::SCHEDULED) {
         initializeSeats();
     }
 
@@ -95,6 +98,23 @@ public:
         return Success(Flight(*flightNumberResult, *routeResult, *scheduleResult, aircraft));
     }
 
+    // Status management methods
+    void setStatus(FlightStatus status) {
+        _status = status;
+    }
+
+    FlightStatus getStatus() const {
+        return _status;
+    }
+
+    std::string getStatusString() const {
+        return FlightStatusUtil::toString(_status);
+    }
+
+    std::string getStatusVietnamese() const {
+        return FlightStatusUtil::toVietnamese(_status);
+    }
+
     // IEntity interface implementation
     std::string getId() const override {
         return _flightNumber.toString();
@@ -104,7 +124,8 @@ public:
         return "Flight{flightNumber=" + _flightNumber.toString() + 
                ", route=" + _route.toString() + 
                ", schedule=" + _schedule.toString() + 
-               ", aircraft=" + _aircraft->toString() + "}";
+               ", aircraft=" + _aircraft->toString() + 
+               ", status=" + getStatusString() + "}";
     }
 
     bool equals(const IEntity& other) const override {
@@ -127,6 +148,9 @@ public:
 
     // Seat management methods
     bool isSeatAvailable(const std::string& seatNumberStr) const {
+        if (_status == FlightStatus::CANCELLED) {
+            return false;
+        }
         auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
         if (!seatNumberResult) {
             return false;
@@ -137,6 +161,10 @@ public:
     }
 
     bool reserveSeat(const std::string& seatNumberStr) {
+        if (_status == FlightStatus::CANCELLED || _status == FlightStatus::DEPARTED || 
+            _status == FlightStatus::IN_FLIGHT || _status == FlightStatus::LANDED) {
+            return false;
+        }
         auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
         if (!seatNumberResult) {
             return false;
@@ -151,6 +179,10 @@ public:
     }
 
     bool releaseSeat(const std::string& seatNumberStr) {
+        if (_status == FlightStatus::CANCELLED || _status == FlightStatus::DEPARTED || 
+            _status == FlightStatus::IN_FLIGHT || _status == FlightStatus::LANDED) {
+            return false;
+        }
         auto seatNumberResult = SeatNumber::create(seatNumberStr, _aircraft->getSeatLayout());
         if (!seatNumberResult) {
             return false;

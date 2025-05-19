@@ -1,88 +1,127 @@
--- Create database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS airlines_db;
-USE airlines_db;
+-- Create database
+CREATE DATABASE IF NOT EXISTS flight_booking_system;
+USE flight_booking_system;
 
--- Flight details table
-CREATE TABLE IF NOT EXISTS flight_tb (
-    f_id INT AUTO_INCREMENT PRIMARY KEY,
-    f_no VARCHAR(10) NOT NULL,
-    f_name VARCHAR(50) NOT NULL,
-    f_from VARCHAR(50) NOT NULL,
-    f_destination VARCHAR(50) NOT NULL,
-    f_departureTime DATETIME NOT NULL,
-    f_leaveTime DATETIME,
-    f_arrivalTime DATETIME,
-    f_amount DOUBLE NOT NULL,
-    f_availability CHAR(1) NOT NULL DEFAULT 'A',
-    CHECK (f_availability IN ('A', 'N')),
-    UNIQUE (f_no)
+-- Aircraft table
+CREATE TABLE aircraft (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    serial_number VARCHAR(10),
+    model VARCHAR(50) NOT NULL
+);
+
+-- Seat class table
+CREATE TABLE seat_class (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code CHAR(1) NOT NULL UNIQUE,
+    name VARCHAR(20) NOT NULL
+);
+
+-- Aircraft seat layout table
+CREATE TABLE aircraft_seat_layout (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    aircraft_serial VARCHAR(10),
+    seat_class_id INT,
+    seat_count INT NOT NULL,
+    FOREIGN KEY (aircraft_serial) REFERENCES aircraft(serial_number),
+    FOREIGN KEY (seat_class_id) REFERENCES seat_class(id),
+    UNIQUE KEY unique_aircraft_seat_class (aircraft_serial, seat_class_id)
+);
+
+-- Route table
+CREATE TABLE route (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    departure_code VARCHAR(3) NOT NULL,
+    departure_name VARCHAR(100) NOT NULL,
+    arrival_code VARCHAR(3) NOT NULL,
+    arrival_name VARCHAR(100) NOT NULL,
+    UNIQUE KEY unique_route (departure_code, arrival_code)
+);
+
+-- Flight table
+CREATE TABLE flight (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    flight_number VARCHAR(10),
+    route_id INT NOT NULL,
+    aircraft_serial VARCHAR(10) NOT NULL,
+    departure_time DATETIME NOT NULL,
+    arrival_time DATETIME NOT NULL,
+    status ENUM('SCHEDULED', 'DELAYED', 'BOARDING', 'DEPARTED', 'IN_FLIGHT', 'LANDED', 'CANCELLED') DEFAULT 'SCHEDULED',
+    FOREIGN KEY (route_id) REFERENCES route(id),
+    FOREIGN KEY (aircraft_serial) REFERENCES aircraft(serial_number)
 );
 
 -- Passenger table
-CREATE TABLE IF NOT EXISTS passenger_tb (
-    p_id INT AUTO_INCREMENT PRIMARY KEY,
-    p_name VARCHAR(100) NOT NULL,
-    p_phone VARCHAR(20) NOT NULL,
-    p_passport VARCHAR(20) NOT NULL,
-    p_address VARCHAR(200),
-    UNIQUE (p_passport)
+CREATE TABLE passenger (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    passport_number VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    address TEXT
 );
 
--- Reservation table
-CREATE TABLE IF NOT EXISTS reservation_tb (
-    r_id INT AUTO_INCREMENT PRIMARY KEY,
-    r_ticketNo VARCHAR(20) NOT NULL,
-    r_flightNo VARCHAR(10) NOT NULL,
-    r_passportPassenger VARCHAR(20) NOT NULL,
-    UNIQUE (r_ticketNo),
-    FOREIGN KEY (r_flightNo) REFERENCES flight_tb(f_no),
-    FOREIGN KEY (r_passportPassenger) REFERENCES passenger_tb(p_passport)
+-- Ticket table
+CREATE TABLE ticket (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_number VARCHAR(20),
+    flight_number VARCHAR(10) NOT NULL,
+    passenger_passport VARCHAR(20) NOT NULL,
+    seat_number VARCHAR(10) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    status ENUM('PENDING', 'CONFIRMED', 'CHECKED_IN', 'BOARDED', 'COMPLETED', 'CANCELLED', 'REFUNDED') DEFAULT 'PENDING',
+    FOREIGN KEY (flight_number) REFERENCES flight(flight_number),
+    FOREIGN KEY (passenger_passport) REFERENCES passenger(passport_number),
+    UNIQUE KEY unique_flight_seat (flight_number, seat_number)
 );
 
--- Insert sample data
-INSERT INTO flight_tb (f_no, f_name, f_from, f_destination, f_departureTime, f_leaveTime, f_arrivalTime, f_amount, f_availability)
-VALUES
-('FL007', 'Jetstar', 'Da Nang', 'Phu Quoc', '2025-05-02 09:11:12', '2025-05-02 08:30:00', '2025-05-02 11:00:00', 150.00, 'A'),
-('FL008', 'Bamboo Airways', 'Hue', 'Nha Trang', '2024-05-03 14:00:00', '2025-05-03 13:30:00', '2025-05-03 16:00:00', 120.00, 'A'),
-('FL009', 'Vietnam Airlines', 'Ho Chi Minh City', 'Hanoi', '2026-05-04 06:00:00', '2025-05-04 05:30:00', '2025-05-04 08:30:00', 200.00, 'A'),
-('FL010', 'Jetstar', 'Can Tho', 'Da Nang', '2028-05-05 10:00:00', '2025-05-05 09:30:00', '2025-05-05 12:00:00', 180.00, 'N'),
-('FL011', 'Bamboo Airways', 'Phu Quoc', 'Ho Chi Minh City', '2012-05-06 15:00:00', '2025-05-06 14:30:00', '2025-05-06 16:30:00', 130.00, 'A'),
-('FL012', 'Vietnam Airlines', 'Hanoi', 'Da Nang', '2024-05-07 07:00:00', '2025-05-07 06:30:00', '2025-05-07 09:00:00', 170.00, 'A'),
-('FL013', 'Jetstar', 'Nha Trang', 'Hue', '2025-05-08 12:00:00', '2025-05-08 11:30:00', '2025-05-08 14:00:00', 140.00, 'N'),
-('FL014', 'Bamboo Airways', 'Ho Chi Minh City', 'Da Nang', '2025-05-09 18:00:00', '2025-05-09 17:30:00', '2025-05-09 20:00:00', 160.00, 'A'),
-('FL015', 'Vietnam Airlines', 'Hanoi', 'Phu Quoc', '2025-05-10 05:00:00', '2025-05-10 04:30:00', '2025-05-10 08:00:00', 250.00, 'A'),
-('FL016', 'Jetstar', 'Da Nang', 'Ho Chi Minh City', '2025-05-11 20:00:00', '2025-05-11 19:30:00', '2025-05-11 22:00:00', 190.00, 'A');
+-- Insert default seat classes
+INSERT INTO seat_class (code, name) VALUES
+('E', 'ECONOMY'),
+('B', 'BUSINESS'),
+('F', 'FIRST');
 
--- Insert sample data into passenger_tb
-INSERT INTO passenger_tb (p_name, p_phone, p_passport, p_address)
-VALUES 
-('Nguyen Van A', '0901234567', 'A12345678', '123 Nguyen Trai, Ho Chi Minh City'),
-('Tran Thi B', '0912345678', 'B87654321', '456 Le Loi, Hanoi'),
-('Le Van C', '0923456789', 'C11223344', '789 Tran Hung Dao, Da Nang'),
-('Pham Thi D', '0934567890', 'D44332211', '321 Nguyen Hue, Hue'),
-('Hoang Van E', '0945678901', 'E55667788', '654 Ly Thuong Kiet, Nha Trang'),
-('Nguyen Thi F', '0956789012', 'F99887766', '987 Hai Ba Trung, Can Tho'),
-('Tran Van G', '0967890123', 'G66554433', '111 Vo Van Kiet, Phu Quoc'),
-('Le Thi H', '0978901234', 'H33445566', '222 Phan Chu Trinh, Da Nang'),
-('Pham Van I', '0989012345', 'I77889900', '333 Bach Dang, Hanoi'),
-('Hoang Thi J', '0990123456', 'J11224455', '444 Tran Phu, Ho Chi Minh City');
+-- Create indexes for better performance
+CREATE INDEX idx_flight_dates ON flight(departure_time, arrival_time);
+CREATE INDEX idx_ticket_flight ON ticket(flight_number);
+CREATE INDEX idx_ticket_passenger ON ticket(passenger_passport);
+CREATE INDEX idx_aircraft_seat_layout ON aircraft_seat_layout(aircraft_serial);
 
--- Insert sample data into reservation_tb
-INSERT INTO reservation_tb (r_ticketNo, r_flightNo, r_passportPassenger)
-VALUES 
-('TK001-FL007', 'FL007', 'A12345678'),
-('TK002-FL008', 'FL008', 'B87654321'),
-('TK003-FL009', 'FL009', 'C11223344'),
-('TK004-FL012', 'FL012', 'D44332211'),
-('TK005-FL011', 'FL011', 'E55667788'),
-('TK006-FL015', 'FL015', 'F99887766'),
-('TK007-FL014', 'FL014', 'G66554433'),
-('TK008-FL016', 'FL016', 'H33445566'),
-('TK009-FL007', 'FL007', 'I77889900'),
-('TK010-FL009', 'FL009', 'J11224455'),
-('TK011-FL015', 'FL015', 'A12345678'),
-('TK012-FL008', 'FL008', 'C11223344'),
-('TK013-FL012', 'FL012', 'E55667788'),
-('TK014-FL016', 'FL016', 'G66554433'),
-('TK015-FL014', 'FL014', 'I77889900'),
-('TK016-FL014', 'FL014', 'I77889900');
+-- Add triggers for data validation
+DELIMITER //
+
+CREATE TRIGGER before_flight_insert
+BEFORE INSERT ON flight
+FOR EACH ROW
+BEGIN
+    IF NEW.departure_time >= NEW.arrival_time THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Arrival time must be after departure time';
+    END IF;
+END//
+
+CREATE TRIGGER before_ticket_insert
+BEFORE INSERT ON ticket
+FOR EACH ROW
+BEGIN
+    DECLARE seat_class_code CHAR(1);
+    DECLARE seat_count INT;
+    
+    -- Get seat class code from seat number
+    SET seat_class_code = LEFT(NEW.seat_number, 1);
+    
+    -- Check if seat class exists in aircraft layout
+    SELECT COUNT(*) INTO seat_count
+    FROM aircraft_seat_layout acl
+    JOIN flight f ON f.aircraft_serial = acl.aircraft_serial
+    JOIN seat_class sc ON sc.id = acl.seat_class_id
+    WHERE f.flight_number = NEW.flight_number
+    AND sc.code = seat_class_code;
+    
+    IF seat_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid seat class for this aircraft';
+    END IF;
+END//
+
+DELIMITER ; 

@@ -1,77 +1,86 @@
 #ifndef TICKET_H
 #define TICKET_H
 
+#include "IEntity.h"
+#include "Passenger.h"
+#include "Flight.h"
+#include "../value_objects/ticket_number/TicketNumber.h"
+#include "../value_objects/seat_number/SeatNumber.h"
+#include "../value_objects/ticket_status/TicketStatus.h"
+#include "../value_objects/flight_status/FlightStatus.h"
+#include "../exceptions/Result.h"
 #include <memory>
 #include <string>
-#include "../value_objects/seat_number/SeatNumber.h"
-#include "../value_objects/ticket_number/TicketNumber.h"
-#include "../value_objects/price/Price.h"
-#include "IEntity.h"
-#include "Flight.h"
-#include "Passenger.h"
+#include <sstream>
 
 class Ticket : public IEntity {
-private:
-    std::shared_ptr<Flight> _flight;
-    std::shared_ptr<Passenger> _passenger;
-    SeatNumber _seatNumber;
+protected:
     TicketNumber _ticketNumber;
-    Price _price;
-    bool _isCheckedIn = false;
+    std::shared_ptr<Passenger> _passenger;
+    std::shared_ptr<Flight> _flight;
+    SeatNumber _seatNumber;
+    TicketStatus _status;
 
-    // Private constructor to enforce creation through factory method
-    Ticket(std::shared_ptr<Flight> flight,
-           std::shared_ptr<Passenger> passenger,
-           const SeatNumber& seatNumber,
-           const TicketNumber& ticketNumber,
-           const Price& price)
-        : _flight(std::move(flight))
+    Ticket(TicketNumber ticketNumber, std::shared_ptr<Passenger> passenger,
+           std::shared_ptr<Flight> flight, SeatNumber seatNumber)
+        : _ticketNumber(std::move(ticketNumber))
         , _passenger(std::move(passenger))
-        , _seatNumber(seatNumber)
-        , _ticketNumber(ticketNumber)
-        , _price(price) {}
+        , _flight(std::move(flight))
+        , _seatNumber(std::move(seatNumber))
+        , _status(TicketStatus::PENDING) {
+    }
 
 public:
-    // Factory method to create a ticket
-    static Result<Ticket> create(
-        std::shared_ptr<Flight> flight,
-        std::shared_ptr<Passenger> passenger,
-        const SeatNumber& seatNumber,
-        const TicketNumber& ticketNumber,
-        const Price& price) {
-        
-        // Validate inputs
+    // Factory methods
+    static Result<Ticket> create(const TicketNumber& ticketNumber, std::shared_ptr<Passenger> passenger,
+                               std::shared_ptr<Flight> flight, const SeatNumber& seatNumber) {
+        if (!passenger) {
+            return Failure<Ticket>(CoreError("Passenger cannot be null", "INVALID_PASSENGER"));
+        }
         if (!flight) {
             return Failure<Ticket>(CoreError("Flight cannot be null", "INVALID_FLIGHT"));
         }
+        return Success(Ticket(ticketNumber, passenger, flight, seatNumber));
+    }
+
+    static Result<Ticket> create(const std::string& ticketNumber, std::shared_ptr<Passenger> passenger,
+                               std::shared_ptr<Flight> flight, const std::string& seatNumber) {
+        auto ticketNumberResult = TicketNumber::create(ticketNumber);
+        if (!ticketNumberResult) {
+            return Failure<Ticket>(CoreError("Invalid ticket number: " + ticketNumberResult.error().message, "INVALID_TICKET_NUMBER"));
+        }
+
         if (!passenger) {
             return Failure<Ticket>(CoreError("Passenger cannot be null", "INVALID_PASSENGER"));
         }
 
-        return Success(Ticket(flight, passenger, seatNumber, ticketNumber, price));
+        if (!flight) {
+            return Failure<Ticket>(CoreError("Flight cannot be null", "INVALID_FLIGHT"));
+        }
+
+        auto seatNumberResult = SeatNumber::create(seatNumber, flight->getAircraft()->getSeatLayout());
+        if (!seatNumberResult) {
+            return Failure<Ticket>(CoreError("Invalid seat number: " + seatNumberResult.error().message, "INVALID_SEAT_NUMBER"));
+        }
+
+        return Success(Ticket(*ticketNumberResult, passenger, flight, *seatNumberResult));
     }
 
-    // Getters
-    const std::shared_ptr<Flight>& getFlight() const { return _flight; }
-    const std::shared_ptr<Passenger>& getPassenger() const { return _passenger; }
-    const SeatNumber& getSeatNumber() const { return _seatNumber; }
-    const TicketNumber& getTicketNumber() const { return _ticketNumber; }
-    const Price& getPrice() const { return _price; }
-    bool isCheckedIn() const { return _isCheckedIn; }
-
-    // Business methods
-    void checkIn() {
-        if (_isCheckedIn) {
-            throw CoreError("Ticket is already checked in", "ALREADY_CHECKED_IN");
-        }
-        _isCheckedIn = true;
+    // Status management methods
+    void setStatus(TicketStatus status) {
+        _status = status;
     }
 
-    void cancelCheckIn() {
-        if (!_isCheckedIn) {
-            throw CoreError("Ticket is not checked in", "NOT_CHECKED_IN");
-        }
-        _isCheckedIn = false;
+    TicketStatus getStatus() const {
+        return _status;
+    }
+
+    std::string getStatusString() const {
+        return TicketStatusUtil::toString(_status);
+    }
+
+    std::string getStatusVietnamese() const {
+        return TicketStatusUtil::toVietnamese(_status);
     }
 
     // IEntity interface implementation
@@ -80,24 +89,56 @@ public:
     }
 
     std::string toString() const override {
-        return "Ticket[" + _ticketNumber.toString() + "]";
+        return "Ticket{ticketNumber=" + _ticketNumber.toString() + 
+               ", passenger=" + _passenger->toString() + 
+               ", flight=" + _flight->toString() + 
+               ", seatNumber=" + _seatNumber.toString() + 
+               ", status=" + getStatusString() + "}";
     }
 
     bool equals(const IEntity& other) const override {
-        const Ticket* ticket = dynamic_cast<const Ticket*>(&other);
-        return ticket && *this == *ticket;
+        if (const auto* ticket = dynamic_cast<const Ticket*>(&other)) {
+            return _ticketNumber == ticket->_ticketNumber;
+        }
+        return false;
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::make_unique<Ticket>(*this);
+        return std::unique_ptr<Ticket>(new Ticket(_ticketNumber, _passenger, _flight, _seatNumber));
     }
 
-    bool operator==(const Ticket& other) const {
-        return _ticketNumber == other._ticketNumber;
+    // Getters
+    const TicketNumber& getTicketNumber() const { return _ticketNumber; }
+    const std::shared_ptr<Passenger>& getPassenger() const { return _passenger; }
+    const std::shared_ptr<Flight>& getFlight() const { return _flight; }
+    const SeatNumber& getSeatNumber() const { return _seatNumber; }
+
+    // Business logic methods
+    bool canBeCancelled() const {
+        return _status == TicketStatus::PENDING || _status == TicketStatus::CONFIRMED;
     }
 
-    bool operator!=(const Ticket& other) const {
-        return !(*this == other);
+    bool canBeRefunded() const {
+        return _status == TicketStatus::CONFIRMED && 
+               _flight->getStatus() != FlightStatus::CANCELLED &&
+               _flight->getStatus() != FlightStatus::DEPARTED &&
+               _flight->getStatus() != FlightStatus::IN_FLIGHT &&
+               _flight->getStatus() != FlightStatus::LANDED;
+    }
+
+    bool canBeCheckedIn() const {
+        return _status == TicketStatus::CONFIRMED && 
+               _flight->getStatus() == FlightStatus::BOARDING;
+    }
+
+    bool canBeBoarded() const {
+        return _status == TicketStatus::CHECKED_IN && 
+               _flight->getStatus() == FlightStatus::BOARDING;
+    }
+
+    bool canBeCompleted() const {
+        return _status == TicketStatus::BOARDED && 
+               _flight->getStatus() == FlightStatus::LANDED;
     }
 };
 
