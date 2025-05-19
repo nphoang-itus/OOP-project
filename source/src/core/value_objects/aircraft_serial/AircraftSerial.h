@@ -1,0 +1,40 @@
+#ifndef AIRCRAFT_SERIAL_H
+#define AIRCRAFT_SERIAL_H
+
+#include <string>
+#include "../../exceptions/Result.h"
+#include "AircraftSerialValidator.h"
+
+class AircraftSerial {
+private:
+    std::string _value;
+
+    explicit AircraftSerial(std::string value) : _value(std::move(value)) {}
+
+public:
+    AircraftSerial() = default;
+
+    static Result<AircraftSerial> create(const std::string& value) {
+        auto validationResult = AircraftSerialValidator::validate(value);
+        if (!validationResult.isValid()) {
+            return getValidationFailure<AircraftSerial>(validationResult);
+        }
+        return Success(AircraftSerial(value));
+    }
+
+    const std::string& value() const { return _value; }
+
+    bool operator==(const AircraftSerial& other) const {
+        return _value == other._value;
+    }
+
+    bool operator!=(const AircraftSerial& other) const {
+        return !(*this == other);
+    }
+
+    std::string toString() const {
+        return _value;
+    }
+};
+
+#endif 

@@ -1,58 +1,42 @@
-cmake_minimum_required(VERSION 3.10)
-project(AirlinesManagement)
+cmake_minimum_required(VERSION 3.14)
+project(OOP_Project)
 
-# C++ Standard
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Tự động tìm tất cả các file header và source
-file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
-file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
-file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/*.cpp)
-file(GLOB_RECURSE SERVICE_SOURCES ${CMAKE_SOURCE_DIR}/src/services/*.cpp)
-file(GLOB_RECURSE UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
+# Find GTest package
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
 
-# Thêm thư mục chứa file header
-include_directories(${CMAKE_SOURCE_DIR})
-
-# Tìm thư viện MySQL Connector/C++
-find_library(MYSQLCPPCONN_LIBRARY 
-    NAMES mysqlcppconnx libmysqlcppconnx
-    HINTS 
-        /usr/local/Cellar/mysql-connector-c++/9.3.0/lib
-        /usr/local/lib 
-        /usr/local/opt/mysql-connector-c++/lib
-        /opt/homebrew/lib
+# Add test executable
+add_executable(${PROJECT_NAME}_test
+    # src/tests/core/value_objects/BaseValueObjectTest.h
+    # src/tests/core/value_objects/AircraftSerialTest.cpp
+    # src/tests/core/value_objects/SeatClassMapTest.cpp
+    # src/tests/core/value_objects/PassportNumberTest.cpp
+    # src/tests/core/value_objects/FlightNumberTest.cpp
+    # src/tests/core/value_objects/RouteTest.cpp
+    # src/tests/core/value_objects/ScheduleTest.cpp
+    # src/tests/core/value_objects/SeatNumberTest.cpp
+    # src/tests/core/value_objects/TicketNumberTest.cpp
+    # src/tests/core/value_objects/PriceTest.cpp
+    
+    ## Entities Test
+    # src/tests/core/entities/AircraftTest.cpp
+    src/tests/core/entities/FlightTest.cpp
 )
 
-find_path(MYSQLCPPCONN_INCLUDE_DIR 
-    NAMES mysqlx/xdevapi.h
-    HINTS
-        /usr/local/Cellar/mysql-connector-c++/9.3.0/include
-        /usr/local/include 
-        /usr/local/opt/mysql-connector-c++/include
-        /opt/homebrew/include
+# Link test executable with GTest
+target_link_libraries(${PROJECT_NAME}_test
+    GTest::gtest_main
+    pthread
 )
 
-if(NOT MYSQLCPPCONN_LIBRARY)
-    message(FATAL_ERROR "Không tìm thấy thư viện MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
-endif()
-
-if(NOT MYSQLCPPCONN_INCLUDE_DIR)
-    message(FATAL_ERROR "Không tìm thấy thư mục include MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
-endif()
-
-include_directories(${MYSQLCPPCONN_INCLUDE_DIR})
-
-# Tạo executable
-add_executable(main
-    src/main.cpp
-    ${CORE_SOURCES}
-    ${DATABASE_SOURCES}
-    ${REPOSITORY_SOURCES}
-    ${UTILS_SOURCES}
-    ${SERVICE_SOURCES}
+# Include directories for tests
+target_include_directories(${PROJECT_NAME}_test PRIVATE
+    ${CMAKE_SOURCE_DIR}
 )
 
-# Liên kết thư viện MySQL Connector/C++
-target_link_libraries(main ${MYSQLCPPCONN_LIBRARY})
+# Enable testing
+enable_testing()
+add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test) 
