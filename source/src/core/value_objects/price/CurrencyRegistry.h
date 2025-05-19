@@ -9,8 +9,8 @@
 
 class CurrencyRegistry {
 private:
-    static std::unordered_map<std::string, std::string> _registry;
-    static bool _initialized;
+    inline static std::unordered_map<std::string, std::string> _registry;
+    inline static bool _initialized = false;
 
     // Initialize default currencies
     static void initialize() {
@@ -72,7 +72,7 @@ public:
 };
 
 // Initialize static members
-std::unordered_map<std::string, std::string> CurrencyRegistry::_registry;
-bool CurrencyRegistry::_initialized = false;
+// std::unordered_map<std::string, std::string> CurrencyRegistry::_registry;
+// bool CurrencyRegistry::_initialized = false;
 
 #endif 

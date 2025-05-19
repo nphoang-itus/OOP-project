@@ -57,8 +57,8 @@ private:
 // Parser factory to manage different parsing strategies
 class SeatClassMapParserFactory {
 private:
-    static std::unordered_map<std::string, std::shared_ptr<ISeatClassMapParserStrategy>> _strategies;
-    static bool _initialized;
+    inline static std::unordered_map<std::string, std::shared_ptr<ISeatClassMapParserStrategy>> _strategies;
+    inline static bool _initialized = false;
 
     static void initialize() {
         if (_initialized) return;
@@ -85,8 +85,8 @@ public:
 };
 
 // Initialize static members
-std::unordered_map<std::string, std::shared_ptr<ISeatClassMapParserStrategy>> SeatClassMapParserFactory::_strategies;
-bool SeatClassMapParserFactory::_initialized = false;
+// std::unordered_map<std::string, std::shared_ptr<ISeatClassMapParserStrategy>> SeatClassMapParserFactory::_strategies;
+// bool SeatClassMapParserFactory::_initialized = false;
 
 // Main parser class that uses strategies
 class SeatClassMapParser {

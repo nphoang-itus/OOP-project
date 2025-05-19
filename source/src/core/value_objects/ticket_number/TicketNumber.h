@@ -23,6 +23,8 @@ private:
     }
 
 public:
+    TicketNumber() = default;
+
     static Result<TicketNumber> create(const std::string& value) {
         return createInternal(value);
     }

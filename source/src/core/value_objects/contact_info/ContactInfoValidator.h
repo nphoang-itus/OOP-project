@@ -151,11 +151,11 @@ public:
 };
 
 // Initialize static regex patterns
-const std::regex ContactInfoValidator::EMAIL_REGEX(
+inline const std::regex ContactInfoValidator::EMAIL_REGEX(
     R"(^[a-zA-Z0-9](\.?[a-zA-Z0-9_\-+%])*@[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$)"
 );
 
-const std::regex ContactInfoValidator::PHONE_REGEX("^\\+?[0-9]{10,15}$");
-const std::regex ContactInfoValidator::ADDRESS_REGEX("^[a-zA-Z0-9\\s,.-]{0,100}$");
+inline const std::regex ContactInfoValidator::PHONE_REGEX("^\\+?[0-9]{10,15}$");
+inline const std::regex ContactInfoValidator::ADDRESS_REGEX("^[a-zA-Z0-9\\s,.-]{0,100}$");
 
 #endif 

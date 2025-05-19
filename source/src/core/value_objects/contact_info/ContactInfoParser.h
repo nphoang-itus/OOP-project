@@ -22,7 +22,7 @@ public:
 
 // Initialize static regex pattern
 // Format: email|phone|address
-const std::regex ContactInfoParser::CONTACT_INFO_REGEX(
+inline const std::regex ContactInfoParser::CONTACT_INFO_REGEX(
     "^([^|]+)\\|([^|]+)\\|(.*)$"
 );
 

@@ -53,8 +53,8 @@ namespace std {
 // Registry class to manage seat classes
 class SeatClassRegistry {
 private:
-    static std::unordered_map<std::string, SeatClass> _registry;
-    static bool _initialized;
+    inline static std::unordered_map<std::string, SeatClass> _registry;
+    inline static bool _initialized = false;
 
     // Initialize default seat classes
     static void initialize() {
@@ -107,9 +107,9 @@ public:
     }
 };
 
-// Initialize static members
-std::unordered_map<std::string, SeatClass> SeatClassRegistry::_registry;
-bool SeatClassRegistry::_initialized = false;
+// // Initialize static members
+// std::unordered_map<std::string, SeatClass> SeatClassRegistry::_registry;
+// bool SeatClassRegistry::_initialized = false;
 
 // Helper functions for backward compatibility
 inline std::string seatClassToString(const SeatClass& seatClass) {

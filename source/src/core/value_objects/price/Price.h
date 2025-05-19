@@ -49,6 +49,9 @@ private:
     }
 
 public:
+    // Price() : _amount(0.0), _currency("") {}
+    Price() = default;
+
     static Result<Price> create(const std::string& value) {
         return createInternal(value);    
     }
