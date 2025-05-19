@@ -23,7 +23,8 @@ add_executable(${PROJECT_NAME}_test
     
     ## Entities Test
     # src/tests/core/entities/AircraftTest.cpp
-    src/tests/core/entities/FlightTest.cpp
+    # src/tests/core/entities/FlightTest.cpp
+    src/tests/core/entities/PassengerTest.cpp
 )
 
 # Link test executable with GTest

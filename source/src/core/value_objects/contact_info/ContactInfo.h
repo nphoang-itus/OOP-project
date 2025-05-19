@@ -41,6 +41,8 @@ private:
     }
 
 public:
+    ContactInfo() = default;
+
     // Factory methods
     static Result<ContactInfo> create(const std::string& email, const std::string& phone, const std::string& address = "") {
         return createInternal(std::make_tuple(email, phone, address));

@@ -61,7 +61,8 @@ public:
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::make_unique<Passenger>(_name, _contactInfo, _passport);
+        // return std::make_unique<Passenger>(_name, _contactInfo, _passport);
+        return std::unique_ptr<Passenger>(new Passenger(_name, _contactInfo, _passport));
     }
 
     const Name& getName() const { return _name; }

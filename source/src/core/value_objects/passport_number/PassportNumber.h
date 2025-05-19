@@ -49,6 +49,8 @@ private:
     }
 
 public:
+    PassportNumber() = default;
+
     static Result<PassportNumber> create(const std::string& value) {
         return createInternal(value);    
     }
