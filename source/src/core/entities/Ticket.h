@@ -84,12 +84,21 @@ public:
     }
 
     // IEntity interface implementation
-    std::string getId() const override {
+    int getId() const override {
+        return _id;
+    }
+
+    std::string getStringId() const override {
         return _ticketNumber.toString();
     }
 
+    void setId(int id) override {
+        _id = id;
+    }
+
     std::string toString() const override {
-        return "Ticket{ticketNumber=" + _ticketNumber.toString() + 
+        return "Ticket{id=" + std::to_string(_id) + 
+               ", ticketNumber=" + _ticketNumber.toString() + 
                ", passenger=" + _passenger->toString() + 
                ", flight=" + _flight->toString() + 
                ", seatNumber=" + _seatNumber.toString() + 
@@ -98,13 +107,16 @@ public:
 
     bool equals(const IEntity& other) const override {
         if (const auto* ticket = dynamic_cast<const Ticket*>(&other)) {
-            return _ticketNumber == ticket->_ticketNumber;
+            return _id == ticket->_id;
         }
         return false;
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::unique_ptr<Ticket>(new Ticket(_ticketNumber, _passenger, _flight, _seatNumber));
+        auto clone = std::unique_ptr<Ticket>(new Ticket(_ticketNumber, _passenger, _flight, _seatNumber));
+        clone->_id = _id;
+        clone->_status = _status;
+        return clone;
     }
 
     // Getters

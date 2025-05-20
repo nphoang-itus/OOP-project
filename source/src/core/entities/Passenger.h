@@ -43,26 +43,36 @@ public:
         return Success(Passenger(name, *contactInfoResult, *passportResult));
     }
 
-    std::string getId() const override {
+    int getId() const override {
+        return _id;
+    }
+
+    std::string getStringId() const override {
         return _passport.toString();
     }
 
+    void setId(int id) override {
+        _id = id;
+    }
+
     std::string toString() const override {
-        return "Passenger{name=" + _name + 
+        return "Passenger{id=" + std::to_string(_id) + 
+               ", name=" + _name + 
                ", contactInfo=" + _contactInfo.toString() + 
                ", passport=" + _passport.toString() + "}";
     }
 
     bool equals(const IEntity& other) const override {
         if (const auto* passenger = dynamic_cast<const Passenger*>(&other)) {
-            return _passport == passenger->_passport;
+            return _id == passenger->_id;
         }
         return false;
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        // return std::make_unique<Passenger>(_name, _contactInfo, _passport);
-        return std::unique_ptr<Passenger>(new Passenger(_name, _contactInfo, _passport));
+        auto clone = std::unique_ptr<Passenger>(new Passenger(_name, _contactInfo, _passport));
+        clone->_id = _id;
+        return clone;
     }
 
     const Name& getName() const { return _name; }
