@@ -45,7 +45,7 @@ MySQLXResult::MySQLXResult(mysqlx::RowResult rowResult)
     }
 }
 
-bool MySQLXResult::next() {
+Result<bool> MySQLXResult::next() {
     auto logger = Logger::getInstance();
     
     try {
@@ -54,12 +54,12 @@ bool MySQLXResult::next() {
             _currentRow = _rowResult.fetchOne();
             if (_currentRow) {
                 logger->debug("Retrieved next row from result set");
-                return true;
+                return Success(true);
             }
             else {
                 _hasCurrentRow = false;
                 logger->debug("No more rows in result set");
-                return false;
+                return Success(false);
             }
         }
         else {
@@ -68,117 +68,117 @@ bool MySQLXResult::next() {
             if (_currentRow) {
                 _hasCurrentRow = true;
                 logger->debug("Retrieved first row from result set");
-                return true;
+                return Success(true);
             }
             else {
                 logger->debug("Result set is empty");
-                return false;
+                return Success(false);
             }
         }
     }
     catch (const mysqlx::Error& e) {
         logger->error("MySQL error in result set navigation: " + std::string(e.what()));
-        throw std::runtime_error("Error in result set: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Error in result set: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         logger->error("Unexpected error in result set navigation: " + std::string(e.what()));
-        throw std::runtime_error("Error in result set: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Error in result set: " + std::string(e.what())));
     }
 }
 
-std::string MySQLXResult::getString(const int& columnIndex) {
+Result<std::string> MySQLXResult::getString(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get string data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<std::string>(CoreError("No current row available"));
     }
     
     try {
         if (columnIndex < 0 || columnIndex >= static_cast<int>(_currentRow.colCount())) {
             logger->error("Column index out of range: " + std::to_string(columnIndex) + 
                         " (max: " + std::to_string(_currentRow.colCount() - 1) + ")");
-            throw std::out_of_range("Column index out of range");
+            return Failure<std::string>(CoreError("Column index out of range"));
         }
 
         std::string value = _currentRow[columnIndex].get<std::string>();
         logger->debug("Retrieved string value from column " + std::to_string(columnIndex));
-        return value;
+        return Success(std::move(value));
     }
     catch (const std::exception& e) {
         logger->error("Error getting string data from column " + std::to_string(columnIndex) + 
                     ": " + std::string(e.what()));
-        throw std::runtime_error("Error getting string data: " + std::string(e.what()));
+        return Failure<std::string>(CoreError("Error getting string data: " + std::string(e.what())));
     }
 }
 
-int MySQLXResult::getInt(const int& columnIndex) {
+Result<int> MySQLXResult::getInt(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get integer data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<int>(CoreError("No current row available"));
     }
     
     try {
         if (columnIndex < 0 || columnIndex >= static_cast<int>(_currentRow.colCount())) {
             logger->error("Column index out of range: " + std::to_string(columnIndex) + 
                         " (max: " + std::to_string(_currentRow.colCount() - 1) + ")");
-            throw std::out_of_range("Column index out of range");
+            return Failure<int>(CoreError("Column index out of range"));
         }
         
         int value = _currentRow[columnIndex].get<int>();
         logger->debug("Retrieved integer value " + std::to_string(value) + 
                     " from column " + std::to_string(columnIndex));
-        return value;
+        return Success(value);
     }
     catch (const std::exception& e) {
         logger->error("Error getting integer data from column " + std::to_string(columnIndex) + 
                     ": " + std::string(e.what()));
-        throw std::runtime_error("Error getting integer data: " + std::string(e.what()));
+        return Failure<int>(CoreError("Error getting integer data: " + std::string(e.what())));
     }
 }
 
-double MySQLXResult::getDouble(const int& columnIndex) {
+Result<double> MySQLXResult::getDouble(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get double data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<double>(CoreError("No current row available"));
     }
     
     try {
         if (columnIndex < 0 || columnIndex >= static_cast<int>(_currentRow.colCount())) {
             logger->error("Column index out of range: " + std::to_string(columnIndex) + 
                         " (max: " + std::to_string(_currentRow.colCount() - 1) + ")");
-            throw std::out_of_range("Column index out of range");
+            return Failure<double>(CoreError("Column index out of range"));
         }
         
         double value = _currentRow[columnIndex].get<double>();
         logger->debug("Retrieved double value " + std::to_string(value) + 
                     " from column " + std::to_string(columnIndex));
-        return value;
+        return Success(value);
     }
     catch (const std::exception& e) {
         logger->error("Error getting double data from column " + std::to_string(columnIndex) + 
                     ": " + std::string(e.what()));
-        throw std::runtime_error("Error getting double data: " + std::string(e.what()));
+        return Failure<double>(CoreError("Error getting double data: " + std::string(e.what())));
     }
 }
 
-std::tm MySQLXResult::getDateTime(const int& columnIndex) {
+Result<std::tm> MySQLXResult::getDateTime(const int& columnIndex) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
-        logger->error("Attempted to get double data without an active row");
-        throw std::runtime_error("No current row available");
+        logger->error("Attempted to get datetime data without an active row");
+        return Failure<std::tm>(CoreError("No current row available"));
     }
     
     try {
         if (columnIndex < 0 || columnIndex >= static_cast<int>(_currentRow.colCount())) {
             logger->error("Column index out of range: " + std::to_string(columnIndex) + 
                         " (max: " + std::to_string(_currentRow.colCount() - 1) + ")");
-            throw std::out_of_range("Column index out of range");
+            return Failure<std::tm>(CoreError("Column index out of range"));
         }
         
         // Lấy raw bytes
@@ -204,24 +204,24 @@ std::tm MySQLXResult::getDateTime(const int& columnIndex) {
         std::time_t time_c = std::mktime(&tm_time);
         if (time_c == -1) {
             logger->error("Failed to convert decoded datetime to std::time_t");
-            throw std::runtime_error("Invalid datetime components");
+            return Failure<std::tm>(CoreError("Invalid datetime components"));
         }
 
-        return tm_time;
+        return Success(std::move(tm_time));
     }
     catch (const std::exception& e) {
-        logger->error("Error getting double data from column " + std::to_string(columnIndex) + 
+        logger->error("Error getting datetime data from column " + std::to_string(columnIndex) + 
                     ": " + std::string(e.what()));
-        throw std::runtime_error("Error getting double data: " + std::string(e.what()));
+        return Failure<std::tm>(CoreError("Error getting datetime data: " + std::string(e.what())));
     }
 }
 
-std::string MySQLXResult::getString(const std::string& columnName) {
+Result<std::string> MySQLXResult::getString(const std::string& columnName) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get string data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<std::string>(CoreError("No current row available"));
     }
     
     try {
@@ -229,7 +229,7 @@ std::string MySQLXResult::getString(const std::string& columnName) {
         auto it = std::find(_columnNames.begin(), _columnNames.end(), columnName);
         if (it == _columnNames.end()) {
             logger->error("Column '" + columnName + "' not found in result set");
-            throw std::out_of_range("Column '" + columnName + "' not found");
+            return Failure<std::string>(CoreError("Column '" + columnName + "' not found"));
         }
         
         int index = std::distance(_columnNames.begin(), it);
@@ -239,16 +239,16 @@ std::string MySQLXResult::getString(const std::string& columnName) {
     catch (const std::exception& e) {
         logger->error("Error getting string data from column '" + columnName + "': " + 
                     std::string(e.what()));
-        throw std::runtime_error("Error getting string data: " + std::string(e.what()));
+        return Failure<std::string>(CoreError("Error getting string data: " + std::string(e.what())));
     }
 }
 
-int MySQLXResult::getInt(const std::string& columnName) {
+Result<int> MySQLXResult::getInt(const std::string& columnName) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get integer data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<int>(CoreError("No current row available"));
     }
     
     try {
@@ -256,7 +256,7 @@ int MySQLXResult::getInt(const std::string& columnName) {
         auto it = std::find(_columnNames.begin(), _columnNames.end(), columnName);
         if (it == _columnNames.end()) {
             logger->error("Column '" + columnName + "' not found in result set");
-            throw std::out_of_range("Column '" + columnName + "' not found");
+            return Failure<int>(CoreError("Column '" + columnName + "' not found"));
         }
         
         int index = std::distance(_columnNames.begin(), it);
@@ -266,16 +266,16 @@ int MySQLXResult::getInt(const std::string& columnName) {
     catch (const std::exception& e) {
         logger->error("Error getting integer data from column '" + columnName + "': " + 
                     std::string(e.what()));
-        throw std::runtime_error("Error getting integer data: " + std::string(e.what()));
+        return Failure<int>(CoreError("Error getting integer data: " + std::string(e.what())));
     }
 }
 
-double MySQLXResult::getDouble(const std::string& columnName) {
+Result<double> MySQLXResult::getDouble(const std::string& columnName) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get double data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<double>(CoreError("No current row available"));
     }
     
     try {
@@ -283,7 +283,7 @@ double MySQLXResult::getDouble(const std::string& columnName) {
         auto it = std::find(_columnNames.begin(), _columnNames.end(), columnName);
         if (it == _columnNames.end()) {
             logger->error("Column '" + columnName + "' not found in result set");
-            throw std::out_of_range("Column '" + columnName + "' not found");
+            return Failure<double>(CoreError("Column '" + columnName + "' not found"));
         }
         
         int index = std::distance(_columnNames.begin(), it);
@@ -293,16 +293,16 @@ double MySQLXResult::getDouble(const std::string& columnName) {
     catch (const std::exception& e) {
         logger->error("Error getting double data from column '" + columnName + "': " + 
                     std::string(e.what()));
-        throw std::runtime_error("Error getting double data: " + std::string(e.what()));
+        return Failure<double>(CoreError("Error getting double data: " + std::string(e.what())));
     }
 }
 
-std::tm MySQLXResult::getDateTime(const std::string& columnName) {
+Result<std::tm> MySQLXResult::getDateTime(const std::string& columnName) {
     auto logger = Logger::getInstance();
     
     if (!_hasCurrentRow) {
         logger->error("Attempted to get datetime data without an active row");
-        throw std::runtime_error("No current row available");
+        return Failure<std::tm>(CoreError("No current row available"));
     }
     
     try {
@@ -310,7 +310,7 @@ std::tm MySQLXResult::getDateTime(const std::string& columnName) {
         auto it = std::find(_columnNames.begin(), _columnNames.end(), columnName);
         if (it == _columnNames.end()) {
             logger->error("Column '" + columnName + "' not found in result set");
-            throw std::out_of_range("Column '" + columnName + "' not found");
+            return Failure<std::tm>(CoreError("Column '" + columnName + "' not found"));
         }
         
         int index = std::distance(_columnNames.begin(), it);
@@ -320,7 +320,7 @@ std::tm MySQLXResult::getDateTime(const std::string& columnName) {
     catch (const std::exception& e) {
         logger->error("Error getting datetime data from column '" + columnName + "': " + 
                     std::string(e.what()));
-        throw std::runtime_error("Error getting datetime data: " + std::string(e.what()));
+        return Failure<std::tm>(CoreError("Error getting datetime data: " + std::string(e.what())));
     }
 }
 
@@ -329,7 +329,6 @@ std::shared_ptr<MySQLXConnection> MySQLXConnection::getInstance() {
     if (_instance == nullptr) {
         std::lock_guard<std::mutex> lock(_instanceMutex);
         if (_instance == nullptr) {
-            // Tạo instance mới trong shared_ptr với deleter tùy chỉnh
             _instance = std::shared_ptr<MySQLXConnection>(new MySQLXConnection());
             auto logger = Logger::getInstance();
             logger->info("MySQLXConnection singleton instance created");
@@ -347,7 +346,7 @@ MySQLXConnection::~MySQLXConnection() {
     disconnect();
 }
 
-bool MySQLXConnection::connect( const std::string& host, const std::string& user, 
+Result<bool> MySQLXConnection::connect(const std::string& host, const std::string& user, 
                                 const std::string& password, const std::string& database, 
                                 const int& port) {
     auto logger = Logger::getInstance();
@@ -370,21 +369,21 @@ bool MySQLXConnection::connect( const std::string& host, const std::string& user
         _currentSchema = database;
         
         logger->info("Successfully connected to MySQL database '" + database + "'");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL connection error: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL connection error: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error while connecting to MySQL: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error while connecting to MySQL: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::disconnect() {
+VoidResult MySQLXConnection::disconnect() {
     std::lock_guard<std::mutex> lock(_mutex);
     
     try {
@@ -394,17 +393,16 @@ void MySQLXConnection::disconnect() {
         // Close the session
         if (_session) {
             _session.reset();
-        };
+        }
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
-        std::cerr << "Error during disconnect: " + std::string(e.what());
+        return Failure(CoreError("Error during disconnect: " + std::string(e.what())));
     }
-
-    // std::cout << "Disconnect server database\n";
 }
 
-bool MySQLXConnection::execute(const std::string& query) {
+Result<bool> MySQLXConnection::execute(const std::string& query) {
     auto logger = Logger::getInstance();
     logger->debug("Executing SQL: " + query);
     
@@ -414,26 +412,26 @@ bool MySQLXConnection::execute(const std::string& query) {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot execute SQL: No active database connection");
-            return false;
+            return Failure<bool>(CoreError("Not connected to database"));
         }
         
         _session->sql(query).execute();
         logger->debug("SQL executed successfully");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error executing SQL: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL error executing SQL: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error executing SQL: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error executing SQL: " + std::string(e.what())));
     }
 }
 
-std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQuery(const std::string& query) {
+Result<std::unique_ptr<IDatabaseResult>> MySQLXConnection::executeQuery(const std::string& query) {
     auto logger = Logger::getInstance();
     logger->debug("Executing query: " + query);
     
@@ -443,7 +441,7 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQuery(const std::strin
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Attempted to execute query without an active database connection");
-            return nullptr;
+            return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Not connected to database"));
         }
         
         mysqlx::SqlResult result = _session->sql(query).execute();
@@ -451,25 +449,25 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQuery(const std::strin
         
         // Check if this is a result-producing query
         if (result.hasData()) {
-            return std::make_unique<MySQLXResult>(std::move(result));
+            return Success(std::make_unique<MySQLXResult>(std::move(result)));
         } else {
             logger->debug("Query did not return any data");
-            return nullptr;
+            return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Query did not return any data"));
         }
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error executing query: " + std::string(e.what()));
-        return nullptr;
+        return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("MySQL error executing query: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error executing query: " + std::string(e.what()));
-        return nullptr;
+        return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Unexpected error executing query: " + std::string(e.what())));
     }
 }
 
-int MySQLXConnection::prepareStatement(const std::string& query) {
+Result<int> MySQLXConnection::prepareStatement(const std::string& query) {
     auto logger = Logger::getInstance();
     logger->debug("Preparing SQL statement: " + query);
     
@@ -479,7 +477,7 @@ int MySQLXConnection::prepareStatement(const std::string& query) {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot prepare statement: No active database connection");
-            return -1;
+            return Failure<int>(CoreError("Not connected to database"));
         }
         
         // Store prepared statement data
@@ -491,16 +489,16 @@ int MySQLXConnection::prepareStatement(const std::string& query) {
         _preparedStatements[id] = data;
         
         logger->debug("Statement prepared successfully with ID: " + std::to_string(id));
-        return id;
+        return Success(id);
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error preparing statement: " + std::string(e.what()));
-        return -1;
+        return Failure<int>(CoreError("Error preparing statement: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::setString(const int& statementId, const int& paramIndex, const std::string& value) {
+VoidResult MySQLXConnection::setString(const int& statementId, const int& paramIndex, const std::string& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding string parameter at index " + std::to_string(paramIndex) + 
                 " for statement ID " + std::to_string(statementId));
@@ -512,21 +510,23 @@ void MySQLXConnection::setString(const int& statementId, const int& paramIndex, 
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot bind parameter: Invalid statement ID " + std::to_string(statementId));
-            return;
+            return Failure(CoreError("Invalid statement ID"));
         }
         
         // Store parameter value
         PreparedStatementData& data = it->second;
         data.paramValues[paramIndex] = value;
         logger->debug("String parameter bound successfully");
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error binding string parameter: " + std::string(e.what()));
+        return Failure(CoreError("Error binding string parameter: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::setInt(const int& statementId, const int& paramIndex, const int& value) {
+VoidResult MySQLXConnection::setInt(const int& statementId, const int& paramIndex, const int& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding integer parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -538,21 +538,23 @@ void MySQLXConnection::setInt(const int& statementId, const int& paramIndex, con
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot bind parameter: Invalid statement ID " + std::to_string(statementId));
-            return;
+            return Failure(CoreError("Invalid statement ID"));
         }
         
         // Store parameter value
         PreparedStatementData& data = it->second;
         data.paramValues[paramIndex] = std::to_string(value);
         logger->debug("Integer parameter bound successfully");
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error binding integer parameter: " + std::string(e.what()));
+        return Failure(CoreError("Error binding integer parameter: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::setDouble(const int& statementId, const int& paramIndex, const double& value) {
+VoidResult MySQLXConnection::setDouble(const int& statementId, const int& paramIndex, const double& value) {
     auto logger = Logger::getInstance();
     logger->debug("Binding double parameter " + std::to_string(value) + " at index " + 
                 std::to_string(paramIndex) + " for statement ID " + std::to_string(statementId));
@@ -564,23 +566,25 @@ void MySQLXConnection::setDouble(const int& statementId, const int& paramIndex, 
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot bind parameter: Invalid statement ID " + std::to_string(statementId));
-            return;
+            return Failure(CoreError("Invalid statement ID"));
         }
         
         // Store parameter value
         PreparedStatementData& data = it->second;
         data.paramValues[paramIndex] = std::to_string(value);
         logger->debug("Double parameter bound successfully");
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error binding double parameter: " + std::string(e.what()));
+        return Failure(CoreError("Error binding double parameter: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) {
+VoidResult MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) {
     auto logger = Logger::getInstance();
-    logger->debug(  "Binding datetime parameter at index " + std::to_string(paramIndex) +
+    logger->debug("Binding datetime parameter at index " + std::to_string(paramIndex) +
                     " for statement ID " + std::to_string(statementId));
     
     try {
@@ -590,7 +594,7 @@ void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot bind parameter: Invalid statement ID " + std::to_string(statementId));
-            return;
+            return Failure(CoreError("Invalid statement ID"));
         }
 
         // Format thành chuỗi "YYYY-MM-DD HH:MM:SS"
@@ -602,63 +606,71 @@ void MySQLXConnection::setDateTime(const int& statementId, const int& paramIndex
         PreparedStatementData& data = it->second;
         data.paramValues[paramIndex] = formatted;
         logger->debug("Datetime parameter bound successfully as string: " + formatted);
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error binding datetime parameter: " + std::string(e.what()));
+        return Failure(CoreError("Error binding datetime parameter: " + std::string(e.what())));
     }
 }
 
-std::string MySQLXConnection::buildPreparedStatement(const PreparedStatementData& data) {
+Result<std::string> MySQLXConnection::buildPreparedStatement(const PreparedStatementData& data) {
     auto logger = Logger::getInstance();
     std::string query = data.query;
     logger->debug("Building prepared statement from: " + query);
     
-    // Đếm số lượng parameters (dấu ?) trong query
-    int questionMarkCount = std::count(query.begin(), query.end(), '?');
-    int maxParamIndex = 0;
-    
-    for (const auto& param : data.paramValues) {
-        maxParamIndex = std::max(maxParamIndex, param.first);
-    }
-    
-    if (maxParamIndex > questionMarkCount) {
-        logger->warning("Query has fewer placeholders than parameters provided");
-    }
-    
-    // Replace ? with actual values từ cuối lên đầu để tránh việc thay đổi chỉ số
-    for (int i = maxParamIndex; i >= 1; i--) {
-        auto paramIt = data.paramValues.find(i);
-        if (paramIt == data.paramValues.end()) {
-            logger->warning("Missing parameter for index " + std::to_string(i));
-            continue;
+    try {
+        // Đếm số lượng parameters (dấu ?) trong query
+        int questionMarkCount = std::count(query.begin(), query.end(), '?');
+        int maxParamIndex = 0;
+        
+        for (const auto& param : data.paramValues) {
+            maxParamIndex = std::max(maxParamIndex, param.first);
         }
         
-        std::string value = paramIt->second;
+        if (maxParamIndex > questionMarkCount) {
+            logger->warning("Query has fewer placeholders than parameters provided");
+        }
         
-        // Tìm dấu ? thứ i trong query
-        size_t pos = 0;
-        for (int j = 0; j < i; j++) {
-            pos = query.find('?', pos);
-            if (pos == std::string::npos) {
-                break;
+        // Replace ? with actual values từ cuối lên đầu để tránh việc thay đổi chỉ số
+        for (int i = maxParamIndex; i >= 1; i--) {
+            auto paramIt = data.paramValues.find(i);
+            if (paramIt == data.paramValues.end()) {
+                logger->warning("Missing parameter for index " + std::to_string(i));
+                continue;
             }
-            if (j < i - 1) {
-                pos++;
+            
+            std::string value = paramIt->second;
+            
+            // Tìm dấu ? thứ i trong query
+            size_t pos = 0;
+            for (int j = 0; j < i; j++) {
+                pos = query.find('?', pos);
+                if (pos == std::string::npos) {
+                    break;
+                }
+                if (j < i - 1) {
+                    pos++;
+                }
+            }
+            
+            if (pos != std::string::npos) {
+                // Thay thế ? với giá trị được quote
+                query.replace(pos, 1, "'" + value + "'");
             }
         }
         
-        if (pos != std::string::npos) {
-            // Thay thế ? với giá trị được quote
-            query.replace(pos, 1, "'" + value + "'");
-        }
+        logger->debug("Built final query: " + query);
+        return Success(query);
     }
-    
-    logger->debug("Built final query: " + query);
-    return query;
+    catch (const std::exception& e) {
+        logger->error("Error building prepared statement: " + std::string(e.what()));
+        return Failure<std::string>(CoreError("Error building prepared statement: " + std::string(e.what())));
+    }
 }
 
-bool MySQLXConnection::executeStatement(const int& statementId) {
+Result<bool> MySQLXConnection::executeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing prepared statement with ID: " + std::to_string(statementId));
     
@@ -669,34 +681,39 @@ bool MySQLXConnection::executeStatement(const int& statementId) {
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot execute statement: Invalid statement ID " + std::to_string(statementId));
-            return false;
+            return Failure<bool>(CoreError("Invalid statement ID"));
         }
         
         const PreparedStatementData& data = it->second;
         
         // Xây dựng câu lệnh SQL cuối cùng từ prepared statement
-        std::string finalQuery = buildPreparedStatement(data);
+        auto finalQueryResult = buildPreparedStatement(data);
+        if (!finalQueryResult) {
+            return Failure<bool>(finalQueryResult.error());
+        }
+        
+        std::string finalQuery = finalQueryResult.value();
         logger->debug("Executing prepared statement: " + finalQuery);
         
         // Thực thi câu lệnh SQL đã xây dựng trực tiếp
         _session->sql(finalQuery).execute();
         
         logger->debug("Statement executed successfully");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error executing statement: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL error executing statement: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error executing statement: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error executing statement: " + std::string(e.what())));
     }
 }
 
-std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(const int& statementId) {
+Result<std::unique_ptr<IDatabaseResult>> MySQLXConnection::executeQueryStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Executing query prepared statement with ID: " + std::to_string(statementId));
     
@@ -707,11 +724,16 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(const i
         if (it == _preparedStatements.end()) {
             _lastError = "Invalid statement ID";
             logger->error("Cannot execute query statement: Invalid statement ID " + std::to_string(statementId));
-            return nullptr;
+            return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Invalid statement ID"));
         }
         
         // Build the statement with parameters
-        std::string finalQuery = buildPreparedStatement(it->second);
+        auto finalQueryResult = buildPreparedStatement(it->second);
+        if (!finalQueryResult) {
+            return Failure<std::unique_ptr<IDatabaseResult>>(finalQueryResult.error());
+        }
+        
+        std::string finalQuery = finalQueryResult.value();
         logger->debug("Executing prepared query: " + finalQuery);
         
         // Execute the statement as a query
@@ -720,25 +742,25 @@ std::unique_ptr<IDatabaseResult> MySQLXConnection::executeQueryStatement(const i
         
         // Check if this is a result-producing query
         if (result.hasData()) {
-            return std::make_unique<MySQLXResult>(std::move(result));
+            return Success(std::make_unique<MySQLXResult>(std::move(result)));
         } else {
             logger->debug("Query did not return any data");
-            return nullptr;
+            return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Query did not return any data"));
         }
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error executing query statement: " + std::string(e.what()));
-        return nullptr;
+        return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("MySQL error executing query statement: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error executing query statement: " + std::string(e.what()));
-        return nullptr;
+        return Failure<std::unique_ptr<IDatabaseResult>>(CoreError("Unexpected error executing query statement: " + std::string(e.what())));
     }
 }
 
-void MySQLXConnection::freeStatement(const int& statementId) {
+VoidResult MySQLXConnection::freeStatement(const int& statementId) {
     auto logger = Logger::getInstance();
     logger->debug("Freeing prepared statement with ID: " + std::to_string(statementId));
     
@@ -752,14 +774,16 @@ void MySQLXConnection::freeStatement(const int& statementId) {
             _preparedStatements.erase(statementId);
             logger->debug("Statement freed successfully");
         }
+        return Success();
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Error freeing statement: " + std::string(e.what()));
+        return Failure(CoreError("Error freeing statement: " + std::string(e.what())));
     }
 }
 
-int MySQLXConnection::getLastInsertId() {
+Result<int> MySQLXConnection::getLastInsertId() {
     auto logger = Logger::getInstance();
     logger->debug("Getting last insert ID");
     
@@ -769,7 +793,7 @@ int MySQLXConnection::getLastInsertId() {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot get last insert ID: No active database connection");
-            return -1;
+            return Failure<int>(CoreError("Not connected to database"));
         }
         
         // Execute query to get last insert ID
@@ -780,34 +804,34 @@ int MySQLXConnection::getLastInsertId() {
             if (row) {
                 int lastId = row[0].get<int>();
                 logger->debug("Last insert ID: " + std::to_string(lastId));
-                return lastId;
+                return Success(lastId);
             }
         }
         
         logger->warning("No last insert ID available");
-        return -1;
+        return Failure<int>(CoreError("No last insert ID available"));
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error getting last insert ID: " + std::string(e.what()));
-        return -1;
+        return Failure<int>(CoreError("MySQL error getting last insert ID: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error getting last insert ID: " + std::string(e.what()));
-        return -1;
+        return Failure<int>(CoreError("Unexpected error getting last insert ID: " + std::string(e.what())));
     }
 }
 
-bool MySQLXConnection::isConnected() const {
-    return _session != nullptr;
+Result<bool> MySQLXConnection::isConnected() const {
+    return Success(_session != nullptr);
 }
 
-std::string MySQLXConnection::getLastError() const {
-    return _lastError;
+Result<std::string> MySQLXConnection::getLastError() const {
+    return Success(_lastError);
 }
 
-bool MySQLXConnection::beginTransaction() {
+Result<bool> MySQLXConnection::beginTransaction() {
     auto logger = Logger::getInstance();
     logger->debug("Beginning database transaction");
     
@@ -817,26 +841,29 @@ bool MySQLXConnection::beginTransaction() {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot begin transaction: No active database connection");
-            return false;
+            return Failure<bool>(CoreError("Not connected to database"));
         }
         
-        _session->startTransaction();
+        // Set transaction isolation level to READ COMMITTED
+        _session->sql("SET TRANSACTION ISOLATION LEVEL READ COMMITTED").execute();
+        // Start transaction
+        _session->sql("START TRANSACTION").execute();
         logger->debug("Transaction started successfully");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error starting transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL error starting transaction: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error starting transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error starting transaction: " + std::string(e.what())));
     }
 }
 
-bool MySQLXConnection::commitTransaction() {
+Result<bool> MySQLXConnection::commitTransaction() {
     auto logger = Logger::getInstance();
     logger->debug("Committing database transaction");
     
@@ -846,26 +873,29 @@ bool MySQLXConnection::commitTransaction() {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot commit transaction: No active database connection");
-            return false;
+            return Failure<bool>(CoreError("Not connected to database"));
         }
         
-        _session->commit();
+        // Commit transaction
+        _session->sql("COMMIT").execute();
+        // Reset transaction isolation level
+        _session->sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ").execute();
         logger->debug("Transaction committed successfully");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error committing transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL error committing transaction: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error committing transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error committing transaction: " + std::string(e.what())));
     }
 }
 
-bool MySQLXConnection::rollbackTransaction() {
+Result<bool> MySQLXConnection::rollbackTransaction() {
     auto logger = Logger::getInstance();
     logger->debug("Rolling back database transaction");
     
@@ -875,21 +905,24 @@ bool MySQLXConnection::rollbackTransaction() {
         if (!_session) {
             _lastError = "Not connected to database";
             logger->error("Cannot rollback transaction: No active database connection");
-            return false;
+            return Failure<bool>(CoreError("Not connected to database"));
         }
         
-        _session->rollback();
+        // Rollback transaction
+        _session->sql("ROLLBACK").execute();
+        // Reset transaction isolation level
+        _session->sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ").execute();
         logger->debug("Transaction rolled back successfully");
-        return true;
+        return Success(true);
     }
     catch (const mysqlx::Error& e) {
         _lastError = e.what();
         logger->error("MySQL error rolling back transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("MySQL error rolling back transaction: " + std::string(e.what())));
     }
     catch (const std::exception& e) {
         _lastError = e.what();
         logger->error("Unexpected error rolling back transaction: " + std::string(e.what()));
-        return false;
+        return Failure<bool>(CoreError("Unexpected error rolling back transaction: " + std::string(e.what())));
     }
 }

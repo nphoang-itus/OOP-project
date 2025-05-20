@@ -15,7 +15,7 @@
 #ifndef MYSQLX_CONNECTION_H
 #define MYSQLX_CONNECTION_H
 
-#include "DatabaseConnection.h"
+#include "InterfaceDatabaseConnection.h"
 #include <mysqlx/xdevapi.h>
 #include <memory>
 #include <unordered_map>
@@ -49,16 +49,16 @@ public:
 
     ~MySQLXResult() override = default;
 
-    bool next() override;
-    std::string getString(const int& columnIndex) override;
-    int getInt(const int& columnIndex) override;
-    double getDouble(const int& columnIndex) override;
-    std::tm getDateTime(const int& columnIndex) override;
+    Result<bool> next() override;
+    Result<std::string> getString(const int& columnIndex) override;
+    Result<int> getInt(const int& columnIndex) override;
+    Result<double> getDouble(const int& columnIndex) override;
+    Result<std::tm> getDateTime(const int& columnIndex) override;
 
-    std::string getString(const std::string& columnName) override;
-    int getInt(const std::string& columnName) override;
-    double getDouble(const std::string& columnName) override;
-    std::tm getDateTime(const std::string& columnName) override;
+    Result<std::string> getString(const std::string& columnName) override;
+    Result<int> getInt(const std::string& columnName) override;
+    Result<double> getDouble(const std::string& columnName) override;
+    Result<std::tm> getDateTime(const std::string& columnName) override;
 };
 
 /**
@@ -94,9 +94,9 @@ private:
     /**
      * @brief Xây dựng chuỗi SQL từ dữ liệu statement và giá trị tham số.
      * @param data Dữ liệu statement
-     * @return Chuỗi SQL đầy đủ đã thay thế tham số
+     * @return Result<std::string> Chuỗi SQL đầy đủ đã thay thế tham số
      */
-    std::string buildPreparedStatement(const PreparedStatementData& data);
+    Result<std::string> buildPreparedStatement(const PreparedStatementData& data);
 
     /**
      * @brief Hàm khởi tạo theo mẫu Singleton: Không cho tự phép tạo đối tượng.
@@ -113,32 +113,32 @@ public:
 
     static std::shared_ptr<MySQLXConnection> getInstance();
 
-    bool connect(const std::string& host, const std::string& user,
+    Result<bool> connect(const std::string& host, const std::string& user,
                  const std::string& password, const std::string& database,
                  const int& port = 33060) override;
 
-    void disconnect() override;
+    VoidResult disconnect() override;
 
-    bool execute(const std::string& query) override;
-    std::unique_ptr<IDatabaseResult> executeQuery(const std::string& query) override;
+    Result<bool> execute(const std::string& query) override;
+    Result<std::unique_ptr<IDatabaseResult>> executeQuery(const std::string& query) override;
 
-    int prepareStatement(const std::string& query) override;
-    void setString(const int& statementId, const int& paramIndex, const std::string& value) override;
-    void setInt(const int& statementId, const int& paramIndex, const int& value) override;
-    void setDouble(const int& statementId, const int& paramIndex, const double& value) override;
-    void setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) override;
+    Result<int> prepareStatement(const std::string& query) override;
+    VoidResult setString(const int& statementId, const int& paramIndex, const std::string& value) override;
+    VoidResult setInt(const int& statementId, const int& paramIndex, const int& value) override;
+    VoidResult setDouble(const int& statementId, const int& paramIndex, const double& value) override;
+    VoidResult setDateTime(const int& statementId, const int& paramIndex, const std::tm& value) override;
 
-    bool executeStatement(const int& statementId) override;
-    std::unique_ptr<IDatabaseResult> executeQueryStatement(const int& statementId) override;
-    void freeStatement(const int& statementId) override;
+    Result<bool> executeStatement(const int& statementId) override;
+    Result<std::unique_ptr<IDatabaseResult>> executeQueryStatement(const int& statementId) override;
+    VoidResult freeStatement(const int& statementId) override;
 
-    int getLastInsertId() override;
-    bool isConnected() const override;
-    std::string getLastError() const override;
+    Result<int> getLastInsertId() override;
+    Result<bool> isConnected() const override;
+    Result<std::string> getLastError() const override;
 
-    bool beginTransaction() override;
-    bool commitTransaction() override;
-    bool rollbackTransaction() override;
+    Result<bool> beginTransaction() override;
+    Result<bool> commitTransaction() override;
+    Result<bool> rollbackTransaction() override;
 };
 
 #endif // MYSQLX_CONNECTION_H

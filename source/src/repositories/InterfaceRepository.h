@@ -36,11 +36,6 @@ template<typename T, typename IdType = int>
 class IRepository : public IReadRepository<T, IdType>, public IWriteRepository<T, IdType> {
 public:
     virtual ~IRepository() = default;
-    
-    // Additional methods for transactions if needed
-    virtual Result<bool> beginTransaction() = 0;
-    virtual Result<bool> commitTransaction() = 0;
-    virtual Result<bool> rollbackTransaction() = 0;
 };
 
 #endif // INTERFACE_REPOSITORY_H
