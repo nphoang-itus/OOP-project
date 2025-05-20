@@ -44,25 +44,36 @@ public:
         return Success(Aircraft(*serialResult, model, *seatLayoutResult));
     }
     
-    std::string getId() const override {
+    int getId() const override {
+        return _id;
+    }
+
+    std::string getStringId() const override {
         return _serial.toString();
     }
 
+    void setId(int id) override {
+        _id = id;
+    }
+
     std::string toString() const override {
-        return "Aircraft{serial=" + _serial.toString() + 
+        return "Aircraft{id=" + std::to_string(_id) + 
+               ", serial=" + _serial.toString() + 
                ", model=" + _model + 
                ", seatLayout=" + _seatLayout.toString() + "}";
     }
 
     bool equals(const IEntity& other) const override {
         if (const auto* aircraft = dynamic_cast<const Aircraft*>(&other)) {
-            return _serial == aircraft->_serial;
+            return _id == aircraft->_id;
         }
         return false;
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        return std::unique_ptr<Aircraft>(new Aircraft(_serial, _model, _seatLayout));
+        auto clone = std::unique_ptr<Aircraft>(new Aircraft(_serial, _model, _seatLayout));
+        clone->_id = _id;
+        return clone;
     }
 
     const AircraftSerial& getSerial() const { return _serial; }
