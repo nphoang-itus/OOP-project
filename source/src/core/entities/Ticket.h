@@ -8,6 +8,7 @@
 #include "../value_objects/seat_number/SeatNumber.h"
 #include "../value_objects/ticket_status/TicketStatus.h"
 #include "../value_objects/flight_status/FlightStatus.h"
+#include "../value_objects/price/Price.h"
 #include "../exceptions/Result.h"
 #include <memory>
 #include <string>
@@ -19,32 +20,34 @@ protected:
     std::shared_ptr<Passenger> _passenger;
     std::shared_ptr<Flight> _flight;
     SeatNumber _seatNumber;
+    Price _price;
     TicketStatus _status;
 
     Ticket(TicketNumber ticketNumber, std::shared_ptr<Passenger> passenger,
-           std::shared_ptr<Flight> flight, SeatNumber seatNumber)
+           std::shared_ptr<Flight> flight, SeatNumber seatNumber, Price price)
         : _ticketNumber(std::move(ticketNumber))
         , _passenger(std::move(passenger))
         , _flight(std::move(flight))
         , _seatNumber(std::move(seatNumber))
+        , _price(std::move(price))
         , _status(TicketStatus::PENDING) {
     }
 
 public:
     // Factory methods
     static Result<Ticket> create(const TicketNumber& ticketNumber, std::shared_ptr<Passenger> passenger,
-                               std::shared_ptr<Flight> flight, const SeatNumber& seatNumber) {
+                               std::shared_ptr<Flight> flight, const SeatNumber& seatNumber, const Price& price) {
         if (!passenger) {
             return Failure<Ticket>(CoreError("Passenger cannot be null", "INVALID_PASSENGER"));
         }
         if (!flight) {
             return Failure<Ticket>(CoreError("Flight cannot be null", "INVALID_FLIGHT"));
         }
-        return Success(Ticket(ticketNumber, passenger, flight, seatNumber));
+        return Success(Ticket(ticketNumber, passenger, flight, seatNumber, price));
     }
 
     static Result<Ticket> create(const std::string& ticketNumber, std::shared_ptr<Passenger> passenger,
-                               std::shared_ptr<Flight> flight, const std::string& seatNumber) {
+                               std::shared_ptr<Flight> flight, const std::string& seatNumber, const std::string& price) {
         auto ticketNumberResult = TicketNumber::create(ticketNumber);
         if (!ticketNumberResult) {
             return Failure<Ticket>(CoreError("Invalid ticket number: " + ticketNumberResult.error().message, "INVALID_TICKET_NUMBER"));
@@ -63,7 +66,12 @@ public:
             return Failure<Ticket>(CoreError("Invalid seat number: " + seatNumberResult.error().message, "INVALID_SEAT_NUMBER"));
         }
 
-        return Success(Ticket(*ticketNumberResult, passenger, flight, *seatNumberResult));
+        auto priceResult = Price::create(price);
+        if (!priceResult) {
+            return Failure<Ticket>(CoreError("Invalid price: " + priceResult.error().message, "INVALID_PRICE"));
+        }
+
+        return Success(Ticket(*ticketNumberResult, passenger, flight, *seatNumberResult, *priceResult));
     }
 
     // Status management methods
@@ -102,6 +110,7 @@ public:
                ", passenger=" + _passenger->toString() + 
                ", flight=" + _flight->toString() + 
                ", seatNumber=" + _seatNumber.toString() + 
+               ", price=" + _price.toString() + 
                ", status=" + getStatusString() + "}";
     }
 
@@ -113,7 +122,7 @@ public:
     }
 
     std::unique_ptr<IEntity> clone() const override {
-        auto clone = std::unique_ptr<Ticket>(new Ticket(_ticketNumber, _passenger, _flight, _seatNumber));
+        auto clone = std::unique_ptr<Ticket>(new Ticket(_ticketNumber, _passenger, _flight, _seatNumber, _price));
         clone->_id = _id;
         clone->_status = _status;
         return clone;
@@ -124,6 +133,7 @@ public:
     const std::shared_ptr<Passenger>& getPassenger() const { return _passenger; }
     const std::shared_ptr<Flight>& getFlight() const { return _flight; }
     const SeatNumber& getSeatNumber() const { return _seatNumber; }
+    const Price& getPrice() const { return _price; }
 
     // Business logic methods
     bool canBeCancelled() const {
