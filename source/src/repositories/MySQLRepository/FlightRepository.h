@@ -33,6 +33,10 @@ public:
     Result<Flight> create(const Flight& flight) override;
     Result<Flight> update(const Flight& flight) override;
     Result<bool> deleteById(const int& id) override;
+
+    // Phương thức riêng của FLight
+    Result<Flight> findByFlightNumber(const FlightNumber& number);
+    Result<bool> existsFlight(const FlightNumber& number);
 };
 
 #endif // FLIGHT_REPOSITORY_H 

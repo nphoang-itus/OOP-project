@@ -533,4 +533,156 @@ Flight FlightRepository::mapRowToFlight(const std::map<std::string, std::string>
     flight.setId(id);
     flight.setStatus(FlightStatusUtil::fromString(row.at(ColumnName[STATUS])));
     return flight;
-} 
+}
+
+Result<Flight> FlightRepository::findByFlightNumber(const FlightNumber& number) {
+    try {
+        if (_logger) _logger->debug("Finding flight by flight number: " + number.toString());
+
+        auto prepareResult = _connection->prepareStatement(FIND_BY_NUMBER_QUERY);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for finding flight by flight number: " + number.toString());
+            return Failure<Flight>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, number.value());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for finding flight by flight number: " + number.toString());
+            return Failure<Flight>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for finding flight by flight number: " + number.toString());
+            return Failure<Flight>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        if (!dbResult->next().value()) {
+            if (_logger) _logger->warning("Flight not found with flight number: " + number.toString());
+            return Failure<Flight>(CoreError("Flight not found with flight number: " + number.toString()));
+        }
+
+        // Get flight data
+        auto idResult = dbResult->getInt(ColumnName[ID]);
+        auto flightNumberResult = dbResult->getString(ColumnName[FLIGHT_NUMBER]);
+        auto departureCodeResult = dbResult->getString(ColumnName[DEPARTURE_CODE]);
+        auto departureNameResult = dbResult->getString(ColumnName[DEPARTURE_NAME]);
+        auto arrivalCodeResult = dbResult->getString(ColumnName[ARRIVAL_CODE]);
+        auto arrivalNameResult = dbResult->getString(ColumnName[ARRIVAL_NAME]);
+        auto aircraftIdResult = dbResult->getInt(ColumnName[AIRCRAFT_ID]);
+        auto departureTimeResult = dbResult->getDateTime(ColumnName[DEPARTURE_TIME]);
+        auto arrivalTimeResult = dbResult->getDateTime(ColumnName[ARRIVAL_TIME]);
+        auto statusResult = dbResult->getString(ColumnName[STATUS]);
+
+        // Get aircraft data
+        auto serialNumberResult = dbResult->getString("serial_number");
+        auto modelResult = dbResult->getString("model");
+        auto economySeatsResult = dbResult->getInt("economy_seats");
+        auto businessSeatsResult = dbResult->getInt("business_seats");
+        auto firstSeatsResult = dbResult->getInt("first_seats");
+
+        if (!idResult || !flightNumberResult || !departureCodeResult || !departureNameResult || 
+            !arrivalCodeResult || !arrivalNameResult || !aircraftIdResult || 
+            !departureTimeResult || !arrivalTimeResult || !statusResult ||
+            !serialNumberResult || !modelResult || !economySeatsResult || !businessSeatsResult || !firstSeatsResult) {
+            if (_logger) _logger->error("Failed to get flight data for flight number: " + number.toString());
+            return Failure<Flight>(CoreError("Failed to get flight data", "DATA_ERROR"));
+        }
+
+        // Create route string Ho Chi Minh City(SGN)-Ha Noi(HAN)
+        std::stringstream routeStr;
+        routeStr << std::format (
+            "{}({})-{}({})",
+            departureNameResult.value(), departureCodeResult.value(),
+            arrivalNameResult.value(), arrivalCodeResult.value()
+        );
+
+        // Create schedule string
+        std::stringstream scheduleStr;
+        scheduleStr << std::put_time(&departureTimeResult.value(), "%Y-%m-%d %H:%M") << "|"
+                   << std::put_time(&arrivalTimeResult.value(), "%Y-%m-%d %H:%M");
+
+        // Create aircraft
+        std::stringstream seatLayoutStr;
+        if (economySeatsResult.value() > 0) seatLayoutStr << "E:" << economySeatsResult.value();
+        if (businessSeatsResult.value() > 0) {
+            if (!seatLayoutStr.str().empty()) seatLayoutStr << ",";
+            seatLayoutStr << "B:" << businessSeatsResult.value();
+        }
+        if (firstSeatsResult.value() > 0) {
+            if (!seatLayoutStr.str().empty()) seatLayoutStr << ",";
+            seatLayoutStr << "F:" << firstSeatsResult.value();
+        }
+
+        auto serial = AircraftSerial::create(serialNumberResult.value()).value();
+        auto seatLayout = SeatClassMap::create(seatLayoutStr.str()).value();
+        auto aircraft = Aircraft::create(serial, modelResult.value(), seatLayout).value();
+        aircraft.setId(aircraftIdResult.value());
+
+        // Create flight
+        auto flightNumber = FlightNumber::create(flightNumberResult.value()).value();
+        auto route = Route::create(routeStr.str()).value();
+        auto schedule = Schedule::create(scheduleStr.str()).value();
+        auto flight = Flight::create(flightNumber, route, schedule, std::make_shared<Aircraft>(aircraft)).value();
+        flight.setId(idResult.value());
+        flight.setStatus(FlightStatusUtil::fromString(statusResult.value()));
+
+        if (_logger) _logger->debug("Successfully found flight with flight number: " + number.toString());
+        return Success(flight);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error finding flight by id: " + std::string(e.what()));
+        return Failure<Flight>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<bool> FlightRepository::existsFlight(const FlightNumber& number) {
+    try {
+        if (_logger) _logger->debug("Checking existence of flight with flight number: " + number.toString());
+
+        auto prepareResult = _connection->prepareStatement(EXISTS_QUERY);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for checking flight existence");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, number.value());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for checking flight existence");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for checking flight existence");
+            return Failure<bool>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        if (!dbResult->next()) {
+            if (_logger) _logger->debug("Flight not found with flight number: " + number.toString());
+            return Success(false);
+        }
+
+        auto countResult = dbResult->getInt(0);  // COUNT(*) is always the first column (index 0)
+        if (!countResult) {
+            if (_logger) _logger->error("Failed to get count for flight existence check");
+            return Failure<bool>(CoreError("Failed to get count", "COUNT_FAILED"));
+        }
+
+        bool exists = countResult.value() > 0;
+        if (_logger) _logger->debug("Flight " + number.value() + " " + (exists ? "exists" : "does not exist"));
+        return Success(exists);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error checking flight existence: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
