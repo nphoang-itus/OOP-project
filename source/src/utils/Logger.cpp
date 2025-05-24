@@ -66,7 +66,10 @@ FileLogHandler::FileLogHandler(const std::string& filename) {
         }
         
         // Mở file log
-        _logFile.open(filename, std::ios::out | std::ios::app);
+        // _logFile.open(filename, std::ios::out | std::ios::app);
+
+        // Cấu hình 1 file log duy nhất
+        _logFile.open(filename, std::ios::out);
         
         if (!_logFile.is_open()) {
             throw std::runtime_error("Failed to open log file: " + filename);
@@ -130,9 +133,12 @@ Logger::Logger() : _minLevel(LogLevel::INFO) {
         std::ostringstream filename;
         filename << "logs/airlines_";
         
-        char timebuf[64];
-        std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d_%H-%M-%S", &tm_buf);
-        filename << timebuf << ".log";
+        // char timebuf[64];
+        // std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d_%H-%M-%S", &tm_buf);
+        // filename << timebuf << ".log";
+
+        // Cấu hình chỉ có 1 file log
+        filename << "logging.log";
         
         // Thêm FileLogHandler
         _handlers.push_back(std::make_shared<FileLogHandler>(filename.str()));

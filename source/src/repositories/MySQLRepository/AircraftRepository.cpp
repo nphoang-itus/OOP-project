@@ -420,4 +420,176 @@ Aircraft AircraftRepository::mapRowToAircraft(const std::map<std::string, std::s
     auto aircraft = Aircraft::create(serial, model, seatLayout).value();
     aircraft.setId(id);
     return aircraft;
-} 
+}
+
+Result<Aircraft> AircraftRepository::findBySerialNumber(const AircraftSerial& serial) {
+    try {
+        if (_logger) _logger->debug("Finding aircraft by serial number: " + serial.toString());
+
+        auto prepareResult = _connection->prepareStatement(FIND_BY_SERIAL_NUMBER);
+
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for finding aircraft by serial number: " + serial.toString());
+            return Failure<Aircraft>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, serial.value());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for finding aircraft by serial number: " + serial.toString());
+            return Failure<Aircraft>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for finding aircraft by serial number: " + serial.toString());
+            return Failure<Aircraft>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        if (!dbResult->next().value()) {
+            if (_logger) _logger->warning("Aircraft not found with serial number: " + serial.toString());
+            return Failure<Aircraft>(CoreError("Aircraft not found with serial number: " + serial.toString(), "NOT_FOUND"));
+        }
+
+        auto idResult = dbResult->getInt(ColumnName[ID]);
+        auto serialResult = dbResult->getString(ColumnName[SERIAL]);
+        auto modelResult = dbResult->getString(ColumnName[MODEL]);
+        auto economySeatsResult = dbResult->getInt(ColumnName[ECONOMY_SEATS]);
+        auto businessSeatsResult = dbResult->getInt(ColumnName[BUSINESS_SEATS]);
+        auto firstSeatsResult = dbResult->getInt(ColumnName[FIRST_SEATS]);
+
+        if (!idResult || !serialResult || !modelResult || !economySeatsResult || !businessSeatsResult || !firstSeatsResult) {
+            if (_logger) _logger->error("Failed to get aircraft data for serial number: " + serial.toString());
+            return Failure<Aircraft>(CoreError("Failed to get aircraft data", "DATA_ERROR"));
+        }
+
+        // Create seat layout string
+        std::stringstream seatLayoutStr;
+        if (economySeatsResult.value() > 0) seatLayoutStr << "E:" << economySeatsResult.value();
+        if (businessSeatsResult.value() > 0) {
+            if (!seatLayoutStr.str().empty()) seatLayoutStr << ",";
+            seatLayoutStr << "B:" << businessSeatsResult.value();
+        }
+        if (firstSeatsResult.value() > 0) {
+            if (!seatLayoutStr.str().empty()) seatLayoutStr << ",";
+            seatLayoutStr << "F:" << firstSeatsResult.value();
+        }
+
+        auto serial = AircraftSerial::create(serialResult.value()).value();
+        auto seatLayout = SeatClassMap::create(seatLayoutStr.str()).value();
+        auto aircraft = Aircraft::create(serial, modelResult.value(), seatLayout).value();
+        aircraft.setId(idResult.value());
+
+        if (_logger) _logger->debug("Successfully found aircraft with serial number: " + serial.toString());
+        return Success(aircraft);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error finding aircraft by serial number: " + std::string(e.what()));
+        return Failure<Aircraft>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<bool> AircraftRepository::existsAircraft(const AircraftSerial& serial) {
+    try {
+        if (_logger) _logger->debug("Checking existence of aircraft with serial number: " + serial.toString());
+
+        auto prepareResult = _connection->prepareStatement(EXISTS_SERIAL_QUERY);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for checking aircraft existence");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, serial.value());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for checking aircraft existence");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for checking aircraft existence");
+            return Failure<bool>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        if (!dbResult->next()) {
+            if (_logger) _logger->debug("Aircraft not found with serial number: " + serial.toString());
+            return Success(false);
+        }
+
+        auto countResult = dbResult->getInt(0);  // COUNT(*) is always the first column (index 0)
+        if (!countResult) {
+            if (_logger) _logger->error("Failed to get count for aircraft existence check");
+            return Failure<bool>(CoreError("Failed to get count", "COUNT_FAILED"));
+        }
+
+        bool exists = countResult.value() > 0;
+        if (_logger) _logger->debug("Aircraft " + serial.toString() + " " + (exists ? "exists" : "does not exist"));
+        return Success(exists);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error checking aircraft existence: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<bool> AircraftRepository::deleteBySerialNumber(const AircraftSerial& serial) {
+    try {
+        if (_logger) _logger->debug("Deleting aircraft with  serial number: " + serial.toString());
+
+        // First check if aircraft exists
+        auto existsResult = existsAircraft(serial);
+        if (!existsResult) {
+            if (_logger) _logger->error("Failed to check aircraft existence");
+            return Failure<bool>(CoreError("Failed to check aircraft existence", "DB_ERROR"));
+        }
+        if (!existsResult.value()) {
+            if (_logger) _logger->error("Aircraft not found with  serial number: " + serial.toString());
+            return Failure<bool>(CoreError("Aircraft not found with serial number: " + serial.toString(), "DB_ERROR"));
+        }
+
+        // Start transaction
+        _connection->beginTransaction();
+
+        // Delete aircraft
+        auto prepareResult = _connection->prepareStatement(DELETE_QUERY);
+        if (!prepareResult) {
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to prepare statement for deleting aircraft");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, serial.value());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to set parameter for deleting aircraft");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to execute statement for deleting aircraft");
+            return Failure<bool>(CoreError("Failed to execute statement", "EXECUTE_FAILED"));
+        }
+
+        _connection->commitTransaction();
+
+        if (_logger) _logger->debug("Successfully deleted aircraft with  serial number: " + serial.toString());
+        return Success(true);
+    } catch (const std::exception& e) {
+        _connection->rollbackTransaction();
+        if (_logger) _logger->error("Error deleting aircraft: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}

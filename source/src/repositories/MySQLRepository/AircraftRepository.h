@@ -32,6 +32,11 @@ public:
     Result<Aircraft> update(const Aircraft& aircraft) override;
     Result<bool> deleteById(const int& id) override;
 
+    // Phương thức riêng của Aircraft
+    Result<Aircraft> findBySerialNumber(const AircraftSerial& serial);
+    Result<bool> existsAircraft(const AircraftSerial& serial);
+    Result<bool> deleteBySerialNumber(const AircraftSerial& serial);
+
 private:
     Aircraft mapRowToAircraft(const std::map<std::string, std::string>& row) const;
 };

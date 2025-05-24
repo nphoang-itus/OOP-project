@@ -102,7 +102,8 @@ target_link_libraries(${PROJECT_NAME}_db_test
 
 # Tạo executable cho repository test
 add_executable(${PROJECT_NAME}_repo_test
-    src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
+    # src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
+    src/tests/repositories/MySQLRepository/FlightRepositoryTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_repo_test

@@ -34,29 +34,21 @@ CREATE TABLE aircraft_seat_layout (
     UNIQUE KEY unique_aircraft_seat_class (aircraft_id, seat_class_code)
 );
 
--- Route table
-CREATE TABLE route (
+-- Flight table (merged with route)
+CREATE TABLE flight (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    flight_number VARCHAR(6) NOT NULL CHECK (flight_number REGEXP '^[A-Z]{2}[1-9][0-9]{0,3}$'),
     departure_code VARCHAR(3) NOT NULL CHECK (departure_code REGEXP '^[A-Z]{3}$'),
     departure_name VARCHAR(100) NOT NULL,
     arrival_code VARCHAR(3) NOT NULL CHECK (arrival_code REGEXP '^[A-Z]{3}$'),
     arrival_name VARCHAR(100) NOT NULL,
-    UNIQUE KEY unique_route (departure_code, arrival_code),
-    CHECK (departure_code != arrival_code)
-);
-
--- Flight table
-CREATE TABLE flight (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    flight_number VARCHAR(6) NOT NULL CHECK (flight_number REGEXP '^[A-Z]{2}[1-9][0-9]{0,3}$'),
-    route_id INT NOT NULL,
     aircraft_id INT NOT NULL,
     departure_time DATETIME NOT NULL,
     arrival_time DATETIME NOT NULL,
     status ENUM('SCHEDULED', 'DELAYED', 'BOARDING', 'DEPARTED', 'IN_FLIGHT', 'LANDED', 'CANCELLED') DEFAULT 'SCHEDULED',
-    FOREIGN KEY (route_id) REFERENCES route(id),
     FOREIGN KEY (aircraft_id) REFERENCES aircraft(id),
-    CHECK (arrival_time > departure_time)
+    CHECK (arrival_time > departure_time),
+    CHECK (departure_code != arrival_code)
 );
 
 -- Passenger table
@@ -147,32 +139,20 @@ INSERT INTO aircraft (serial_number, model, economy_seats, business_seats, first
 ('VN126', 'Boeing 777-300ER', 268, 48, 4),
 ('VN127', 'Airbus A330-300', 256, 24, 0);
 
--- Insert data into route table
-INSERT INTO route (departure_code, departure_name, arrival_code, arrival_name) VALUES
-('SGN', 'Tan Son Nhat', 'HAN', 'Noi Bai'),
-('SGN', 'Tan Son Nhat', 'DAD', 'Da Nang'),
-('HAN', 'Noi Bai', 'SGN', 'Tan Son Nhat'),
-('HAN', 'Noi Bai', 'DAD', 'Da Nang'),
-('SGN', 'Tan Son Nhat', 'PQC', 'Phu Quoc'),
-('HAN', 'Noi Bai', 'PQC', 'Phu Quoc'),
-('SGN', 'Tan Son Nhat', 'CXR', 'Cam Ranh'),
-('SGN', 'Tan Son Nhat', 'ICN', 'Incheon'),
-('HAN', 'Noi Bai', 'NRT', 'Narita');
-
--- Insert data into flight table
-INSERT INTO flight (flight_number, route_id, aircraft_id, departure_time, arrival_time, status) VALUES
-('VN100', 1, 1, '2025-05-22 07:30:00', '2025-05-22 09:30:00', 'SCHEDULED'),
-('VN101', 3, 1, '2025-05-22 19:00:00', '2025-05-22 21:00:00', 'SCHEDULED'),
-('VN200', 2, 3, '2025-05-22 08:45:00', '2025-05-22 10:00:00', 'SCHEDULED'),
-('VN201', 4, 3, '2025-05-22 14:30:00', '2025-05-22 15:45:00', 'SCHEDULED'),
-('VN300', 5, 3, '2025-05-23 10:15:00', '2025-05-23 11:30:00', 'SCHEDULED'),
-('VN301', 6, 2, '2025-05-23 12:00:00', '2025-05-23 14:00:00', 'SCHEDULED'),
-('VN400', 7, 3, '2025-05-24 06:30:00', '2025-05-24 07:45:00', 'SCHEDULED'),
-('VN500', 8, 2, '2025-05-25 00:30:00', '2025-05-25 07:30:00', 'SCHEDULED'),
-('VN600', 9, 4, '2025-05-25 08:00:00', '2025-05-25 15:00:00', 'SCHEDULED'),
-('VN102', 1, 1, '2025-05-23 07:30:00', '2025-05-23 09:30:00', 'SCHEDULED'),
-('VN103', 3, 1, '2025-05-23 19:00:00', '2025-05-23 21:00:00', 'SCHEDULED'),
-('VN104', 1, 1, '2025-05-24 07:30:00', '2025-05-24 09:30:00', 'SCHEDULED');
+-- Insert data into flight table (merged with route)
+INSERT INTO flight (flight_number, departure_code, departure_name, arrival_code, arrival_name, aircraft_id, departure_time, arrival_time, status) VALUES
+('VN100', 'SGN', 'Tan Son Nhat', 'HAN', 'Noi Bai', 1, '2025-05-22 07:30:00', '2025-05-22 09:30:00', 'SCHEDULED'),
+('VN101', 'HAN', 'Noi Bai', 'SGN', 'Tan Son Nhat', 1, '2025-05-22 19:00:00', '2025-05-22 21:00:00', 'SCHEDULED'),
+('VN200', 'SGN', 'Tan Son Nhat', 'DAD', 'Da Nang', 3, '2025-05-22 08:45:00', '2025-05-22 10:00:00', 'SCHEDULED'),
+('VN201', 'HAN', 'Noi Bai', 'DAD', 'Da Nang', 3, '2025-05-22 14:30:00', '2025-05-22 15:45:00', 'SCHEDULED'),
+('VN300', 'SGN', 'Tan Son Nhat', 'PQC', 'Phu Quoc', 3, '2025-05-23 10:15:00', '2025-05-23 11:30:00', 'SCHEDULED'),
+('VN301', 'HAN', 'Noi Bai', 'PQC', 'Phu Quoc', 2, '2025-05-23 12:00:00', '2025-05-23 14:00:00', 'SCHEDULED'),
+('VN400', 'SGN', 'Tan Son Nhat', 'CXR', 'Cam Ranh', 3, '2025-05-24 06:30:00', '2025-05-24 07:45:00', 'SCHEDULED'),
+('VN500', 'SGN', 'Tan Son Nhat', 'ICN', 'Incheon', 2, '2025-05-25 00:30:00', '2025-05-25 07:30:00', 'SCHEDULED'),
+('VN600', 'HAN', 'Noi Bai', 'NRT', 'Narita', 4, '2025-05-25 08:00:00', '2025-05-25 15:00:00', 'SCHEDULED'),
+('VN102', 'SGN', 'Tan Son Nhat', 'HAN', 'Noi Bai', 1, '2025-05-23 07:30:00', '2025-05-23 09:30:00', 'SCHEDULED'),
+('VN103', 'HAN', 'Noi Bai', 'SGN', 'Tan Son Nhat', 1, '2025-05-23 19:00:00', '2025-05-23 21:00:00', 'SCHEDULED'),
+('VN104', 'SGN', 'Tan Son Nhat', 'HAN', 'Noi Bai', 1, '2025-05-24 07:30:00', '2025-05-24 09:30:00', 'SCHEDULED');
 
 -- Insert data into passenger table
 INSERT INTO passenger (passport_number, name, email, phone, address) VALUES
