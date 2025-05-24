@@ -58,35 +58,41 @@ add_library(database_lib STATIC
     ${DATABASE_SOURCES}
 )
 
+# Tạo thư viện core
+add_library(core_lib STATIC
+    ${CORE_SOURCES}
+)
+
+# Tạo thư viện repository
+add_library(repository_lib STATIC
+    ${REPOSITORY_SOURCES}
+)
+
 target_link_libraries(database_lib
     ${MYSQLCPPCONN_LIBRARY}
     utils_lib
 )
 
-# Tạo executable cho ứng dụng
-# add_executable(airlines_app
-#     # src/main.cpp
-#     # ${CORE_SOURCES}
-#     # ${REPOSITORY_SOURCES}
-#     # ${SERVICES_SOURCES}
-#     # ${UTILS_SOURCES}
-#     # ${UI_SOURCES}
-# )
+target_link_libraries(core_lib
+    utils_lib
+)
 
-# target_link_libraries(airlines_app 
-#     database_lib
-# )
+target_link_libraries(repository_lib
+    core_lib
+    database_lib
+    utils_lib
+)
 
 # Cấu hình cho test
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-# Tạo executable cho test
-add_executable(${PROJECT_NAME}_test
+# Tạo executable cho database test
+add_executable(${PROJECT_NAME}_db_test
     src/tests/database/MySQLXConnectionTest.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_test
+target_link_libraries(${PROJECT_NAME}_db_test
     GTest::gtest_main
     pthread
     database_lib
@@ -94,6 +100,22 @@ target_link_libraries(${PROJECT_NAME}_test
     ${MYSQLCPPCONN_LIBRARY}
 )
 
+# Tạo executable cho repository test
+add_executable(${PROJECT_NAME}_repo_test
+    src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_repo_test
+    GTest::gtest_main
+    pthread
+    repository_lib
+    core_lib
+    database_lib
+    utils_lib
+    ${MYSQLCPPCONN_LIBRARY}
+)
+
 # Enable testing
 enable_testing()
-add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test) 
+add_test(NAME ${PROJECT_NAME}_db_test COMMAND ${PROJECT_NAME}_db_test)
+add_test(NAME ${PROJECT_NAME}_repo_test COMMAND ${PROJECT_NAME}_repo_test) 

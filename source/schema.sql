@@ -9,70 +9,75 @@ FLUSH PRIVILEGES;
 -- Aircraft table
 CREATE TABLE aircraft (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    serial_number VARCHAR(10) UNIQUE,
-    model VARCHAR(50) NOT NULL
+    serial_number VARCHAR(10) UNIQUE CHECK (serial_number REGEXP '^[A-Z]{2,3}[0-9]{1,7}$'),
+    model VARCHAR(50) NOT NULL,
+    economy_seats INT NOT NULL DEFAULT 0 CHECK (economy_seats >= 0),
+    business_seats INT NOT NULL DEFAULT 0 CHECK (business_seats >= 0),
+    first_seats INT NOT NULL DEFAULT 0 CHECK (first_seats >= 0)
 );
 
 -- Seat class table
 CREATE TABLE seat_class (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    code CHAR(1) NOT NULL UNIQUE,
-    name VARCHAR(20) NOT NULL
+    code CHAR(1) NOT NULL UNIQUE CHECK (code IN ('E', 'B', 'F')),
+    name VARCHAR(20) NOT NULL CHECK (name IN ('ECONOMY', 'BUSINESS', 'FIRST'))
 );
 
 -- Aircraft seat layout table
 CREATE TABLE aircraft_seat_layout (
     id INT AUTO_INCREMENT PRIMARY KEY,
     aircraft_id INT,
-    seat_class_id INT,
+    seat_class_code CHAR(1),
     seat_count INT NOT NULL,
     FOREIGN KEY (aircraft_id) REFERENCES aircraft(id),
-    FOREIGN KEY (seat_class_id) REFERENCES seat_class(id),
-    UNIQUE KEY unique_aircraft_seat_class (aircraft_id, seat_class_id)
+    FOREIGN KEY (seat_class_code) REFERENCES seat_class(code),
+    UNIQUE KEY unique_aircraft_seat_class (aircraft_id, seat_class_code)
 );
 
 -- Route table
 CREATE TABLE route (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    departure_code VARCHAR(3) NOT NULL,
+    departure_code VARCHAR(3) NOT NULL CHECK (departure_code REGEXP '^[A-Z]{3}$'),
     departure_name VARCHAR(100) NOT NULL,
-    arrival_code VARCHAR(3) NOT NULL,
+    arrival_code VARCHAR(3) NOT NULL CHECK (arrival_code REGEXP '^[A-Z]{3}$'),
     arrival_name VARCHAR(100) NOT NULL,
-    UNIQUE KEY unique_route (departure_code, arrival_code)
+    UNIQUE KEY unique_route (departure_code, arrival_code),
+    CHECK (departure_code != arrival_code)
 );
 
 -- Flight table
 CREATE TABLE flight (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    flight_number VARCHAR(10),
+    flight_number VARCHAR(6) NOT NULL CHECK (flight_number REGEXP '^[A-Z]{2}[1-9][0-9]{0,3}$'),
     route_id INT NOT NULL,
     aircraft_id INT NOT NULL,
     departure_time DATETIME NOT NULL,
     arrival_time DATETIME NOT NULL,
     status ENUM('SCHEDULED', 'DELAYED', 'BOARDING', 'DEPARTED', 'IN_FLIGHT', 'LANDED', 'CANCELLED') DEFAULT 'SCHEDULED',
     FOREIGN KEY (route_id) REFERENCES route(id),
-    FOREIGN KEY (aircraft_id) REFERENCES aircraft(id)
+    FOREIGN KEY (aircraft_id) REFERENCES aircraft(id),
+    CHECK (arrival_time > departure_time)
 );
 
 -- Passenger table
 CREATE TABLE passenger (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    passport_number VARCHAR(20) UNIQUE,
+    passport_number VARCHAR(20) UNIQUE CHECK (passport_number REGEXP '^[A-Z]{2,3}:[0-9]{6,9}$'),
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address TEXT
+    email VARCHAR(254) NOT NULL CHECK (email REGEXP '^[a-zA-Z0-9](\.?[a-zA-Z0-9_\-+%])*@[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$'),
+    phone VARCHAR(15) NOT NULL CHECK (phone REGEXP '^\+[0-9]{10,14}$'),
+    address VARCHAR(100)
 );
 
 -- Ticket table
 CREATE TABLE ticket (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_number VARCHAR(20),
+    ticket_number VARCHAR(20) NOT NULL UNIQUE CHECK (ticket_number REGEXP '^[A-Z]{2}[0-9]{1,4}-[0-9]{8}-[0-9]{4}$'),
     flight_id INT NOT NULL,
     passenger_id INT NOT NULL,
-    seat_number VARCHAR(10) NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) NOT NULL,
+    seat_number VARCHAR(4) NOT NULL CHECK (seat_number REGEXP '^[A-Z][0-9]{2,3}$'),
+    price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+    currency VARCHAR(3) NOT NULL CHECK (currency IN ('VND', 'USD', 'EUR')),
     status ENUM('PENDING', 'CONFIRMED', 'CHECKED_IN', 'BOARDED', 'COMPLETED', 'CANCELLED', 'REFUNDED') DEFAULT 'PENDING',
     FOREIGN KEY (flight_id) REFERENCES flight(id),
     FOREIGN KEY (passenger_id) REFERENCES passenger(id),
@@ -90,7 +95,6 @@ CREATE INDEX idx_flight_dates ON flight(departure_time, arrival_time);
 CREATE INDEX idx_ticket_flight ON ticket(flight_id);
 CREATE INDEX idx_ticket_passenger ON ticket(passenger_id);
 CREATE INDEX idx_aircraft_seat_layout ON aircraft_seat_layout(aircraft_id);
-
 
 -- Đăng nhập với tài khoản admin/root
 
@@ -123,7 +127,7 @@ BEGIN
     SELECT COUNT(*) INTO seat_count
     FROM aircraft_seat_layout acl
     JOIN flight f ON f.aircraft_id = acl.aircraft_id
-    JOIN seat_class sc ON sc.id = acl.seat_class_id
+    JOIN seat_class sc ON sc.code = acl.seat_class_code
     WHERE f.id = NEW.flight_id
     AND sc.code = seat_class_code;
     
@@ -136,40 +140,12 @@ END//
 DELIMITER ;
 
 -- Insert data into aircraft table
-INSERT INTO aircraft (serial_number, model) VALUES
-('VN-A001', 'Boeing 787-9'),
-('VN-A002', 'Airbus A350-900'),
-('VN-A003', 'Airbus A321neo'),
-('VN-A004', 'Boeing 777-300ER'),
-('VN-A005', 'Airbus A330-300');
-
--- Configure seat layout for each aircraft
--- Boeing 787-9 (VN-A001)
-INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_id, seat_count) VALUES
-(1, (SELECT id FROM seat_class WHERE code = 'F'), 8),  -- First Class
-(1, (SELECT id FROM seat_class WHERE code = 'B'), 28), -- Business Class
-(1, (SELECT id FROM seat_class WHERE code = 'E'), 214); -- Economy Class
-
--- Airbus A350-900 (VN-A002)
-INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_id, seat_count) VALUES
-(2, (SELECT id FROM seat_class WHERE code = 'B'), 32), -- Business Class
-(2, (SELECT id FROM seat_class WHERE code = 'E'), 226); -- Economy Class
-
--- Airbus A321neo (VN-A003)
-INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_id, seat_count) VALUES
-(3, (SELECT id FROM seat_class WHERE code = 'B'), 16), -- Business Class
-(3, (SELECT id FROM seat_class WHERE code = 'E'), 162); -- Economy Class
-
--- Boeing 777-300ER (VN-A004)
-INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_id, seat_count) VALUES
-(4, (SELECT id FROM seat_class WHERE code = 'F'), 4),  -- First Class
-(4, (SELECT id FROM seat_class WHERE code = 'B'), 48), -- Business Class
-(4, (SELECT id FROM seat_class WHERE code = 'E'), 268); -- Economy Class
-
--- Airbus A330-300 (VN-A005)
-INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_id, seat_count) VALUES
-(5, (SELECT id FROM seat_class WHERE code = 'B'), 24), -- Business Class
-(5, (SELECT id FROM seat_class WHERE code = 'E'), 256); -- Economy Class
+INSERT INTO aircraft (serial_number, model, economy_seats, business_seats, first_seats) VALUES
+('VN123', 'Boeing 787-9', 214, 28, 8),
+('VN124', 'Airbus A350-900', 226, 32, 0),
+('VN125', 'Airbus A321neo', 162, 16, 0),
+('VN126', 'Boeing 777-300ER', 268, 48, 4),
+('VN127', 'Airbus A330-300', 256, 24, 0);
 
 -- Insert data into route table
 INSERT INTO route (departure_code, departure_name, arrival_code, arrival_name) VALUES
@@ -200,52 +176,52 @@ INSERT INTO flight (flight_number, route_id, aircraft_id, departure_time, arriva
 
 -- Insert data into passenger table
 INSERT INTO passenger (passport_number, name, email, phone, address) VALUES
-('P123456', 'Nguyen Van A', 'nguyenvana@email.com', '+84901234567', '123 Nguyen Hue, District 1, Ho Chi Minh City, Vietnam'),
-('P234567', 'Tran Thi B', 'tranthib@email.com', '+84912345678', '456 Le Loi, District 1, Ho Chi Minh City, Vietnam'),
-('P345678', 'Le Van C', 'levanc@email.com', '+84923456789', '789 Dong Khoi, District 1, Ho Chi Minh City, Vietnam'),
-('P456789', 'Pham Thi D', 'phamthid@email.com', '+84934567890', '101 Tran Hung Dao, District 1, Ho Chi Minh City, Vietnam'),
-('P567890', 'Hoang Van E', 'hoangvane@email.com', '+84945678901', '202 Hai Ba Trung, District 1, Ho Chi Minh City, Vietnam'),
-('P678901', 'Vu Thi F', 'vuthif@email.com', '+84956789012', '15 Nguyen Trai, District 5, Ho Chi Minh City, Vietnam'),
-('P789012', 'Dang Van G', 'dangvang@email.com', '+84967890123', '25 Ly Tu Trong, District 1, Ho Chi Minh City, Vietnam'),
-('P890123', 'Lam Thi H', 'lamthih@email.com', '+84978901234', '35 Cong Quynh, District 1, Ho Chi Minh City, Vietnam'),
-('P901234', 'Trinh Van I', 'trinhvani@email.com', '+84989012345', '45 Vo Van Tan, District 3, Ho Chi Minh City, Vietnam'),
-('P012345', 'Mai Thi K', 'maithik@email.com', '+84990123456', '55 Dien Bien Phu, District 3, Ho Chi Minh City, Vietnam');
+('VN:P123456', 'Nguyen Van A', 'nguyenvana@email.com', '+84901234567', '123 Nguyen Hue, District 1, Ho Chi Minh City'),
+('VN:P234567', 'Tran Thi B', 'tranthib@email.com', '+84912345678', '456 Le Loi, District 1, Ho Chi Minh City'),
+('VN:P345678', 'Le Van C', 'levanc@email.com', '+84923456789', '789 Dong Khoi, District 1, Ho Chi Minh City'),
+('VN:P456789', 'Pham Thi D', 'phamthid@email.com', '+84934567890', '101 Tran Hung Dao, District 1, Ho Chi Minh City'),
+('VN:P567890', 'Hoang Van E', 'hoangvane@email.com', '+84945678901', '202 Hai Ba Trung, District 1, Ho Chi Minh City'),
+('VN:P678901', 'Vu Thi F', 'vuthif@email.com', '+84956789012', '15 Nguyen Trai, District 5, Ho Chi Minh City'),
+('VN:P789012', 'Dang Van G', 'dangvang@email.com', '+84967890123', '25 Ly Tu Trong, District 1, Ho Chi Minh City'),
+('VN:P890123', 'Lam Thi H', 'lamthih@email.com', '+84978901234', '35 Cong Quynh, District 1, Ho Chi Minh City'),
+('VN:P901234', 'Trinh Van I', 'trinhvani@email.com', '+84989012345', '45 Vo Van Tan, District 3, Ho Chi Minh City'),
+('VN:P012345', 'Mai Thi K', 'maithik@email.com', '+84990123456', '55 Dien Bien Phu, District 3, Ho Chi Minh City');
 
 -- Insert data into ticket table
 INSERT INTO ticket (ticket_number, flight_id, passenger_id, seat_number, price, currency, status) VALUES
--- VN100 (SGN-HAN) on VN-A001
-('TK10001', 1, 1, 'F01', 5000000, 'VND', 'CONFIRMED'),
-('TK10002', 1, 2, 'B05', 3500000, 'VND', 'CONFIRMED'),
-('TK10003', 1, 3, 'E120', 1800000, 'VND', 'CONFIRMED'),
-('TK10004', 1, 4, 'E121', 1800000, 'VND', 'CONFIRMED'),
+-- VN100 (SGN-HAN) on VN123
+('VN100-20250522-0001', 1, 1, 'F01', 5000000, 'VND', 'CONFIRMED'),
+('VN100-20250522-0002', 1, 2, 'B05', 3500000, 'VND', 'CONFIRMED'),
+('VN100-20250522-0003', 1, 3, 'E120', 1800000, 'VND', 'CONFIRMED'),
+('VN100-20250522-0004', 1, 4, 'E121', 1800000, 'VND', 'CONFIRMED'),
 
--- VN101 (HAN-SGN) on VN-A001
-('TK10101', 2, 5, 'B12', 3600000, 'VND', 'CONFIRMED'),
-('TK10102', 2, 6, 'E045', 1900000, 'VND', 'CONFIRMED'),
+-- VN101 (HAN-SGN) on VN123
+('VN101-20250522-0001', 2, 5, 'B12', 3600000, 'VND', 'CONFIRMED'),
+('VN101-20250522-0002', 2, 6, 'E045', 1900000, 'VND', 'CONFIRMED'),
 
--- VN200 (SGN-DAD) on VN-A003
-('TK20001', 3, 7, 'B08', 2800000, 'VND', 'CHECKED_IN'),
-('TK20002', 3, 8, 'E078', 1500000, 'VND', 'CHECKED_IN'),
+-- VN200 (SGN-DAD) on VN125
+('VN200-20250522-0001', 3, 7, 'B08', 2800000, 'VND', 'CHECKED_IN'),
+('VN200-20250522-0002', 3, 8, 'E078', 1500000, 'VND', 'CHECKED_IN'),
 
--- VN500 (SGN-ICN) on VN-A002
-('TK50001', 8, 9, 'B15', 8500000, 'VND', 'CONFIRMED'),
-('TK50002', 8, 10, 'E156', 5200000, 'VND', 'CONFIRMED'),
+-- VN500 (SGN-ICN) on VN124
+('VN500-20250525-0001', 8, 9, 'B15', 8500000, 'VND', 'CONFIRMED'),
+('VN500-20250525-0002', 8, 10, 'E156', 5200000, 'VND', 'CONFIRMED'),
 
--- VN600 (HAN-NRT) on VN-A004
-('TK60001', 9, 1, 'F02', 12000000, 'VND', 'PENDING'),
-('TK60002', 9, 2, 'B22', 8500000, 'VND', 'PENDING'),
+-- VN600 (HAN-NRT) on VN126
+('VN600-20250525-0001', 9, 1, 'F02', 12000000, 'VND', 'PENDING'),
+('VN600-20250525-0002', 9, 2, 'B22', 8500000, 'VND', 'PENDING'),
 
 -- Add tickets for future flights
--- VN102 (SGN-HAN) tomorrow on VN-A001
-('TK10201', 10, 3, 'B02', 3500000, 'VND', 'CONFIRMED'),
-('TK10202', 10, 4, 'E025', 1800000, 'VND', 'CONFIRMED'),
+-- VN102 (SGN-HAN) tomorrow on VN123
+('VN102-20250523-0001', 10, 3, 'B02', 3500000, 'VND', 'CONFIRMED'),
+('VN102-20250523-0002', 10, 4, 'E025', 1800000, 'VND', 'CONFIRMED'),
 
--- VN103 (HAN-SGN) tomorrow on VN-A001
-('TK10301', 11, 5, 'B08', 3600000, 'VND', 'CONFIRMED'),
-('TK10302', 11, 6, 'E110', 1900000, 'VND', 'CONFIRMED'),
+-- VN103 (HAN-SGN) tomorrow on VN123
+('VN103-20250523-0001', 11, 5, 'B08', 3600000, 'VND', 'CONFIRMED'),
+('VN103-20250523-0002', 11, 6, 'E110', 1900000, 'VND', 'CONFIRMED'),
 
--- VN104 (SGN-HAN) day after tomorrow on VN-A001
-('TK10401', 12, 7, 'F03', 5000000, 'VND', 'PENDING');
+-- VN104 (SGN-HAN) day after tomorrow on VN123
+('VN104-20250524-0001', 12, 7, 'F03', 5000000, 'VND', 'PENDING');
 
 -- Add some statistics data
 -- Insert additional passengers (bulk data)

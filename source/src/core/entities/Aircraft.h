@@ -5,6 +5,7 @@
 #include "../value_objects/aircraft_serial/AircraftSerial.h"
 #include "../value_objects/seat_class_map/SeatClassMap.h"
 #include "../exceptions/Result.h"
+#include <memory>
 
 using AircraftModel = std::string;
 
@@ -18,7 +19,7 @@ protected:
         : _serial(std::move(serial)), _model(std::move(model)), _seatLayout(std::move(seatLayout)) {}
 
 public:
-    // Factory methods cho phép mở rộng cách tạo đối tượng mà không cần sửa code
+    // Factory methods
     static Result<Aircraft> create(const AircraftSerial& serial, const AircraftModel& model, const SeatClassMap& seatLayout) {
         if (model.empty()) {
             return Failure<Aircraft>(CoreError("Aircraft model cannot be empty", "INVALID_MODEL"));
@@ -43,19 +44,20 @@ public:
 
         return Success(Aircraft(*serialResult, model, *seatLayoutResult));
     }
-    
-    int getId() const override {
-        return _id;
-    }
 
-    std::string getStringId() const override {
-        return _serial.toString();
-    }
+    // Getters
+    int getId() const override { return _id; }
+    std::string getStringId() const override { return _serial.toString(); }
+    const AircraftSerial& getSerial() const { return _serial; }
+    const AircraftModel& getModel() const { return _model; }
+    const SeatClassMap& getSeatLayout() const { return _seatLayout; }
 
-    void setId(int id) override {
-        _id = id;
-    }
+    // Setters
+    void setId(int id) override { _id = id; }
+    void setModel(const std::string& model) { _model = model; }
+    void setSeatLayout(const SeatClassMap& seatLayout) { _seatLayout = seatLayout; }
 
+    // Utility methods
     std::string toString() const override {
         return "Aircraft{id=" + std::to_string(_id) + 
                ", serial=" + _serial.toString() + 
@@ -76,9 +78,18 @@ public:
         return clone;
     }
 
-    const AircraftSerial& getSerial() const { return _serial; }
-    const AircraftModel& getModel() const { return _model; }
-    const SeatClassMap& getSeatLayout() const { return _seatLayout; }
+    // Business logic methods
+    bool hasSeatClass(const std::string& seatClassCode) const {
+        return _seatLayout.hasSeatClass(seatClassCode);
+    }
+
+    int getSeatCount(const std::string& seatClassCode) const {
+        return _seatLayout.getSeatCount(seatClassCode);
+    }
+
+    bool isValidSeatNumber(const std::string& seatNumber) const {
+        return _seatLayout.isValidSeatNumber(seatNumber);
+    }
 };
 
 #endif

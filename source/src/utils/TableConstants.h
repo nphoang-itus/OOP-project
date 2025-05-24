@@ -15,51 +15,108 @@
 #include <string>
 #include <sstream>
 
-// Định nghĩa Flight Table
 namespace Tables {
+    namespace Aircraft {
+        constexpr const char* NAME_TABLE = "aircraft";
+
+        enum ColumnNumber {
+            ID = 0,
+            SERIAL,
+            MODEL,
+            ECONOMY_SEATS,
+            BUSINESS_SEATS,
+            FIRST_SEATS
+        };
+
+        constexpr const char* ColumnName[] {
+            "id",
+            "serial_number",
+            "model",
+            "economy_seats",
+            "business_seats",
+            "first_seats"
+        };
+
+        static std::string getOrderedSelectClause() {
+            return "SELECT id, serial_number, model, economy_seats, business_seats, first_seats "
+                   "FROM aircraft";
+        }
+
+        // SQL Queries
+        const std::string FIND_BY_ID_QUERY = "SELECT id, serial_number, model, economy_seats, business_seats, first_seats "
+                                            "FROM aircraft "
+                                            "WHERE id = ?";
+        const std::string FIND_ALL_QUERY = getOrderedSelectClause();
+        const std::string EXISTS_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE) + " WHERE id = ?";
+        const std::string COUNT_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE);
+        const std::string INSERT_QUERY = "INSERT INTO " + std::string(NAME_TABLE) + " (" + 
+            ColumnName[SERIAL] + ", " + 
+            ColumnName[MODEL] + ", " +
+            ColumnName[ECONOMY_SEATS] + ", " +
+            ColumnName[BUSINESS_SEATS] + ", " +
+            ColumnName[FIRST_SEATS] + 
+            ") VALUES (?, ?, ?, ?, ?)";
+        const std::string UPDATE_QUERY = "UPDATE " + std::string(NAME_TABLE) + " SET " + 
+            ColumnName[SERIAL] + " = ?, " + 
+            ColumnName[MODEL] + " = ?, " +
+            ColumnName[ECONOMY_SEATS] + " = ?, " +
+            ColumnName[BUSINESS_SEATS] + " = ?, " +
+            ColumnName[FIRST_SEATS] + " = ? " +
+            "WHERE " + ColumnName[ID] + " = ?";
+        const std::string DELETE_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+
+        // Additional queries for seat layout
+        const std::string INSERT_SEAT_LAYOUT_QUERY = "INSERT INTO aircraft_seat_layout (aircraft_id, seat_class_code, seat_count) VALUES (?, ?, ?)";
+        const std::string DELETE_SEAT_LAYOUT_QUERY = "DELETE FROM aircraft_seat_layout WHERE aircraft_id = ?";
+    }
+
     namespace Flight {
         constexpr const char* NAME_TABLE = "flight_tb";
 
         enum ColumnNumber {
             ID = 0,
-            NO,
-            NAME,
-            FROM,
-            DESTINATION,
-            DEPARTURE_TIME,
-            LEAVE_TIME,
-            ARRIVAL_TIME,
-            AMOUNT,
-            AVAILABILITY
+            FLIGHT_NUMBER,
+            ROUTE,
+            SCHEDULE,
+            AIRCRAFT_ID,
+            STATUS
         };
 
         constexpr const char* ColumnName[] {
             "f_id",
-            "f_no",
-            "f_name",
-            "f_from",
-            "f_destination",
-            "f_departureTime",
-            "f_leaveTime",
-            "f_arrivalTime",
-            "f_amount",
-            "f_availability"
+            "f_number",
+            "f_route",
+            "f_schedule",
+            "f_aircraftId",
+            "f_status"
         };
 
         inline std::string getOrderedSelectClause() {
-            return std::string("SELECT ") + 
-                   ColumnName[ID] + ", " +
-                   ColumnName[NO] + ", " +
-                   ColumnName[NAME] + ", " +
-                   ColumnName[FROM] + ", " +
-                   ColumnName[DESTINATION] + ", " +
-                   ColumnName[DEPARTURE_TIME] + ", " +
-                   ColumnName[LEAVE_TIME] + ", " +
-                   ColumnName[ARRIVAL_TIME] + ", " +
-                   ColumnName[AMOUNT] + ", " +
-                   ColumnName[AVAILABILITY] + 
-                   " FROM " + NAME_TABLE;
+            return std::string("SELECT f.*, a.* FROM ") + NAME_TABLE + " f " +
+                   "JOIN " + Aircraft::NAME_TABLE + " a ON f." + ColumnName[AIRCRAFT_ID] + 
+                   " = a." + Aircraft::ColumnName[Aircraft::ID];
         }
+
+        // SQL Queries
+        const std::string FIND_BY_ID_QUERY = getOrderedSelectClause() + " WHERE f." + ColumnName[ID] + " = ?";
+        const std::string FIND_ALL_QUERY = getOrderedSelectClause();
+        const std::string EXISTS_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+        const std::string COUNT_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE);
+        const std::string INSERT_QUERY = "INSERT INTO " + std::string(NAME_TABLE) + " (" + 
+            ColumnName[FLIGHT_NUMBER] + ", " + 
+            ColumnName[ROUTE] + ", " + 
+            ColumnName[SCHEDULE] + ", " + 
+            ColumnName[AIRCRAFT_ID] + ", " + 
+            ColumnName[STATUS] + 
+            ") VALUES (?, ?, ?, ?, ?)";
+        const std::string UPDATE_QUERY = "UPDATE " + std::string(NAME_TABLE) + " SET " + 
+            ColumnName[FLIGHT_NUMBER] + " = ?, " + 
+            ColumnName[ROUTE] + " = ?, " + 
+            ColumnName[SCHEDULE] + " = ?, " + 
+            ColumnName[AIRCRAFT_ID] + " = ?, " + 
+            ColumnName[STATUS] + " = ? " + 
+            "WHERE " + ColumnName[ID] + " = ?";
+        const std::string DELETE_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
     }
 
     namespace Passenger {
@@ -68,59 +125,100 @@ namespace Tables {
         enum ColumnNumber {
             ID = 0,
             NAME,
-            PHONE,
-            PASSPORT,
-            ADDRESS
+            CONTACT_INFO,
+            PASSPORT
         };
 
         constexpr const char* ColumnName[] {
             "p_id",
             "p_name",
-            "p_phone",
-            "p_passport",
-            "p_address"
+            "p_contactInfo",
+            "p_passport"
         };
 
         inline std::string getOrderedSelectClause() {
             return std::string("SELECT ") + 
                    ColumnName[ID] + ", " +
                    ColumnName[NAME] + ", " +
-                   ColumnName[PHONE] + ", " +
-                   ColumnName[PASSPORT] + ", " +
-                   ColumnName[ADDRESS] +
+                   ColumnName[CONTACT_INFO] + ", " +
+                   ColumnName[PASSPORT] + 
                    " FROM " + NAME_TABLE;
         }
-    };
 
-    namespace Reservation {
-        constexpr const char* NAME_TABLE = "reservation_tb";
+        // SQL Queries
+        const std::string FIND_BY_ID_QUERY = getOrderedSelectClause() + " WHERE " + ColumnName[ID] + " = ?";
+        const std::string FIND_ALL_QUERY = getOrderedSelectClause();
+        const std::string EXISTS_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+        const std::string COUNT_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE);
+        const std::string INSERT_QUERY = "INSERT INTO " + std::string(NAME_TABLE) + " (" + 
+            ColumnName[NAME] + ", " + 
+            ColumnName[CONTACT_INFO] + ", " + 
+            ColumnName[PASSPORT] + 
+            ") VALUES (?, ?, ?)";
+        const std::string UPDATE_QUERY = "UPDATE " + std::string(NAME_TABLE) + " SET " + 
+            ColumnName[NAME] + " = ?, " + 
+            ColumnName[CONTACT_INFO] + " = ?, " + 
+            ColumnName[PASSPORT] + " = ? " + 
+            "WHERE " + ColumnName[ID] + " = ?";
+        const std::string DELETE_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+    }
+
+    namespace Ticket {
+        constexpr const char* NAME_TABLE = "ticket_tb";
 
         enum ColumnNumber {
             ID = 0,
-            TICKET_NO,
-            FLIGHT,
-            PASSENGER
+            TICKET_NUMBER,
+            PASSENGER_ID,
+            FLIGHT_ID,
+            SEAT_NUMBER,
+            PRICE,
+            STATUS
         };
 
         constexpr const char* ColumnName[] {
-            "r_id",
-            "r_ticketNo",
-            "r_flightNo",
-            "r_passportPassenger"
+            "t_id",
+            "t_number",
+            "t_passengerId",
+            "t_flightId",
+            "t_seatNumber",
+            "t_price",
+            "t_status"
         };
 
         inline std::string getOrderedSelectClause() {
-            std::string query = std::format(
-                "SELECT r.*, p.*, f.* FROM {} r "
-                "JOIN {} p ON r.{} = p.{} "
-                "JOIN {} f ON r.{} = f.{} ",
-                NAME_TABLE,
-                Passenger::NAME_TABLE , ColumnName[PASSENGER], Passenger::ColumnName[Passenger::PASSPORT],
-                Flight::NAME_TABLE, ColumnName[FLIGHT], Flight::ColumnName[Flight::NO]
-            );
-            return query;
+            return std::string("SELECT t.*, p.*, f.*, a.* FROM ") + NAME_TABLE + " t " +
+                   "JOIN " + Passenger::NAME_TABLE + " p ON t." + ColumnName[PASSENGER_ID] + 
+                   " = p." + Passenger::ColumnName[Passenger::ID] + " " +
+                   "JOIN " + Flight::NAME_TABLE + " f ON t." + ColumnName[FLIGHT_ID] + 
+                   " = f." + Flight::ColumnName[Flight::ID] + " " +
+                   "JOIN " + Aircraft::NAME_TABLE + " a ON f." + Flight::ColumnName[Flight::AIRCRAFT_ID] + 
+                   " = a." + Aircraft::ColumnName[Aircraft::ID];
         }
-    };
+
+        // SQL Queries
+        const std::string FIND_BY_ID_QUERY = getOrderedSelectClause() + " WHERE t." + ColumnName[ID] + " = ?";
+        const std::string FIND_ALL_QUERY = getOrderedSelectClause();
+        const std::string EXISTS_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+        const std::string COUNT_QUERY = "SELECT COUNT(*) FROM " + std::string(NAME_TABLE);
+        const std::string INSERT_QUERY = "INSERT INTO " + std::string(NAME_TABLE) + " (" + 
+            ColumnName[TICKET_NUMBER] + ", " + 
+            ColumnName[PASSENGER_ID] + ", " + 
+            ColumnName[FLIGHT_ID] + ", " + 
+            ColumnName[SEAT_NUMBER] + ", " + 
+            ColumnName[PRICE] + ", " + 
+            ColumnName[STATUS] + 
+            ") VALUES (?, ?, ?, ?, ?, ?)";
+        const std::string UPDATE_QUERY = "UPDATE " + std::string(NAME_TABLE) + " SET " + 
+            ColumnName[TICKET_NUMBER] + " = ?, " + 
+            ColumnName[PASSENGER_ID] + " = ?, " + 
+            ColumnName[FLIGHT_ID] + " = ?, " + 
+            ColumnName[SEAT_NUMBER] + " = ?, " + 
+            ColumnName[PRICE] + " = ?, " + 
+            ColumnName[STATUS] + " = ? " + 
+            "WHERE " + ColumnName[ID] + " = ?";
+        const std::string DELETE_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
+    }
 }
 
 #endif

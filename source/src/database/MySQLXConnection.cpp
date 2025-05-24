@@ -25,7 +25,7 @@ std::mutex MySQLXConnection::_instanceMutex;
 
 // MySQLXResult implementation
 MySQLXResult::MySQLXResult(mysqlx::RowResult rowResult) 
-    : _rowResult(std::move(rowResult)), _hasData(false) {
+    : _rowResult(std::move(rowResult)), _hasData(false), _hasCurrentRow(false) {
     
     auto logger = Logger::getInstance();
     logger->debug("Creating result object from MySQL X DevAPI RowResult");
@@ -49,39 +49,20 @@ Result<bool> MySQLXResult::next() {
     auto logger = Logger::getInstance();
     
     try {
-        if (_hasCurrentRow) {
-            // We already fetched a row last time, get next one
-            _currentRow = _rowResult.fetchOne();
-            if (_currentRow) {
-                logger->debug("Retrieved next row from result set");
-                return Success(true);
-            }
-            else {
-                _hasCurrentRow = false;
-                logger->debug("No more rows in result set");
-                return Success(false);
-            }
+        _currentRow = _rowResult.fetchOne();
+        if (_currentRow) {
+            _hasCurrentRow = true;
+            logger->debug("Retrieved row from result set");
+            return Success(true);
         }
-        else {
-            // First call to next(), fetch first row
-            _currentRow = _rowResult.fetchOne();
-            if (_currentRow) {
-                _hasCurrentRow = true;
-                logger->debug("Retrieved first row from result set");
-                return Success(true);
-            }
-            else {
-                logger->debug("Result set is empty");
-                return Success(false);
-            }
-        }
-    }
-    catch (const mysqlx::Error& e) {
-        logger->error("MySQL error in result set navigation: " + std::string(e.what()));
-        return Failure<bool>(CoreError("Error in result set: " + std::string(e.what())));
+        
+        _hasCurrentRow = false;
+        logger->debug("No more rows in result set");
+        return Success(false);
     }
     catch (const std::exception& e) {
-        logger->error("Unexpected error in result set navigation: " + std::string(e.what()));
+        _hasCurrentRow = false;
+        logger->error("Error in result set navigation: " + std::string(e.what()));
         return Failure<bool>(CoreError("Error in result set: " + std::string(e.what())));
     }
 }
@@ -234,11 +215,13 @@ Result<std::string> MySQLXResult::getString(const std::string& columnName) {
         
         int index = std::distance(_columnNames.begin(), it);
         logger->debug("Found column '" + columnName + "' at index " + std::to_string(index));
-        return getString(index);
+        
+        std::string value = _currentRow[index].get<std::string>();
+        logger->debug("Retrieved string value from column " + std::to_string(index));
+        return Success(std::move(value));
     }
     catch (const std::exception& e) {
-        logger->error("Error getting string data from column '" + columnName + "': " + 
-                    std::string(e.what()));
+        logger->error("Error getting string data from column '" + columnName + "': " + std::string(e.what()));
         return Failure<std::string>(CoreError("Error getting string data: " + std::string(e.what())));
     }
 }
@@ -261,11 +244,13 @@ Result<int> MySQLXResult::getInt(const std::string& columnName) {
         
         int index = std::distance(_columnNames.begin(), it);
         logger->debug("Found column '" + columnName + "' at index " + std::to_string(index));
-        return getInt(index);
+        
+        int value = _currentRow[index].get<int>();
+        logger->debug("Retrieved integer value " + std::to_string(value) + " from column " + std::to_string(index));
+        return Success(value);
     }
     catch (const std::exception& e) {
-        logger->error("Error getting integer data from column '" + columnName + "': " + 
-                    std::string(e.what()));
+        logger->error("Error getting integer data from column '" + columnName + "': " + std::string(e.what()));
         return Failure<int>(CoreError("Error getting integer data: " + std::string(e.what())));
     }
 }

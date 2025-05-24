@@ -2,65 +2,84 @@
 #define SEAT_CLASS_MAP_H
 
 #include <string>
-#include <unordered_map>
-#include <vector>
+#include <map>
+#include <sstream>
 #include "SeatClass.h"
-#include "SeatClassMapValidator.h"
-#include "SeatClassMapParser.h"
-#include "SeatClassMapFormatter.h"
 #include "../../exceptions/Result.h"
+
+// Add comparison operator for SeatClass
+inline bool operator<(const SeatClass& lhs, const SeatClass& rhs) {
+    return lhs.getCode() < rhs.getCode();
+}
 
 class SeatClassMap {
 private:
-    std::unordered_map<SeatClass, int> _seatCounts;
-
-    // Private constructor for string input
-    explicit SeatClassMap(const std::string& value) {
-        _seatCounts = SeatClassMapParser::parse(value);
-    }
-
-    // Private constructor for map input
-    explicit SeatClassMap(std::unordered_map<SeatClass, int> seatCounts)
-        : _seatCounts(std::move(seatCounts)) {}
-
-    // Template method for creation process
-    template<typename InputType>
-    static Result<SeatClassMap> createInternal(const InputType& input) {
-        auto validationResult = SeatClassMapValidator::validate(input);
-        if (!validationResult.isValid()) {
-            return getValidationFailure<SeatClassMap>(validationResult);
-        }
-        return Success(SeatClassMap(input));
-    }
+    std::map<SeatClass, int> _seatCounts;
 
 public:
-    // Default constructor
+    // Make default constructor public
     SeatClassMap() = default;
 
-    // Public factory methods that delegate to internal template method
-    static Result<SeatClassMap> create(const std::string& value) {
-        return createInternal(value);
+    static Result<SeatClassMap> create(const std::map<SeatClass, int>& seatCounts) {
+        SeatClassMap map;
+        map._seatCounts = seatCounts;
+        return Success(map);
     }
 
-    static Result<SeatClassMap> create(const std::unordered_map<SeatClass, int>& classMap) {
-        return createInternal(classMap);
+    static Result<SeatClassMap> create(const std::string& seatLayoutStr) {
+        SeatClassMap map;
+        if (seatLayoutStr.empty()) {
+            return Success(map);
+        }
+        
+        // Parse string format: "E:100,B:20,F:10"
+        std::stringstream ss(seatLayoutStr);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            size_t pos = item.find(':');
+            if (pos == std::string::npos) continue;
+            
+            std::string code = item.substr(0, pos);
+            int count = std::stoi(item.substr(pos + 1));
+            
+            auto seatClassResult = SeatClassRegistry::getByCode(code);
+            if (!seatClassResult) continue;
+            
+            map._seatCounts[seatClassResult.value()] = count;
+        }
+        return Success(map);
     }
 
-    const std::unordered_map<SeatClass, int>& getSeatCounts() const {
-        return _seatCounts;
+    bool hasSeatClass(const std::string& seatClassCode) const {
+        auto seatClassResult = SeatClassRegistry::getByCode(seatClassCode);
+        if (!seatClassResult) return false;
+        return _seatCounts.find(seatClassResult.value()) != _seatCounts.end();
+    }
+
+    int getSeatCount(const std::string& seatClassCode) const {
+        auto seatClassResult = SeatClassRegistry::getByCode(seatClassCode);
+        if (!seatClassResult) return 0;
+        auto it = _seatCounts.find(seatClassResult.value());
+        return it != _seatCounts.end() ? it->second : 0;
+    }
+
+    bool isValidSeatNumber(const std::string& seatNumber) const {
+        if (seatNumber.length() < 2) return false;
+        std::string code = seatNumber.substr(0, 1);
+        std::string number = seatNumber.substr(1);
+        return hasSeatClass(code) && std::stoi(number) <= getSeatCount(code);
     }
 
     std::string toString() const {
-        return SeatClassMapFormatter::toString(_seatCounts);
+        std::stringstream ss;
+        for (const auto& [seatClass, count] : _seatCounts) {
+            if (!ss.str().empty()) ss << ",";
+            ss << seatClass.getName() << ":" << count;
+        }
+        return ss.str();
     }
 
-    bool operator==(const SeatClassMap& other) const {
-        return toString() == other.toString();
-    }
-
-    bool operator!=(const SeatClassMap& other) const {
-        return !(*this == other);
-    }
+    const std::map<SeatClass, int>& getSeatCounts() const { return _seatCounts; }
 };
 
 #endif
