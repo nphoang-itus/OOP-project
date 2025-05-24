@@ -73,3 +73,15 @@ const std::unordered_map<int, Aircraft> &AircraftMockRepository::getAircrafts() 
 {
     return _aircrafts;
 }
+
+Result<Aircraft> AircraftMockRepository::findBySerialNumber(const AircraftSerial &serial)
+{
+    for (const auto &[id, aircraft] : _aircrafts)
+    {
+        if (aircraft.getSerial() == serial)
+        {
+            return aircraft;
+        }
+    }
+    return std::unexpected(CoreError("Aircraft not found with serial number: " + serial.toString(), "NOT_FOUND"));
+}

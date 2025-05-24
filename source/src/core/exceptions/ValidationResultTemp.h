@@ -76,15 +76,16 @@ inline VoidResult toResult(const ValidationResult &validation)
 template <typename T>
 Result<T> getValidationFailure(const ValidationResult &validationResult)
 {
-    std::string typeErrors = "";
+    std::string typeErrors;
     for (size_t i = 0; i < validationResult.getErrors().size(); ++i)
     {
         if (i > 0)
             typeErrors += ';';
         typeErrors += validationResult.getErrors()[i].errorCode;
     }
-    return Failure<T>(CoreError(
+    return std::unexpected(CoreError(
         validationResult.getErrorMessages(),
         typeErrors));
 }
+
 #endif

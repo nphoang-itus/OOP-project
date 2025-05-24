@@ -238,4 +238,25 @@ TEST_F(AircraftMockRepositoryTest, DifferentSeatLayouts)
     EXPECT_NE(result.value().getSeatLayout(), _seatLayout);
 }
 
+// Test findBySerialNumber operation
+TEST_F(AircraftMockRepositoryTest, FindBySerialNumber)
+{
+    auto aircraftResult = createAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = repository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    auto result = repository->findBySerialNumber(_serial);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().getModel(), _model);
+    EXPECT_EQ(result.value().getSerial().toString(), _serial.toString());
+    EXPECT_EQ(result.value().getSeatLayout().toString(), _seatLayout.toString());
+
+    // Test with non-existent serial number
+    auto nonExistentSerialResult = AircraftSerial::create("VN999");
+    ASSERT_TRUE(nonExistentSerialResult.has_value());
+    auto notFoundResult = repository->findBySerialNumber(nonExistentSerialResult.value());
+    ASSERT_FALSE(notFoundResult.has_value());
+}
+
 #endif

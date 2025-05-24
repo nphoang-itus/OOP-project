@@ -23,6 +23,8 @@ public:
     Result<bool> deleteById(const int &id) override;
     void clear();
     const std::unordered_map<int, Aircraft> &getAircrafts() const;
+
+    Result<Aircraft> findBySerialNumber(const AircraftSerial &serial);
 };
 
 #endif
