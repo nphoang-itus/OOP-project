@@ -128,6 +128,10 @@ public:
         _id = id;
     }
 
+    void setSchedule(const Schedule& schedule) {
+        _schedule = schedule;
+    }
+
     std::string toString() const override {
         return "Flight{id=" + std::to_string(_id) + 
                ", flightNumber=" + _flightNumber.toString() + 
