@@ -85,3 +85,28 @@ Result<Aircraft> AircraftMockRepository::findBySerialNumber(const AircraftSerial
     }
     return std::unexpected(CoreError("Aircraft not found with serial number: " + serial.toString(), "NOT_FOUND"));
 }
+
+Result<bool> AircraftMockRepository::existsAircraft(const AircraftSerial &serial)
+{
+    for (const auto &[id, aircraft] : _aircrafts)
+    {
+        if (aircraft.getSerial() == serial)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+Result<bool> AircraftMockRepository::deleteBySerialNumber(const AircraftSerial &serial)
+{
+    for (auto it = _aircrafts.begin(); it != _aircrafts.end(); ++it)
+    {
+        if (it->second.getSerial() == serial)
+        {
+            _aircrafts.erase(it);
+            return true;
+        }
+    }
+    return false;
+}

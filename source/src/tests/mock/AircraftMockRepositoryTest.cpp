@@ -259,4 +259,50 @@ TEST_F(AircraftMockRepositoryTest, FindBySerialNumber)
     ASSERT_FALSE(notFoundResult.has_value());
 }
 
+// Test existsAircraft operation
+TEST_F(AircraftMockRepositoryTest, ExistsAircraft)
+{
+    auto aircraftResult = createAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = repository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    auto result = repository->existsAircraft(_serial);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result.value());
+
+    // Test with non-existent serial number
+    auto nonExistentSerialResult = AircraftSerial::create("VN999");
+    ASSERT_TRUE(nonExistentSerialResult.has_value());
+    auto notFoundResult = repository->existsAircraft(nonExistentSerialResult.value());
+    ASSERT_TRUE(notFoundResult.has_value());
+    EXPECT_FALSE(notFoundResult.value());
+}
+
+// Test deleteBySerialNumber operation
+TEST_F(AircraftMockRepositoryTest, DeleteBySerialNumber)
+{
+    auto aircraftResult = createAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = repository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    // Test successful deletion
+    auto deleteResult = repository->deleteBySerialNumber(_serial);
+    ASSERT_TRUE(deleteResult.has_value());
+    EXPECT_TRUE(deleteResult.value());
+
+    // Verify aircraft no longer exists
+    auto existsResult = repository->existsAircraft(_serial);
+    ASSERT_TRUE(existsResult.has_value());
+    EXPECT_FALSE(existsResult.value());
+
+    // Test deletion of non-existent aircraft
+    auto nonExistentSerialResult = AircraftSerial::create("VN999");
+    ASSERT_TRUE(nonExistentSerialResult.has_value());
+    auto notFoundResult = repository->deleteBySerialNumber(nonExistentSerialResult.value());
+    ASSERT_TRUE(notFoundResult.has_value());
+    EXPECT_FALSE(notFoundResult.value());
+}
+
 #endif

@@ -25,6 +25,8 @@ public:
     const std::unordered_map<int, Aircraft> &getAircrafts() const;
 
     Result<Aircraft> findBySerialNumber(const AircraftSerial &serial);
+    Result<bool> existsAircraft(const AircraftSerial &serial);
+    Result<bool> deleteBySerialNumber(const AircraftSerial &serial);
 };
 
 #endif
