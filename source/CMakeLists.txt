@@ -9,7 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 enable_testing()
 
 # Find all source files
-file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
+file(GLOB_RECURSE CORE_SOURCES 
+    ${CMAKE_SOURCE_DIR}/src/core/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/utils/Logger.cpp
+)
 file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/MockRepository/*.cpp)
 file(GLOB_RECURSE TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/tests/mock/*.cpp)
 
