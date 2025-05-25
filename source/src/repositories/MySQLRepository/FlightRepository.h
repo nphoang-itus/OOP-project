@@ -23,8 +23,7 @@ public:
         if (!_logger) {
             _logger = Logger::getInstance();
         }
-    }
-                    ;
+    };
 
     Result<Flight> findById(const int& id) override;
     Result<std::vector<Flight>> findAll() override;
