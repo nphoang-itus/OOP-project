@@ -226,17 +226,22 @@ TEST_F(TicketMockRepositoryTest, FindByPassengerId)
     }
 }
 
-TEST_F(TicketMockRepositoryTest, FindByFlightId)
+TEST_F(TicketMockRepositoryTest, FindBySerialNumber)
 {
     auto ticketResult = createTicket();
     ASSERT_TRUE(ticketResult.has_value());
 
     repository->create(ticketResult.value());
-    auto findResult = repository->findByFlightId(flight->getId());
+
+    // Assuming AircraftSerial has a suitable constructor or factory method:
+    AircraftSerial serial = flight->getAircraft()->getSerial();
+
+    auto findResult = repository->findBySerialNumber(serial);
     ASSERT_TRUE(findResult.has_value());
     ASSERT_FALSE(findResult.value().empty());
+
     for (const auto &t : findResult.value())
     {
-        EXPECT_EQ(t.getFlight()->getId(), flight->getId());
+        EXPECT_EQ(t.getFlight()->getAircraft()->getSerial(), serial);
     }
 }

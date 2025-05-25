@@ -117,12 +117,25 @@ Result<std::vector<Ticket>> TicketMockRepository::findByPassengerId(int passenge
     return result;
 }
 
-Result<std::vector<Ticket>> TicketMockRepository::findByFlightId(int flightId)
+// Result<std::vector<Ticket>> TicketMockRepository::findByFlightId(int flightId)
+// {
+//     std::vector<Ticket> result;
+//     for (const auto &[id, ticket] : _tickets)
+//     {
+//         if (ticket->getFlight()->getId() == flightId)
+//         {
+//             result.push_back(*ticket);
+//         }
+//     }
+//     return result;
+// }
+
+Result<std::vector<Ticket>> TicketMockRepository::findBySerialNumber(const AircraftSerial &serial)
 {
     std::vector<Ticket> result;
     for (const auto &[id, ticket] : _tickets)
     {
-        if (ticket->getFlight()->getId() == flightId)
+        if (ticket->getFlight()->getAircraft()->getSerial() == serial)
         {
             result.push_back(*ticket);
         }
