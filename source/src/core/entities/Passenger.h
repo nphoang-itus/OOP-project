@@ -55,6 +55,10 @@ public:
         _id = id;
     }
 
+    void setName(const std::string& name) {
+        _name = name;
+    }
+
     std::string toString() const override {
         return "Passenger{id=" + std::to_string(_id) + 
                ", name=" + _name + 
