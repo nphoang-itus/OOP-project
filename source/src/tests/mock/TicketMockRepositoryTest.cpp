@@ -84,34 +84,159 @@ protected:
     }
 };
 
-TEST_F(TicketMockRepositoryTest, CreateAndFindAndDeleteTicket)
+TEST_F(TicketMockRepositoryTest, CreateAndFindById)
 {
-    // Create ticket
     auto ticketResult = createTicket();
     ASSERT_TRUE(ticketResult.has_value());
+
     auto createResult = repository->create(ticketResult.value());
     ASSERT_TRUE(createResult.has_value());
-    auto createdTicket = createResult.value();
 
-    // Find by id
-    auto findResult = repository->findById(createdTicket.getId());
+    auto findResult = repository->findById(createResult.value().getId());
     ASSERT_TRUE(findResult.has_value());
-    EXPECT_EQ(findResult.value().getTicketNumber().toString(), ticketNumber.toString());
-    EXPECT_EQ(findResult.value().getPassenger()->getId(), passenger->getId());
-    EXPECT_EQ(findResult.value().getFlight()->getId(), flight->getId());
+    EXPECT_EQ(findResult.value().getTicketNumber(), ticketNumber);
+}
 
-    // Count tickets
-    auto countResult = repository->count();
-    ASSERT_TRUE(countResult.has_value());
-    EXPECT_EQ(countResult.value(), 1);
+TEST_F(TicketMockRepositoryTest, FindAll)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
 
-    // Delete ticket
-    auto deleteResult = repository->deleteById(createdTicket.getId());
+    repository->create(ticketResult.value());
+    repository->create(ticketResult.value());
+
+    auto findAllResult = repository->findAll();
+    ASSERT_TRUE(findAllResult.has_value());
+    EXPECT_EQ(findAllResult.value().size(), 2);
+}
+
+TEST_F(TicketMockRepositoryTest, UpdateTicket)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    auto createResult = repository->create(ticketResult.value());
+    ASSERT_TRUE(createResult.has_value());
+    auto ticket = createResult.value();
+
+    // Tạo một vé mới với giá mới
+    Price newPrice = Price::create(150.0, "USD").value();
+    auto newTicketResult = Ticket::create(
+        ticket.getTicketNumber(),
+        ticket.getPassenger(),
+        ticket.getFlight(),
+        ticket.getSeatNumber(),
+        newPrice);
+    ASSERT_TRUE(newTicketResult.has_value());
+
+    // Giữ nguyên ID cũ
+    auto newTicket = newTicketResult.value();
+    newTicket.setId(ticket.getId());
+    newTicket.setStatus(ticket.getStatus());
+
+    auto updateResult = repository->update(newTicket);
+    ASSERT_TRUE(updateResult.has_value());
+    EXPECT_EQ(updateResult.value().getPrice(), newPrice);
+}
+
+TEST_F(TicketMockRepositoryTest, DeleteById)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    auto createResult = repository->create(ticketResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    auto deleteResult = repository->deleteById(createResult.value().getId());
     ASSERT_TRUE(deleteResult.has_value());
     EXPECT_TRUE(deleteResult.value());
 
-    // Count after delete
-    countResult = repository->count();
-    ASSERT_TRUE(countResult.has_value());
-    EXPECT_EQ(countResult.value(), 0);
+    auto findResult = repository->findById(createResult.value().getId());
+    EXPECT_FALSE(findResult.has_value());
+}
+
+TEST_F(TicketMockRepositoryTest, Exists)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    auto createResult = repository->create(ticketResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    auto existsResult = repository->exists(createResult.value().getId());
+    ASSERT_TRUE(existsResult.has_value());
+    EXPECT_TRUE(existsResult.value());
+
+    auto notExistsResult = repository->exists(-1);
+    ASSERT_TRUE(notExistsResult.has_value());
+    EXPECT_FALSE(notExistsResult.value());
+}
+
+TEST_F(TicketMockRepositoryTest, Count)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    EXPECT_EQ(repository->count().value(), 0);
+
+    repository->create(ticketResult.value());
+    repository->create(ticketResult.value());
+
+    EXPECT_EQ(repository->count().value(), 2);
+}
+
+TEST_F(TicketMockRepositoryTest, FindByTicketNumber)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    repository->create(ticketResult.value());
+    auto findResult = repository->findByTicketNumber(ticketNumber);
+    ASSERT_TRUE(findResult.has_value());
+    EXPECT_EQ(findResult.value().getTicketNumber(), ticketNumber);
+}
+
+TEST_F(TicketMockRepositoryTest, ExistsTicket)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    repository->create(ticketResult.value());
+    auto existsResult = repository->existsTicket(ticketNumber);
+    ASSERT_TRUE(existsResult.has_value());
+    EXPECT_TRUE(existsResult.value());
+
+    auto notExistsResult = repository->existsTicket(TicketNumber::create("ZZ99-99999999-9999").value());
+    ASSERT_TRUE(notExistsResult.has_value());
+    EXPECT_FALSE(notExistsResult.value());
+}
+
+TEST_F(TicketMockRepositoryTest, FindByPassengerId)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    repository->create(ticketResult.value());
+    auto findResult = repository->findByPassengerId(passenger->getId());
+    ASSERT_TRUE(findResult.has_value());
+    ASSERT_FALSE(findResult.value().empty());
+    for (const auto &t : findResult.value())
+    {
+        EXPECT_EQ(t.getPassenger()->getId(), passenger->getId());
+    }
+}
+
+TEST_F(TicketMockRepositoryTest, FindByFlightId)
+{
+    auto ticketResult = createTicket();
+    ASSERT_TRUE(ticketResult.has_value());
+
+    repository->create(ticketResult.value());
+    auto findResult = repository->findByFlightId(flight->getId());
+    ASSERT_TRUE(findResult.has_value());
+    ASSERT_FALSE(findResult.value().empty());
+    for (const auto &t : findResult.value())
+    {
+        EXPECT_EQ(t.getFlight()->getId(), flight->getId());
+    }
 }
