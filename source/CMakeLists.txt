@@ -104,7 +104,8 @@ target_link_libraries(${PROJECT_NAME}_db_test
 add_executable(${PROJECT_NAME}_repo_test
     # src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
     # src/tests/repositories/MySQLRepository/FlightRepositoryTest.cpp
-    src/tests/repositories/MySQLRepository/PassengerRepositoryTest.cpp
+    # src/tests/repositories/MySQLRepository/PassengerRepositoryTest.cpp
+    src/tests/repositories/MySQLRepository/TicketRepositoryTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_repo_test

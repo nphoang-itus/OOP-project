@@ -40,6 +40,17 @@ public:
             default: return "Không xác định";
         }
     }
+    
+    static TicketStatus fromString(const std::string& statusString) {
+        if (statusString == "PENDING") return TicketStatus::PENDING;
+        else if (statusString == "CONFIRMED") return TicketStatus::CONFIRMED;
+        else if (statusString == "CHECKED_IN") return TicketStatus::CHECKED_IN;
+        else if (statusString == "BOARDED") return TicketStatus::BOARDED;
+        else if (statusString == "COMPLETED") return TicketStatus::COMPLETED;
+        else if (statusString == "CANCELLED") return TicketStatus::CANCELLED;
+        else if (statusString == "REFUNDED") return TicketStatus::REFUNDED;
+        else throw std::invalid_argument("Unknown ticket status: " + statusString);
+    }
 };
 
 #endif 

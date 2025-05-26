@@ -168,7 +168,7 @@ Result<bool> PassengerRepository::exists(const int& id) {
             return Success(false);
         }
 
-        auto countResult = dbResult->getInt(0);  // COUNT(*) is always the first column (index 0)
+        auto countResult = dbResult->getInt(0);
         if (!countResult) {
             if (_logger) _logger->error("Failed to get count for passenger existence check");
             return Failure<bool>(CoreError("Failed to get count", "COUNT_FAILED"));
