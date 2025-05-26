@@ -46,8 +46,13 @@ target_link_libraries(${PROJECT_NAME}_test
     repository_lib
 )
 
-# Add test
-add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
+# Tạo executable cho repository test
+add_executable(${PROJECT_NAME}_repo_test
+    # src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
+    # src/tests/repositories/MySQLRepository/FlightRepositoryTest.cpp
+    # src/tests/repositories/MySQLRepository/PassengerRepositoryTest.cpp
+    src/tests/repositories/MySQLRepository/TicketRepositoryTest.cpp
+)
 
 # Set build type if not specified
 if(NOT CMAKE_BUILD_TYPE)

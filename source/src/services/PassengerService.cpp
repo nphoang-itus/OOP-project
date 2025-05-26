@@ -1,117 +1,188 @@
-/**
- * @file PassengerService.cpp
- * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
- * @brief Triển khai lớp PassengerService quản lý các chức năng nghiệp vụ liên quan đến hành khách.
- * @version 0.1
- * @date 2025-05-10
- * 
- * @copyright Copyright (c) 2025
- * 
- */
-
 #include "PassengerService.h"
-#include <stdexcept>
-#include <regex>
 
-PassengerService::PassengerService(std::shared_ptr<PassengerRepository> passengerRepository)
-    : _passengerRepository(std::move(passengerRepository)), _logger(Logger::getInstance()) {
-    
-    _logger->debug("Creating PassengerService instance");
-    
-    if (!_passengerRepository) {
-        _logger->error("PassengerRepository is null in PassengerService constructor");
-        throw std::invalid_argument("PassengerRepository cannot be null");
+Result<Passenger> PassengerService::getPassengerById(const int &id)
+{
+    try
+    {
+        _logger->info("Getting passenger by ID: " + std::to_string(id));
+        auto result = _repository->findById(id);
+        if (result.has_value())
+        {
+            _logger->info("Successfully retrieved passenger with ID: " + std::to_string(id));
+        }
+        else
+        {
+            _logger->warning("Passenger not found with ID: " + std::to_string(id));
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error getting passenger by ID: " + std::string(e.what()));
+        return Failure<Passenger>(CoreError("Database error: " + std::string(e.what())));
     }
 }
 
-// bool PassengerService::validatePassenger(const Passenger& passenger) {
-//     // Kiểm tra tên hành khách
-//     if (passenger.getName().empty()) {
-//         _logger->error("Invalid passenger data: Name is empty");
-//         return false;
-//     }
-    
-//     // Kiểm tra số hộ chiếu
-//     if (passenger.getPassport().empty()) {
-//         _logger->error("Invalid passenger data: Passport is empty");
-//         return false;
-//     }
-    
-//     // Kiểm tra định dạng số điện thoại (cơ bản)
-//     if (!passenger.getPhone().empty()) {
-//         std::regex phoneRegex("^[0-9+\\-\\(\\) ]+$");
-//         if (!std::regex_match(passenger.getPhone(), phoneRegex)) {
-//             _logger->error("Invalid passenger data: Phone number format is invalid");
-//             return false;
-//         }
-//     }
-    
-//     return true;
-// }
-
-std::vector<Passenger> PassengerService::findAll() {
-    _logger->debug("PassengerService::findAll - Retrieving all passengers");
-    return _passengerRepository->findAll();
-}
-
-std::optional<Passenger> PassengerService::findById(const int& id) {
-    _logger->debug("PassengerService::findById - Finding passenger with ID: " + std::to_string(id));
-    return _passengerRepository->findById(id);
-}
-
-bool PassengerService::save(Passenger& passenger) {
-    _logger->debug("PassengerService::save - Saving passenger with passport: " + passenger.getPassport());
-    
-    // Validate passenger data
-    // if (!validatePassenger(passenger)) {
-    //     return false;
-    // }
-    
-    // Check if passport already exists
-    if (isPassportExists(passenger.getPassport())) {
-        _logger->warning("Passport " + passenger.getPassport() + " already exists in the system");
-        return false;
+Result<std::vector<Passenger>> PassengerService::getAllPassengers()
+{
+    try
+    {
+        _logger->info("Getting all passengers");
+        auto result = _repository->findAll();
+        if (result.has_value())
+        {
+            _logger->info("Successfully retrieved " + std::to_string(result.value().size()) + " passengers");
+        }
+        else
+        {
+            _logger->warning("Failed to retrieve passengers");
+        }
+        return result;
     }
-    
-    return _passengerRepository->save(passenger);
-}
-
-bool PassengerService::remove(const int& id) {
-    _logger->debug("PassengerService::remove - Removing passenger with ID: " + std::to_string(id));
-    return _passengerRepository->remove(id);
-}
-
-std::optional<Passenger> PassengerService::findByPassport(const std::string& passport) {
-    _logger->debug("PassengerService::findByPassport - Finding passenger with passport: " + passport);
-    return _passengerRepository->findByPassport(passport);
-}
-
-std::vector<Passenger> PassengerService::findByName(const std::string& name) {
-    _logger->debug("PassengerService::findByName - Finding passengers with name: " + name);
-    return _passengerRepository->findByName(name);
-}
-
-bool PassengerService::update(const Passenger& passenger) {
-    _logger->debug("PassengerService::update - Updating passenger with ID: " + std::to_string(passenger.getId()));
-    
-    // // Validate passenger data
-    // if (!validatePassenger(passenger)) {
-    //     return false;
-    // }
-    
-    // Check if the updated passport belongs to another passenger
-    auto existingPassenger = _passengerRepository->findByPassport(passenger.getPassport());
-    if (existingPassenger && existingPassenger->getId() != passenger.getId()) {
-        _logger->warning("Cannot update: Passport " + passenger.getPassport() + " already assigned to another passenger");
-        return false;
+    catch (const std::exception &e)
+    {
+        _logger->error("Error getting all passengers: " + std::string(e.what()));
+        return Failure<std::vector<Passenger>>(CoreError("Database error: " + std::string(e.what())));
     }
-    
-    return _passengerRepository->update(passenger);
 }
 
-bool PassengerService::isPassportExists(const std::string& passport) {
-    _logger->debug("PassengerService::isPassportExists - Checking if passport exists: " + passport);
-    
-    auto passenger = _passengerRepository->findByPassport(passport);
-    return passenger.has_value();
+Result<Passenger> PassengerService::createPassenger(const Passenger &passenger)
+{
+    try
+    {
+        _logger->info("Creating new passenger");
+        auto result = _repository->create(passenger);
+        if (result.has_value())
+        {
+            _logger->info("Successfully created passenger with ID: " + std::to_string(result.value().getId()));
+        }
+        else
+        {
+            _logger->warning("Failed to create passenger");
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error creating passenger: " + std::string(e.what()));
+        return Failure<Passenger>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<Passenger> PassengerService::updatePassenger(const Passenger &passenger)
+{
+    try
+    {
+        _logger->info("Updating passenger with ID: " + std::to_string(passenger.getId()));
+        auto result = _repository->update(passenger);
+        if (result.has_value())
+        {
+            _logger->info("Successfully updated passenger with ID: " + std::to_string(passenger.getId()));
+        }
+        else
+        {
+            _logger->warning("Failed to update passenger with ID: " + std::to_string(passenger.getId()));
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error updating passenger: " + std::string(e.what()));
+        return Failure<Passenger>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<bool> PassengerService::deletePassenger(const int &id)
+{
+    try
+    {
+        _logger->info("Deleting passenger with ID: " + std::to_string(id));
+        auto result = _repository->deleteById(id);
+        if (result.has_value())
+        {
+            _logger->info("Successfully deleted passenger with ID: " + std::to_string(id));
+        }
+        else
+        {
+            _logger->warning("Failed to delete passenger with ID: " + std::to_string(id));
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error deleting passenger: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<Passenger> PassengerService::getPassengerByPassport(const PassportNumber &passport)
+{
+    try
+    {
+        _logger->info("Getting passenger by passport");
+        auto result = _repository->findByPassportNumber(passport);
+        if (result.has_value())
+        {
+            _logger->info("Successfully retrieved passenger by passport");
+        }
+        else
+        {
+            _logger->warning("Passenger not found with given passport");
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error getting passenger by passport: " + std::string(e.what()));
+        return Failure<Passenger>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<bool> PassengerService::passengerExists(const int &id)
+{
+    try
+    {
+        _logger->info("Checking if passenger exists with ID: " + std::to_string(id));
+        auto result = _repository->exists(id);
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error checking passenger existence: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<bool> PassengerService::passportExists(const PassportNumber &passport)
+{
+    try
+    {
+        _logger->info("Checking if passport exists");
+        auto result = _repository->existsPassport(passport);
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error checking passport existence: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<size_t> PassengerService::getPassengerCount()
+{
+    try
+    {
+        _logger->info("Getting passenger count");
+        auto result = _repository->count();
+        if (result.has_value())
+        {
+            _logger->info("Passenger count: " + std::to_string(result.value()));
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        _logger->error("Error getting passenger count: " + std::string(e.what()));
+        return Failure<size_t>(CoreError("Database error: " + std::string(e.what())));
+    }
 }

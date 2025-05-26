@@ -9,7 +9,7 @@ FLUSH PRIVILEGES;
 -- Aircraft table
 CREATE TABLE aircraft (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    serial_number VARCHAR(10) UNIQUE CHECK (serial_number REGEXP '^[A-Z]{2,3}[0-9]{1,7}$'),
+    serial_number VARCHAR(10) UNIQUE,
     model VARCHAR(50) NOT NULL,
     economy_seats INT NOT NULL DEFAULT 0 CHECK (economy_seats >= 0),
     business_seats INT NOT NULL DEFAULT 0 CHECK (business_seats >= 0),
@@ -19,8 +19,8 @@ CREATE TABLE aircraft (
 -- Seat class table
 CREATE TABLE seat_class (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    code CHAR(1) NOT NULL UNIQUE CHECK (code IN ('E', 'B', 'F')),
-    name VARCHAR(20) NOT NULL CHECK (name IN ('ECONOMY', 'BUSINESS', 'FIRST'))
+    code CHAR(1) NOT NULL UNIQUE,
+    name VARCHAR(20) NOT NULL
 );
 
 -- Aircraft seat layout table
@@ -37,10 +37,10 @@ CREATE TABLE aircraft_seat_layout (
 -- Flight table (merged with route)
 CREATE TABLE flight (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    flight_number VARCHAR(6) NOT NULL CHECK (flight_number REGEXP '^[A-Z]{2}[1-9][0-9]{0,3}$'),
-    departure_code VARCHAR(3) NOT NULL CHECK (departure_code REGEXP '^[A-Z]{3}$'),
+    flight_number VARCHAR(6) NOT NULL,
+    departure_code VARCHAR(3) NOT NULL,
     departure_name VARCHAR(100) NOT NULL,
-    arrival_code VARCHAR(3) NOT NULL CHECK (arrival_code REGEXP '^[A-Z]{3}$'),
+    arrival_code VARCHAR(3) NOT NULL,
     arrival_name VARCHAR(100) NOT NULL,
     aircraft_id INT NOT NULL,
     departure_time DATETIME NOT NULL,
@@ -54,22 +54,22 @@ CREATE TABLE flight (
 -- Passenger table
 CREATE TABLE passenger (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    passport_number VARCHAR(20) UNIQUE CHECK (passport_number REGEXP '^[A-Z]{2,3}:[0-9]{6,9}$'),
+    passport_number VARCHAR(20) UNIQUE,
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(254) NOT NULL CHECK (email REGEXP '^[a-zA-Z0-9](\.?[a-zA-Z0-9_\-+%])*@[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$'),
-    phone VARCHAR(15) NOT NULL CHECK (phone REGEXP '^\+[0-9]{10,14}$'),
+    email VARCHAR(254) NOT NULL,
+    phone VARCHAR(15) NOT NULL,
     address VARCHAR(100)
 );
 
 -- Ticket table
 CREATE TABLE ticket (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_number VARCHAR(20) NOT NULL UNIQUE CHECK (ticket_number REGEXP '^[A-Z]{2}[0-9]{1,4}-[0-9]{8}-[0-9]{4}$'),
+    ticket_number VARCHAR(20) NOT NULL UNIQUE,
     flight_id INT NOT NULL,
     passenger_id INT NOT NULL,
-    seat_number VARCHAR(4) NOT NULL CHECK (seat_number REGEXP '^[A-Z][0-9]{2,3}$'),
+    seat_number VARCHAR(4) NOT NULL,
     price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
-    currency VARCHAR(3) NOT NULL CHECK (currency IN ('VND', 'USD', 'EUR')),
+    currency VARCHAR(3) NOT NULL,
     status ENUM('PENDING', 'CONFIRMED', 'CHECKED_IN', 'BOARDED', 'COMPLETED', 'CANCELLED', 'REFUNDED') DEFAULT 'PENDING',
     FOREIGN KEY (flight_id) REFERENCES flight(id),
     FOREIGN KEY (passenger_id) REFERENCES passenger(id),
@@ -93,8 +93,8 @@ CREATE INDEX idx_aircraft_seat_layout ON aircraft_seat_layout(aircraft_id);
 -- Sau khi đăng nhập, cấp quyền SUPER cho tài khoản của bạn
 FLUSH PRIVILEGES;
 -- Add triggers for data validation
-DELIMITER //
 
+DELIMITER //
 CREATE TRIGGER before_flight_insert
 BEFORE INSERT ON flight
 FOR EACH ROW
@@ -103,32 +103,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Arrival time must be after departure time';
     END IF;
-END//
-
-CREATE TRIGGER before_ticket_insert
-BEFORE INSERT ON ticket
-FOR EACH ROW
-BEGIN
-    DECLARE seat_class_code CHAR(1);
-    DECLARE seat_count INT;
-    
-    -- Get seat class code from seat number
-    SET seat_class_code = LEFT(NEW.seat_number, 1);
-    
-    -- Check if seat class exists in aircraft layout
-    SELECT COUNT(*) INTO seat_count
-    FROM aircraft_seat_layout acl
-    JOIN flight f ON f.aircraft_id = acl.aircraft_id
-    JOIN seat_class sc ON sc.code = acl.seat_class_code
-    WHERE f.id = NEW.flight_id
-    AND sc.code = seat_class_code;
-    
-    IF seat_count = 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid seat class for this aircraft';
-    END IF;
-END//
-
+END //
 DELIMITER ;
 
 -- Insert data into aircraft table
@@ -156,16 +131,16 @@ INSERT INTO flight (flight_number, departure_code, departure_name, arrival_code,
 
 -- Insert data into passenger table
 INSERT INTO passenger (passport_number, name, email, phone, address) VALUES
-('VN:P123456', 'Nguyen Van A', 'nguyenvana@email.com', '+84901234567', '123 Nguyen Hue, District 1, Ho Chi Minh City'),
-('VN:P234567', 'Tran Thi B', 'tranthib@email.com', '+84912345678', '456 Le Loi, District 1, Ho Chi Minh City'),
-('VN:P345678', 'Le Van C', 'levanc@email.com', '+84923456789', '789 Dong Khoi, District 1, Ho Chi Minh City'),
-('VN:P456789', 'Pham Thi D', 'phamthid@email.com', '+84934567890', '101 Tran Hung Dao, District 1, Ho Chi Minh City'),
-('VN:P567890', 'Hoang Van E', 'hoangvane@email.com', '+84945678901', '202 Hai Ba Trung, District 1, Ho Chi Minh City'),
-('VN:P678901', 'Vu Thi F', 'vuthif@email.com', '+84956789012', '15 Nguyen Trai, District 5, Ho Chi Minh City'),
-('VN:P789012', 'Dang Van G', 'dangvang@email.com', '+84967890123', '25 Ly Tu Trong, District 1, Ho Chi Minh City'),
-('VN:P890123', 'Lam Thi H', 'lamthih@email.com', '+84978901234', '35 Cong Quynh, District 1, Ho Chi Minh City'),
-('VN:P901234', 'Trinh Van I', 'trinhvani@email.com', '+84989012345', '45 Vo Van Tan, District 3, Ho Chi Minh City'),
-('VN:P012345', 'Mai Thi K', 'maithik@email.com', '+84990123456', '55 Dien Bien Phu, District 3, Ho Chi Minh City');
+('VN:1123456', 'Nguyen Van A', 'nguyenvana@email.com', '+84901234567', '123 Nguyen Hue, District 1, Ho Chi Minh City'),
+('VN:1234567', 'Tran Thi B', 'tranthib@email.com', '+84912345678', '456 Le Loi, District 1, Ho Chi Minh City'),
+('VN:1345678', 'Le Van C', 'levanc@email.com', '+84923456789', '789 Dong Khoi, District 1, Ho Chi Minh City'),
+('VN:1456789', 'Pham Thi D', 'phamthid@email.com', '+84934567890', '101 Tran Hung Dao, District 1, Ho Chi Minh City'),
+('VN:1567890', 'Hoang Van E', 'hoangvane@email.com', '+84945678901', '202 Hai Ba Trung, District 1, Ho Chi Minh City'),
+('VN:1678901', 'Vu Thi F', 'vuthif@email.com', '+84956789012', '15 Nguyen Trai, District 5, Ho Chi Minh City'),
+('VN:1789012', 'Dang Van G', 'dangvang@email.com', '+84967890123', '25 Ly Tu Trong, District 1, Ho Chi Minh City'),
+('VN:1890123', 'Lam Thi H', 'lamthih@email.com', '+84978901234', '35 Cong Quynh, District 1, Ho Chi Minh City'),
+('VN:1901234', 'Trinh Van I', 'trinhvani@email.com', '+84989012345', '45 Vo Van Tan, District 3, Ho Chi Minh City'),
+('VN:1012345', 'Mai Thi K', 'maithik@email.com', '+84990123456', '55 Dien Bien Phu, District 3, Ho Chi Minh City');
 
 -- Insert data into ticket table
 INSERT INTO ticket (ticket_number, flight_id, passenger_id, seat_number, price, currency, status) VALUES
@@ -211,7 +186,7 @@ WITH RECURSIVE numbers AS (
     UNION ALL
     SELECT n + 1 FROM numbers WHERE n < 100
 )
-SELECT 
+SELECT
     CONCAT('BLK', LPAD(n, 6, '0')),
     CONCAT('Test Passenger ', n),
     CONCAT('test', n, '@example.com'),
