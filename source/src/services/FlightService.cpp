@@ -1,160 +1,173 @@
-/**
- * @file FlightService.cpp
- * @author Hoang Phuc Nguyen (nphuchoang.itus@gmail.com)
- * @brief Triển khai lớp FlightService quản lý các chức năng nghiệp vụ liên quan đến chuyến bay.
- * @version 0.1
- * @date 2025-05-10
- * 
- * @copyright Copyright (c) 2025
- * 
- */
-
 #include "FlightService.h"
-#include "../utils/utils.h"
-#include <algorithm>
-#include <stdexcept>
 
-FlightService::FlightService(std::shared_ptr<FlightRepository> flightRepository)
-    : _flightRepository(std::move(flightRepository)), _logger(Logger::getInstance()) {
-    
-    _logger->debug("Creating FlightService instance");
-    
-    if (!_flightRepository) {
-        _logger->error("FlightRepository is null in FlightService constructor");
-        throw std::invalid_argument("FlightRepository cannot be null");
+Result<Flight> FlightService::getById(const int &id)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Getting flight by ID: " + std::to_string(id));
+        return _repository->findById(id);
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error getting flight by ID: " + std::string(e.what()));
+        return Failure<Flight>(CoreError("Database error: " + std::string(e.what())));
     }
 }
 
-std::vector<Flight> FlightService::findAll() {
-    _logger->debug("FlightService::findAll - Retrieving all flights");
-    return _flightRepository->findAll();
+Result<std::vector<Flight>> FlightService::getAll()
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Getting all flights");
+        return _repository->findAll();
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error getting all flights: " + std::string(e.what()));
+        return Failure<std::vector<Flight>>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
 
-std::optional<Flight> FlightService::findById(const int& id) {
-    _logger->debug("FlightService::findById - Finding flight with ID: " + std::to_string(id));
-    return _flightRepository->findById(id);
+Result<bool> FlightService::exists(const int &id)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->debug("Checking if flight exists with ID: " + std::to_string(id));
+        return _repository->exists(id);
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error checking flight existence: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
 
-bool FlightService::save(Flight& flight) {
-    _logger->debug("FlightService::save - Saving flight: " + flight.getNo());
-    
-    // // Validate flight data before saving
-    // if (flight.getNo().empty() || flight.getName().empty() || 
-    //     flight.getFrom().empty() || flight.getDestination().empty() || 
-    //     flight.getAmount() < 0) {
-        
-    //     _logger->error("Invalid flight data provided");
-    //     return false;
-    // }
-    
-    return _flightRepository->save(flight);
+Result<size_t> FlightService::count()
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->debug("Getting total flight count");
+        return _repository->count();
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error getting flight count: " + std::string(e.what()));
+        return Failure<size_t>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
 
-bool FlightService::remove(const int& id) {
-    _logger->debug("FlightService::remove - Removing flight with ID: " + std::to_string(id));
-    return _flightRepository->remove(id);
-}
-
-std::vector<Flight> FlightService::findAvailableFlights() {
-    _logger->debug("FlightService::findAvailableFlights - Retrieving available flights");
-    return _flightRepository->findAvailableFlights();
-}
-
-std::optional<Flight> FlightService::findByFlightNo(const std::string& flightNo) {
-    _logger->debug("FlightService::findByFlightNo - Finding flight with number: " + flightNo);
-    return _flightRepository->findByFlightNo(flightNo);
-}
-
-bool FlightService::update(const Flight& flight) {
-    _logger->debug("FlightService::update - Updating flight with ID: " + std::to_string(flight.getId()));
-    
-    // // Validate flight data before updating
-    // if (flight.getNo().empty() || flight.getName().empty() || 
-    //     flight.getFrom().empty() || flight.getDestination().empty() || 
-    //     flight.getAmount() < 0) {
-        
-    //     _logger->error("Invalid flight data provided for update");
-    //     return false;
-    // }
-    
-    return _flightRepository->update(flight);
-}
-
-std::vector<Flight> FlightService::findByRoute(const std::string& from, const std::string& destination) {
-    _logger->debug("FlightService::findByRoute - Finding flights from " + from + " to " + destination);
-    
-    std::vector<Flight> allFlights = _flightRepository->findAll();
-    std::vector<Flight> matchingFlights;
-    
-    for (const auto& flight : allFlights) {
-        if (flight.getFrom() == from && flight.getDestination() == destination) {
-            matchingFlights.push_back(flight);
+Result<Flight> FlightService::create(const Flight &entity)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Creating new flight with number: " + entity.getFlightNumber().value());
+        auto existsResult = flightExistsByNumber(entity.getFlightNumber());
+        if (!existsResult.has_value())
+        {
+            return Failure<Flight>(existsResult.error());
         }
-    }
-    
-    _logger->info("Found " + std::to_string(matchingFlights.size()) + " flights matching route " + from + " to " + destination);
-    return matchingFlights;
-}
-
-std::vector<Flight> FlightService::findByDateRange(const std::tm& startDate, const std::tm& endDate) {
-    _logger->debug("FlightService::findByDateRange - Finding flights in date range");
-    
-    std::vector<Flight> allFlights = _flightRepository->findAll();
-    std::vector<Flight> matchingFlights;
-    
-    // Convert tm objects to time_t for easier comparison
-    std::time_t startTime = std::mktime(const_cast<std::tm*>(&startDate));
-    std::time_t endTime = std::mktime(const_cast<std::tm*>(&endDate));
-    
-    if (startTime == -1 || endTime == -1) {
-        _logger->error("Invalid date range provided");
-        return matchingFlights;
-    }
-    
-    for (const auto& flight : allFlights) {
-        std::tm departureTime = flight.getDepartureTime();
-        std::time_t flightTime = std::mktime(&departureTime);
-        
-        if (flightTime != -1 && flightTime >= startTime && flightTime <= endTime) {
-            matchingFlights.push_back(flight);
+        if (existsResult.value())
+        {
+            return Failure<Flight>(CoreError("Flight with flight number already exists"));
         }
+        return _repository->create(entity);
     }
-    
-    _logger->info("Found " + std::to_string(matchingFlights.size()) + " flights within the specified date range");
-    return matchingFlights;
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error creating flight: " + std::string(e.what()));
+        return Failure<Flight>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
 
-bool FlightService::isFlightAvailable(const std::string& flightNo) {
-    _logger->debug("FlightService::isFlightAvailable - Checking availability for flight: " + flightNo);
-    
-    auto flight = _flightRepository->findByFlightNo(flightNo);
-    if (!flight) {
-        _logger->warning("Flight not found: " + flightNo);
-        return false;
+Result<Flight> FlightService::update(const Flight &entity)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Updating flight with ID: " + std::to_string(entity.getId()));
+        auto existsResult = exists(entity.getId());
+        if (!existsResult.has_value())
+        {
+            return Failure<Flight>(existsResult.error());
+        }
+        if (!existsResult.value())
+        {
+            return Failure<Flight>(CoreError("Flight not found"));
+        }
+        return _repository->update(entity);
     }
-    
-    bool isAvailable = (flight->getAvailability() == 'A');
-    _logger->debug("Flight " + flightNo + " availability: " + (isAvailable ? "Available" : "Not Available"));
-    
-    return isAvailable;
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error updating flight: " + std::string(e.what()));
+        return Failure<Flight>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
 
-bool FlightService::updateAvailability(const std::string& flightNo, char availability) {
-    _logger->debug("FlightService::updateAvailability - Updating availability for flight: " + flightNo);
-    
-    if (availability != 'A' && availability != 'N') {
-        _logger->error("Invalid availability value: " + std::string(1, availability));
-        return false;
+Result<bool> FlightService::deleteById(const int &id)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Deleting flight with ID: " + std::to_string(id));
+        auto existsResult = exists(id);
+        if (!existsResult.has_value())
+        {
+            return Failure<bool>(existsResult.error());
+        }
+        if (!existsResult.value())
+        {
+            return Failure<bool>(CoreError("Flight not found"));
+        }
+        return _repository->deleteById(id);
     }
-    
-    auto flight = _flightRepository->findByFlightNo(flightNo);
-    if (!flight) {
-        _logger->warning("Flight not found: " + flightNo);
-        return false;
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error deleting flight: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
     }
-    
-    Flight updatedFlight = *flight;
-    updatedFlight.setAvailability(availability);
-    
-    return _flightRepository->update(updatedFlight);
+}
+
+// Flight-specific operations
+Result<Flight> FlightService::getFlightByNumber(const FlightNumber &number)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->info("Getting flight by flight number: " + number.value());
+        return _repository->findByFlightNumber(number);
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error getting flight by number: " + std::string(e.what()));
+        return Failure<Flight>(CoreError("Database error: " + std::string(e.what())));
+    }
+}
+
+Result<bool> FlightService::flightExistsByNumber(const FlightNumber &number)
+{
+    try
+    {
+        auto logger = Logger::getInstance();
+        logger->debug("Checking if flight exists with number: " + number.value());
+        return _repository->existsFlight(number);
+    }
+    catch (const std::exception &e)
+    {
+        auto logger = Logger::getInstance();
+        logger->error("Error checking flight existence by number: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what())));
+    }
 }
