@@ -135,6 +135,8 @@ public:
     const SeatNumber& getSeatNumber() const { return _seatNumber; }
     const Price& getPrice() const { return _price; }
 
+    void setPrice(const Price& price) { _price = price; }
+
     // Business logic methods
     bool canBeCancelled() const {
         return _status == TicketStatus::PENDING || _status == TicketStatus::CONFIRMED;
