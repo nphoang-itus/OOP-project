@@ -8,96 +8,42 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Enable testing
 enable_testing()
 
-# Tìm tất cả các file nguồn
-file(GLOB_RECURSE CORE_SOURCES ${CMAKE_SOURCE_DIR}/src/core/*.cpp)
-file(GLOB_RECURSE DATABASE_SOURCES ${CMAKE_SOURCE_DIR}/src/database/*.cpp)
-file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/*.cpp)
-file(GLOB_RECURSE SERVICES_SOURCES ${CMAKE_SOURCE_DIR}/src/services/*.cpp)
-file(GLOB_RECURSE UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/utils/*.cpp)
-file(GLOB_RECURSE UI_SOURCES ${CMAKE_SOURCE_DIR}/src/ui/*.cpp)
+# Find all source files
+file(GLOB_RECURSE CORE_SOURCES 
+    ${CMAKE_SOURCE_DIR}/src/core/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/utils/Logger.cpp
+)
+file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/MockRepository/*.cpp)
+file(GLOB_RECURSE TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/tests/mock/*.cpp)
 
-# Thêm thư mục chứa file header
+# Add include directories
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Tìm thư viện MySQL Connector/C++
-find_library(MYSQLCPPCONN_LIBRARY 
-    NAMES mysqlcppconnx libmysqlcppconnx
-    HINTS 
-        /usr/local/Cellar/mysql-connector-c++/9.3.0/lib
-        /usr/local/lib 
-        /usr/local/opt/mysql-connector-c++/lib
-        /opt/homebrew/lib
-)
-
-find_path(MYSQLCPPCONN_INCLUDE_DIR 
-    NAMES mysqlx/xdevapi.h
-    HINTS
-        /usr/local/Cellar/mysql-connector-c++/9.3.0/include
-        /usr/local/include 
-        /usr/local/opt/mysql-connector-c++/include
-        /opt/homebrew/include
-)
-
-if(NOT MYSQLCPPCONN_LIBRARY)
-    message(FATAL_ERROR "Không tìm thấy thư viện MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
-endif()
-
-if(NOT MYSQLCPPCONN_INCLUDE_DIR)
-    message(FATAL_ERROR "Không tìm thấy thư mục include MySQL Connector/C++. Vui lòng cài đặt với lệnh: brew install mysql-connector-c++")
-endif()
-
-include_directories(${MYSQLCPPCONN_INCLUDE_DIR})
-
-# Tạo thư viện utils
-add_library(utils_lib STATIC
-    ${UTILS_SOURCES}
-)
-
-# Tạo thư viện database
-add_library(database_lib STATIC
-    ${DATABASE_SOURCES}
-)
-
-# Tạo thư viện core
+# Create core library
 add_library(core_lib STATIC
     ${CORE_SOURCES}
 )
 
-# Tạo thư viện repository
+# Create repository library
 add_library(repository_lib STATIC
     ${REPOSITORY_SOURCES}
 )
 
-target_link_libraries(database_lib
-    ${MYSQLCPPCONN_LIBRARY}
-    utils_lib
-)
-
-target_link_libraries(core_lib
-    utils_lib
-)
-
-target_link_libraries(repository_lib
-    core_lib
-    database_lib
-    utils_lib
-)
-
-# Cấu hình cho test
+# Configure GTest
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-# Tạo executable cho database test
-add_executable(${PROJECT_NAME}_db_test
-    src/tests/database/MySQLXConnectionTest.cpp
+# Create test executable
+add_executable(${PROJECT_NAME}_test
+    ${TEST_SOURCES}
 )
 
-target_link_libraries(${PROJECT_NAME}_db_test
+# Link libraries
+target_link_libraries(${PROJECT_NAME}_test
     GTest::gtest_main
     pthread
-    database_lib
-    utils_lib
-    ${MYSQLCPPCONN_LIBRARY}
+    core_lib
+    repository_lib
 )
 
 # Tạo executable cho repository test
@@ -108,17 +54,10 @@ add_executable(${PROJECT_NAME}_repo_test
     src/tests/repositories/MySQLRepository/TicketRepositoryTest.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_repo_test
-    GTest::gtest_main
-    pthread
-    repository_lib
-    core_lib
-    database_lib
-    utils_lib
-    ${MYSQLCPPCONN_LIBRARY}
-)
+# Set build type if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
 
-# Enable testing
-enable_testing()
-add_test(NAME ${PROJECT_NAME}_db_test COMMAND ${PROJECT_NAME}_db_test)
-add_test(NAME ${PROJECT_NAME}_repo_test COMMAND ${PROJECT_NAME}_repo_test) 
+# Add compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") 
