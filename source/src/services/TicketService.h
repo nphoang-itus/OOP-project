@@ -1,7 +1,7 @@
 #ifndef TICKET_SERVICE_H
 #define TICKET_SERVICE_H
 
-#include "repositories/MockRepository/TicketMockRepository.h"
+#include "../repositories/MySQLRepository/TicketRepository.h"
 #include "core/entities/Ticket.h"
 #include "core/value_objects/ticket_number/TicketNumber.h"
 #include "core/value_objects/seat_number/SeatNumber.h"
@@ -16,11 +16,11 @@
 class TicketService : public IService<Ticket>
 {
 private:
-    std::shared_ptr<TicketMockRepository> _ticketRepository;
+    std::shared_ptr<TicketRepository> _ticketRepository;
     std::shared_ptr<Logger> _logger;
 
 public:
-    explicit TicketService(std::shared_ptr<TicketMockRepository> ticketRepository,
+    explicit TicketService(std::shared_ptr<TicketRepository> ticketRepository,
                            std::shared_ptr<Logger> logger = nullptr)
         : _ticketRepository(std::move(ticketRepository)), _logger(std::move(logger)) {}
 

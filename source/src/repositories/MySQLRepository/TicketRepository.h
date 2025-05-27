@@ -26,16 +26,17 @@ private:
     std::shared_ptr<PassengerRepository> _passengerRepository;
 
 public:
-    explicit TicketRepository(std::shared_ptr<IDatabaseConnection> connection,
-                            std::shared_ptr<AircraftRepository> aircraftRepository,
-                            std::shared_ptr<FlightRepository> flightRepository,
-                            std::shared_ptr<PassengerRepository> passengerRepository,
-                            std::shared_ptr<Logger> logger = nullptr)
+    explicit TicketRepository(
+        std::shared_ptr<IDatabaseConnection> connection,
+        std::shared_ptr<PassengerRepository> passengerRepository,
+        std::shared_ptr<FlightRepository> flightRepository,
+        std::shared_ptr<Logger> logger = nullptr
+    )
         : _connection(std::move(connection))
-        , _aircraftRepository(std::move(aircraftRepository))
-        , _flightRepository(std::move(flightRepository))
         , _passengerRepository(std::move(passengerRepository))
-        , _logger(std::move(logger)) {}
+        , _flightRepository(std::move(flightRepository))
+        , _logger(std::move(logger))
+    {}
 
     Result<Ticket> findById(const int& id) override;
     Result<std::vector<Ticket>> findAll() override;
