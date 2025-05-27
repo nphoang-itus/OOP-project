@@ -558,7 +558,7 @@ Result<bool> AircraftRepository::deleteBySerialNumber(const AircraftSerial& seri
         _connection->beginTransaction();
 
         // Delete aircraft
-        auto prepareResult = _connection->prepareStatement(DELETE_QUERY);
+        auto prepareResult = _connection->prepareStatement(DELETE_BY_SERIAL_QUERY);
         if (!prepareResult) {
             _connection->rollbackTransaction();
             if (_logger) _logger->error("Failed to prepare statement for deleting aircraft");

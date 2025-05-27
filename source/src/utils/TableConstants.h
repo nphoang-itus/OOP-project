@@ -77,6 +77,8 @@ namespace Tables {
             "SELECT COUNT(*) FROM {} WHERE {} = ?",
             NAME_TABLE, ColumnName[SERIAL]
         );
+
+        const std::string DELETE_BY_SERIAL_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[SERIAL] + " = ?";
     }
 
     namespace Flight {
