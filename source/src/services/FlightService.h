@@ -2,20 +2,21 @@
 #define FLIGHT_SERVICE_H
 
 #include "InterfaceService.h"
-#include "../../core/entities/Flight.h"
-#include "../../core/value_objects/flight_number/FlightNumber.h"
-#include "../../core/exceptions/Result.h"
-#include "../repositories/MySQLRepository/FlightRepository.h"
+#include "core/entities/Flight.h"
+#include "core/value_objects/flight_number/FlightNumber.h"
+#include "core/exceptions/Result.h"
+#include "repositories/MockRepository/FlightMockRepository.h"
+#include "utils/Logger.h"
 #include <memory>
 #include <vector>
 
 class FlightService : public IService<Flight>
 {
 private:
-    std::shared_ptr<FlightRepository> _repository;
+    std::shared_ptr<FlightMockRepository> _repository;
 
 public:
-    explicit FlightService(std::shared_ptr<FlightRepository> repository)
+    explicit FlightService(std::shared_ptr<FlightMockRepository> repository)
         : _repository(std::move(repository)) {}
 
     // Implementation of IService interface

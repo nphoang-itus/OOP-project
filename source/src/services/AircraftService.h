@@ -1,12 +1,13 @@
 #ifndef AIRCRAFT_SERVICE_H
 #define AIRCRAFT_SERVICE_H
 
-#include "src/repositories/MySQLRepository/AircraftRepository.h"
-#include "../../core/entities/Aircraft.h"
-#include "../../core/value_objects/aircraft_serial/AircraftSerial.h"
-#include "../../core/value_objects/seat_class_map/SeatClassMap.h"
-#include "src/core/exceptions/Result.h"
-#include "src/utils/Logger.h"
+// #include "src/repositories/MySQLRepository/AircraftRepository.h"
+#include "../repositories/MockRepository/AircraftMockRepository.h"
+#include "../core/entities/Aircraft.h"
+#include "../core/value_objects/aircraft_serial/AircraftSerial.h"
+#include "../core/value_objects/seat_class_map/SeatClassMap.h"
+#include "../core/exceptions/Result.h"
+#include "../utils/Logger.h"
 #include "InterfaceService.h"
 #include <memory>
 #include <vector>
@@ -14,10 +15,10 @@
 class AircraftService : public IService<Aircraft>
 {
 private:
-    std::shared_ptr<AircraftRepository> _repository;
+    std::shared_ptr<AircraftMockRepository> _repository;
 
 public:
-    explicit AircraftService(std::shared_ptr<AircraftRepository> repository)
+    explicit AircraftService(std::shared_ptr<AircraftMockRepository> repository)
         : _repository(std::move(repository)) {}
 
     // Implementation of IService interface

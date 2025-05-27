@@ -14,6 +14,7 @@ file(GLOB_RECURSE CORE_SOURCES
     ${CMAKE_SOURCE_DIR}/src/utils/Logger.cpp
 )
 file(GLOB_RECURSE REPOSITORY_SOURCES ${CMAKE_SOURCE_DIR}/src/repositories/MockRepository/*.cpp)
+file(GLOB_RECURSE SERVICE_SOURCES ${CMAKE_SOURCE_DIR}/src/services/*.cpp)
 file(GLOB_RECURSE TEST_SOURCES ${CMAKE_SOURCE_DIR}/src/tests/mock/*.cpp)
 
 # Add include directories
@@ -29,30 +30,45 @@ add_library(repository_lib STATIC
     ${REPOSITORY_SOURCES}
 )
 
+# Create service library
+add_library(service_lib STATIC
+    ${SERVICE_SOURCES}
+)
+
 # Configure GTest
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-# Create test executable
-add_executable(${PROJECT_NAME}_test
+# Create test executable for mock repository tests
+add_executable(${PROJECT_NAME}_mock_test
     ${TEST_SOURCES}
 )
 
-# Link libraries
-target_link_libraries(${PROJECT_NAME}_test
+# Create test executable for service tests
+add_executable(${PROJECT_NAME}_service_test
+    src/tests/services/AircraftServiceTest.cpp
+)
+
+# Link libraries for mock repository tests
+target_link_libraries(${PROJECT_NAME}_mock_test
     GTest::gtest_main
     pthread
     core_lib
     repository_lib
 )
 
-# Tạo executable cho repository test
-add_executable(${PROJECT_NAME}_repo_test
-    # src/tests/repositories/MySQLRepository/AircraftRepositoryTest.cpp
-    # src/tests/repositories/MySQLRepository/FlightRepositoryTest.cpp
-    # src/tests/repositories/MySQLRepository/PassengerRepositoryTest.cpp
-    src/tests/repositories/MySQLRepository/TicketRepositoryTest.cpp
+# Link libraries for service tests
+target_link_libraries(${PROJECT_NAME}_service_test
+    GTest::gtest_main
+    pthread
+    core_lib
+    repository_lib
+    service_lib
 )
+
+# Add tests to CTest
+add_test(NAME MockRepositoryTest COMMAND ${PROJECT_NAME}_mock_test)
+add_test(NAME AircraftServiceTest COMMAND ${PROJECT_NAME}_service_test)
 
 # Set build type if not specified
 if(NOT CMAKE_BUILD_TYPE)
