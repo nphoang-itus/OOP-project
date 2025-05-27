@@ -1,7 +1,7 @@
 #ifndef PASSENGER_SERVICE_H
 #define PASSENGER_SERVICE_H
 
-#include "repositories/MockRepository/PassengerMockRepository.h"
+#include "../repositories/MySQLRepository/PassengerRepository.h"
 #include "core/entities/Passenger.h"
 #include "core/exceptions/Result.h"
 #include "utils/Logger.h"
@@ -11,11 +11,11 @@
 class PassengerService
 {
 private:
-    std::shared_ptr<PassengerMockRepository> _repository;
+    std::shared_ptr<PassengerRepository> _repository;
     std::shared_ptr<Logger> _logger;
 
 public:
-    PassengerService(std::shared_ptr<PassengerMockRepository> repository, std::shared_ptr<Logger> logger)
+    PassengerService(std::shared_ptr<PassengerRepository> repository, std::shared_ptr<Logger> logger)
         : _repository(repository), _logger(logger) {}
 
     Result<Passenger> getPassengerById(const int &id);
