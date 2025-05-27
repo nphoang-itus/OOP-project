@@ -644,7 +644,7 @@ Result<bool> FlightRepository::existsFlight(const FlightNumber& number) {
     try {
         if (_logger) _logger->debug("Checking existence of flight with flight number: " + number.toString());
 
-        auto prepareResult = _connection->prepareStatement(EXISTS_QUERY);
+        auto prepareResult = _connection->prepareStatement(EXISTS_FLIGHT_QUERY);
         if (!prepareResult) {
             if (_logger) _logger->error("Failed to prepare statement for checking flight existence");
             return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
