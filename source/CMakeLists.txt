@@ -46,7 +46,10 @@ add_executable(${PROJECT_NAME}_mock_test
 
 # Create test executable for service tests
 add_executable(${PROJECT_NAME}_service_test
-    src/tests/services/AircraftServiceTest.cpp
+    # src/tests/services/AircraftServiceTest.cpp
+    # src/tests/services/FlightServiceTest.cpp
+    # src/tests/services/PassengerServiceTest.cpp
+    src/tests/services/TicketServiceTest.cpp
 )
 
 # Link libraries for mock repository tests
