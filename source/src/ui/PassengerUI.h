@@ -26,6 +26,8 @@ private:
     wxButton *deleteButton;
     wxButton *searchByIdButton;
     wxButton *searchByPassportButton;
+    wxButton *checkBookingsButton;
+    wxButton *viewStatsButton;
     wxListCtrl *passengerList;
     wxStaticText *infoLabel;
 
@@ -44,6 +46,8 @@ private:
     void OnDeletePassenger(wxCommandEvent &event);
     void OnSearchById(wxCommandEvent &event);
     void OnSearchByPassport(wxCommandEvent &event);
+    void OnCheckBookings(wxCommandEvent &event);
+    void OnViewStats(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
 
     DECLARE_EVENT_TABLE()
