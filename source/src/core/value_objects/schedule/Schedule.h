@@ -72,6 +72,15 @@ public:
     bool operator!=(const Schedule& other) const {
         return !(*this == other);
     }
+
+    bool overlapsWith(const Schedule& other) const {
+        auto thisDep = std::mktime(const_cast<std::tm*>(&_departure));
+        auto thisArr = std::mktime(const_cast<std::tm*>(&_arrival));
+        auto otherDep = std::mktime(const_cast<std::tm*>(&other._departure));
+        auto otherArr = std::mktime(const_cast<std::tm*>(&other._arrival));
+
+        return (thisDep <= otherArr && thisArr >= otherDep);
+    }
 };
 
 namespace std {

@@ -132,6 +132,10 @@ public:
         _schedule = schedule;
     }
 
+    void setAircraft(std::shared_ptr<Aircraft> aircraft) {
+        _aircraft = aircraft;
+    }
+
     std::string toString() const override {
         return "Flight{id=" + std::to_string(_id) + 
                ", flightNumber=" + _flightNumber.toString() + 
@@ -211,6 +215,14 @@ public:
             return true;
         }
         return false;
+    }
+
+    // Initialize seat availability from database
+    void initializeSeats(const std::map<SeatNumber, bool>& seatAvailability) {
+        _seatAvailability.clear();
+        for (const auto& [seatNumber, isAvailable] : seatAvailability) {
+            _seatAvailability[seatNumber] = isAvailable;
+        }
     }
 };
 

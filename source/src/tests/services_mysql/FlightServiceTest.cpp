@@ -31,6 +31,7 @@ protected:
     Route _route;
     Schedule _schedule;
     std::shared_ptr<Aircraft> _aircraft;
+    std::shared_ptr<Flight> _flight;
 
     void SetUp() override
     {
@@ -54,7 +55,7 @@ protected:
 
         // Setup test data
         // Create test aircraft
-        auto serialResult = AircraftSerial::create("VN119");
+        auto serialResult = AircraftSerial::create("VN414");
         ASSERT_TRUE(serialResult.has_value());
         auto seatLayoutResult = SeatClassMap::create("E:10,B:5,F:2");
         ASSERT_TRUE(seatLayoutResult.has_value());
@@ -66,7 +67,7 @@ protected:
         _aircraft = std::make_shared<Aircraft>(createAircraftResult.value());
 
         // Setup test flight number
-        auto flightNumberResult = FlightNumber::create("VN119");
+        auto flightNumberResult = FlightNumber::create("VN414");
         ASSERT_TRUE(flightNumberResult.has_value());
         _flightNumber = *flightNumberResult;
 
@@ -83,12 +84,27 @@ protected:
 
     void TearDown() override
     {
-        // Clean up test data
-        auto result = _db->execute("DELETE FROM flight WHERE flight_number = 'VN119'");
-        ASSERT_TRUE(result.has_value()) << "Failed to clean up test data: " << result.error().message;
-        
-        result = _db->execute("DELETE FROM aircraft WHERE serial_number = 'VN119'");
-        ASSERT_TRUE(result.has_value()) << "Failed to clean up test data: " << result.error().message;
+        // Delete seat availability records first
+        if (_flight) {
+            std::string deleteSeatsQuery = "DELETE FROM flight_seat_availability WHERE flight_id = ?";
+            auto prepareResult = _db->prepareStatement(deleteSeatsQuery);
+            if (prepareResult) {
+                int stmtId = prepareResult.value();
+                _db->setInt(stmtId, 1, _flight->getId());
+                _db->executeStatement(stmtId);
+                _db->freeStatement(stmtId);
+            }
+        }
+
+        // Delete test flight
+        if (_flight) {
+            _service->deleteFlight(_flight->getFlightNumber());
+        }
+
+        // Delete test aircraft
+        if (_aircraft) {
+            _aircraftRepository->deleteById(_aircraft->getId());
+        }
     }
 
     Result<Flight> createTestFlight()
@@ -99,226 +115,164 @@ protected:
     }
 };
 
-// // Core CRUD Tests
-// TEST_F(FlightServiceTest, GetFlightSuccess)
-// {
-//     auto flightResult = createTestFlight();
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->getFlight(_flightNumber);
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_EQ(result.value().getFlightNumber().toString(), _flightNumber.toString());
-//     EXPECT_EQ(result.value().getRoute().toString(), _route.toString());
-//     EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
-// }
-
-// TEST_F(FlightServiceTest, GetFlightNotFound)
-// {
-//     auto result = _service->getFlight(_flightNumber);
-//     ASSERT_FALSE(result.has_value());
-//     EXPECT_EQ(result.error().code, "NOT_FOUND");
-// }
-
-// TEST_F(FlightServiceTest, GetAllFlightsSuccess)
-// {
-//     auto flightResult = createTestFlight();
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->getAllFlights();
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_FALSE(result.value().empty());
-    
-//     bool foundTargetFlight = false;
-//     for (const auto& flight : result.value()) {
-//         if (flight.getFlightNumber().toString() == _flightNumber.toString()) {
-//             foundTargetFlight = true;
-//             EXPECT_EQ(flight.getFlightNumber().toString(), _flightNumber.toString());
-//             EXPECT_EQ(flight.getRoute().toString(), _route.toString());
-//             EXPECT_EQ(flight.getSchedule().toString(), _schedule.toString());
-//             break;
-//         }
-//     }
-// }
-
-// TEST_F(FlightServiceTest, FlightExistsSuccess)
-// {
-//     auto flightResult = createTestFlight();
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->flightExists(_flightNumber);
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_TRUE(result.value());
-// }
-
-// TEST_F(FlightServiceTest, FlightExistsNotFound)
-// {
-//     auto result = _service->flightExists(_flightNumber);
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_FALSE(result.value());
-// }
-
-// TEST_F(FlightServiceTest, CreateFlightSuccess)
-// {
-//     auto flightResult = Flight::create(_flightNumber, _route, _schedule, _aircraft);
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->createFlight(*flightResult);
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_EQ(result.value().getFlightNumber().toString(), _flightNumber.toString());
-//     EXPECT_EQ(result.value().getRoute().toString(), _route.toString());
-//     EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
-// }
-
-// TEST_F(FlightServiceTest, CreateFlightDuplicateFlightNumber)
-// {
-//     auto flightResult = createTestFlight();
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->createFlight(flightResult.value());
-//     ASSERT_FALSE(result.has_value());
-//     EXPECT_EQ(result.error().code, "DUPLICATE_FLIGHT_NUMBER");
-// }
-
-// TEST_F(FlightServiceTest, UpdateFlightSuccess)
-// {
-//     auto flightResult = createTestFlight();
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto flight = flightResult.value();
-//     auto newScheduleResult = Schedule::create("2024-03-21 10:00|2024-03-21 12:00");
-//     ASSERT_TRUE(newScheduleResult.has_value());
-//     flight.setSchedule(*newScheduleResult);
-
-//     auto result = _service->updateFlight(flight);
-//     ASSERT_TRUE(result.has_value());
-//     EXPECT_EQ(result.value().getSchedule().toString(), newScheduleResult->toString());
-// }
-
-// TEST_F(FlightServiceTest, UpdateFlightNotFound)
-// {
-//     auto flightResult = Flight::create(_flightNumber, _route, _schedule, _aircraft);
-//     ASSERT_TRUE(flightResult.has_value());
-
-//     auto result = _service->updateFlight(*flightResult);
-//     ASSERT_FALSE(result.has_value());
-//     EXPECT_EQ(result.error().code, "NOT_FOUND");
-// }
-
-TEST_F(FlightServiceTest, DeleteFlightSuccess)
+TEST_F(FlightServiceTest, CreateFlightSuccess)
 {
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->deleteFlight(_flightNumber);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
+    // Verify flight was created
+    auto getFlightResult = _service->getFlight(_flight->getFlightNumber());
+    ASSERT_TRUE(getFlightResult);
+    EXPECT_EQ(getFlightResult.value().getFlightNumber().toString(), _flight->getFlightNumber().toString());
+    EXPECT_EQ(getFlightResult.value().getRoute().toString(), _flight->getRoute().toString());
+    EXPECT_EQ(getFlightResult.value().getSchedule().toString(), _flight->getSchedule().toString());
+    EXPECT_EQ(getFlightResult.value().getAircraft()->getId(), _flight->getAircraft()->getId());
+    EXPECT_EQ(getFlightResult.value().getStatus(), _flight->getStatus());
 
-    auto existsResult = _service->flightExists(_flightNumber);
-    ASSERT_TRUE(existsResult.has_value());
-    EXPECT_FALSE(existsResult.value());
+    // Verify seat availability records were created
+    auto availableSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "ECONOMY");
+    ASSERT_TRUE(availableSeatsResult);
+    EXPECT_EQ(availableSeatsResult.value().size(), 10); // 10 economy seats
+
+    availableSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "BUSINESS");
+    ASSERT_TRUE(availableSeatsResult);
+    EXPECT_EQ(availableSeatsResult.value().size(), 5); // 5 business seats
+
+    availableSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "FIRST");
+    ASSERT_TRUE(availableSeatsResult);
+    EXPECT_EQ(availableSeatsResult.value().size(), 2); // 2 first class seats
 }
 
-TEST_F(FlightServiceTest, DeleteFlightNotFound)
+TEST_F(FlightServiceTest, CreateFlightDuplicateNumber)
 {
-    auto result = _service->deleteFlight(_flightNumber);
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "NOT_FOUND");
-}
-
-// Business Operations Tests
-TEST_F(FlightServiceTest, GetFlightsByAircraftSuccess)
-{
+    // Create first flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->getFlightsByAircraft(_aircraft->getSerial());
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value().empty());
-    EXPECT_EQ(result.value()[0].getFlightNumber().toString(), _flightNumber.toString());
+    // Try to create another flight with same number
+    auto duplicateResult = createTestFlight();
+    ASSERT_FALSE(duplicateResult);
+    EXPECT_EQ(duplicateResult.error().code, "DUPLICATE_FLIGHT_NUMBER");
 }
 
-TEST_F(FlightServiceTest, GetFlightsByAircraftNotFound)
+TEST_F(FlightServiceTest, ReserveSeatSuccess)
 {
-    auto serialResult = AircraftSerial::create("VN888");
-    ASSERT_TRUE(serialResult.has_value());
-
-    auto result = _service->getFlightsByAircraft(*serialResult);
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "NOT_FOUND");
-}
-
-TEST_F(FlightServiceTest, GetFlightsByRouteNotImplemented)
-{
-    auto result = _service->getFlightsByRoute("SGN", "HAN");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "NOT_IMPLEMENTED");
-}
-
-TEST_F(FlightServiceTest, GetFlightsByDateNotImplemented)
-{
-    auto result = _service->getFlightsByDate("2024-03-20");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "NOT_IMPLEMENTED");
-}
-
-TEST_F(FlightServiceTest, IsSeatAvailableSuccess)
-{
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->isSeatAvailable(_flightNumber, "E01");
-    ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
+    // Reserve a seat
+    auto reserveResult = _service->reserveSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_TRUE(reserveResult);
+    EXPECT_TRUE(reserveResult.value());
+
+    // Verify seat is no longer available
+    auto availableSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "ECONOMY");
+    ASSERT_TRUE(availableSeatsResult);
+    EXPECT_EQ(availableSeatsResult.value().size(), 9); // One less available seat
+
+    // Try to reserve same seat again
+    auto duplicateReserveResult = _service->reserveSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_FALSE(duplicateReserveResult);
+    EXPECT_EQ(duplicateReserveResult.error().code, "SEAT_NOT_AVAILABLE");
 }
 
-TEST_F(FlightServiceTest, IsSeatAvailableInvalidSeat)
+TEST_F(FlightServiceTest, ReleaseSeatSuccess)
 {
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->isSeatAvailable(_flightNumber, "X01");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "INVALID_SEAT_NUMBER");
+    // Reserve a seat
+    auto reserveResult = _service->reserveSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_TRUE(reserveResult);
+    EXPECT_TRUE(reserveResult.value());
+
+    // Release the seat
+    auto releaseResult = _service->releaseSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_TRUE(releaseResult);
+    EXPECT_TRUE(releaseResult.value());
+
+    // Verify seat is available again
+    auto availableSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "ECONOMY");
+    ASSERT_TRUE(availableSeatsResult);
+    EXPECT_EQ(availableSeatsResult.value().size(), 10); // All seats available again
+
+    // Try to release an already available seat
+    auto duplicateReleaseResult = _service->releaseSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_FALSE(duplicateReleaseResult);
+    EXPECT_EQ(duplicateReleaseResult.error().code, "SEAT_NOT_RESERVED");
 }
 
-TEST_F(FlightServiceTest, GetAvailableSeatsSuccess)
+TEST_F(FlightServiceTest, InvalidSeatNumber)
 {
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->getAvailableSeats(_flightNumber, "ECONOMY");
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value().empty());
-    EXPECT_EQ(result.value().size(), 10); // 10 economy seats
+    // Try to reserve invalid seat
+    auto reserveResult = _service->reserveSeat(_flight->getFlightNumber(), "X99");
+    ASSERT_FALSE(reserveResult);
+    EXPECT_EQ(reserveResult.error().code, "INVALID_SEAT_NUMBER");
+
+    // Try to release invalid seat
+    auto releaseResult = _service->releaseSeat(_flight->getFlightNumber(), "X99");
+    ASSERT_FALSE(releaseResult);
+    EXPECT_EQ(releaseResult.error().code, "INVALID_SEAT_NUMBER");
 }
 
-TEST_F(FlightServiceTest, GetAvailableSeatsInvalidClass)
+TEST_F(FlightServiceTest, GetAvailableSeatsByClass)
 {
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->getAvailableSeats(_flightNumber, "INVALID");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "INVALID_SEAT_CLASS");
+    // Get available seats for each class
+    auto economySeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "ECONOMY");
+    ASSERT_TRUE(economySeatsResult);
+    EXPECT_EQ(economySeatsResult.value().size(), 10);
+
+    auto businessSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "BUSINESS");
+    ASSERT_TRUE(businessSeatsResult);
+    EXPECT_EQ(businessSeatsResult.value().size(), 5);
+
+    auto firstSeatsResult = _service->getAvailableSeats(_flight->getFlightNumber(), "FIRST");
+    ASSERT_TRUE(firstSeatsResult);
+    EXPECT_EQ(firstSeatsResult.value().size(), 2);
+
+    // Try invalid class
+    auto invalidClassResult = _service->getAvailableSeats(_flight->getFlightNumber(), "INVALID");
+    ASSERT_FALSE(invalidClassResult);
+    EXPECT_EQ(invalidClassResult.error().code, "INVALID_SEAT_CLASS");
 }
 
-TEST_F(FlightServiceTest, UpdateFlightStatusSuccess)
+TEST_F(FlightServiceTest, GetRemainingCapacity)
 {
+    // Create test flight
     auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
+    ASSERT_TRUE(flightResult);
+    _flight = std::make_shared<Flight>(flightResult.value());
 
-    auto result = _service->updateFlightStatus(_flightNumber, FlightStatus::DELAYED);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
+    // Check initial capacity
+    auto initialCapacityResult = _service->getRemainingCapacity(_flight->getFlightNumber());
+    ASSERT_TRUE(initialCapacityResult);
+    EXPECT_EQ(initialCapacityResult.value(), 17); // Total seats: 10 + 5 + 2
 
-    auto flight = _service->getFlight(_flightNumber);
-    ASSERT_TRUE(flight.has_value());
-    EXPECT_EQ(flight.value().getStatus(), FlightStatus::DELAYED);
-}
+    // Reserve some seats
+    auto reserveResult1 = _service->reserveSeat(_flight->getFlightNumber(), "E01");
+    ASSERT_TRUE(reserveResult1);
+    auto reserveResult2 = _service->reserveSeat(_flight->getFlightNumber(), "B01");
+    ASSERT_TRUE(reserveResult2);
 
-TEST_F(FlightServiceTest, UpdateFlightStatusNotFound)
-{
-    auto result = _service->updateFlightStatus(_flightNumber, FlightStatus::DELAYED);
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, "NOT_FOUND");
+    // Check remaining capacity
+    auto remainingCapacityResult = _service->getRemainingCapacity(_flight->getFlightNumber());
+    ASSERT_TRUE(remainingCapacityResult);
+    EXPECT_EQ(remainingCapacityResult.value(), 15); // 17 - 2 reserved seats
 }

@@ -15,6 +15,7 @@ private:
     std::shared_ptr<Logger> _logger;
 
     Flight mapRowToFlight(const std::map<std::string, std::string>& row) const;
+    std::map<SeatNumber, bool> getSeatAvailability(const Flight& flight) const;
 
 public:
     FlightRepository(std::shared_ptr<IDatabaseConnection> connection, 
@@ -37,6 +38,13 @@ public:
     Result<Flight> findByFlightNumber(const FlightNumber& number);
     Result<bool> existsFlight(const FlightNumber& number);
     Result<std::vector<Flight>> findFlightByAircraft(const AircraftSerial& serial);
+
+    // Phương thức quản lý seat availability
+    Result<bool> reserveSeat(const Flight& flight, const SeatNumber& seatNumber);
+    Result<bool> releaseSeat(const Flight& flight, const SeatNumber& seatNumber);
+    Result<std::vector<SeatNumber>> getAvailableSeats(const Flight& flight);
+    Result<std::vector<SeatNumber>> getReservedSeats(const Flight& flight);
+    Result<bool> isSeatAvailable(const Flight& flight, const SeatNumber& seatNumber);
 };
 
 #endif // FLIGHT_REPOSITORY_H 

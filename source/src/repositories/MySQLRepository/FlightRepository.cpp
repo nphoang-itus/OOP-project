@@ -4,6 +4,7 @@
 #include <sstream>
 #include <map>
 #include <format>
+#include <iomanip>
 
 using namespace Tables::Flight;
 
@@ -103,6 +104,10 @@ Result<Flight> FlightRepository::findById(const int& id) {
         auto flight = Flight::create(flightNumber, route, schedule, std::make_shared<Aircraft>(aircraft)).value();
         flight.setId(idResult.value());
         flight.setStatus(FlightStatusUtil::fromString(statusResult.value()));
+
+        // Get seat availability
+        auto seatAvailability = getSeatAvailability(flight);
+        flight.initializeSeats(seatAvailability);
 
         if (_logger) _logger->debug("Successfully found flight with id: " + std::to_string(id));
         return Success(flight);
@@ -318,6 +323,17 @@ Result<Flight> FlightRepository::create(const Flight& flight) {
     try {
         if (_logger) _logger->debug("Creating new flight");
 
+        // First check if flight exists
+        auto existsResult = existsFlight(flight.getFlightNumber());
+        if (!existsResult) {
+            if (_logger) _logger->error("Failed to check flight existence");
+            return Failure<Flight>(CoreError("Failed to check flight existence", "DB_ERROR"));
+        }
+        if (existsResult.value()) {
+            if (_logger) _logger->error("Failed to create because flight : " + flight.getFlightNumber().toString() + " exists");
+            return Failure<Flight>(CoreError("Failed to create because flight : " + flight.getFlightNumber().toString() + " exists", "DUPLICATE_FLIGHT_NUMBER"));
+        }
+
         // Start transaction
         _connection->beginTransaction();
 
@@ -368,6 +384,47 @@ Result<Flight> FlightRepository::create(const Flight& flight) {
 
         auto newFlight = flight;
         newFlight.setId(idResult.value());
+
+        // Create seat availability records
+        std::string insertSeatQuery = "INSERT INTO flight_seat_availability (flight_id, seat_number, is_available) VALUES (?, ?, TRUE)";
+        auto prepareSeatResult = _connection->prepareStatement(insertSeatQuery);
+        if (!prepareSeatResult) {
+            if (_logger) _logger->error("Failed to prepare statement for creating seat availability");
+            return Failure<Flight>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int seatStmtId = prepareSeatResult.value();
+
+        // Get seat layout from aircraft
+        const auto& seatLayout = flight.getAircraft()->getSeatLayout();
+        
+        // Create seats for each class
+        for (const auto& [classCode, count] : seatLayout.getSeatCounts()) {
+            int padding = count > 99 ? 3 : 2;
+            for (int i = 1; i <= count; i++) {
+                std::stringstream ss;
+                ss << classCode.getCode() << std::setfill('0') << std::setw(padding) << i;
+                std::string seatNumber = ss.str();
+                
+                auto setFlightIdResult = _connection->setInt(seatStmtId, 1, idResult.value());
+                auto setSeatNumberResult = _connection->setString(seatStmtId, 2, seatNumber);
+                
+                if (!setFlightIdResult || !setSeatNumberResult) {
+                    _connection->freeStatement(seatStmtId);
+                    if (_logger) _logger->error("Failed to set parameters for creating seat availability");
+                    return Failure<Flight>(CoreError("Failed to set parameters", "PARAM_FAILED"));
+                }
+
+                auto seatResult = _connection->executeStatement(seatStmtId);
+                if (!seatResult) {
+                    _connection->freeStatement(seatStmtId);
+                    if (_logger) _logger->error("Failed to create seat availability record");
+                    return Failure<Flight>(CoreError("Failed to create seat availability", "CREATE_FAILED"));
+                }
+            }
+        }
+
+        _connection->freeStatement(seatStmtId);
+
         if (_logger) _logger->debug("Successfully created flight with id: " + std::to_string(idResult.value()));
         return Success(newFlight);
     } catch (const std::exception& e) {
@@ -824,4 +881,336 @@ Result<std::vector<Flight>> FlightRepository::findFlightByAircraft(const Aircraf
         if (_logger) _logger->error("Error finding all flights: " + std::string(e.what()));
         return Failure<std::vector<Flight>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
     }
+}
+
+std::map<SeatNumber, bool> FlightRepository::getSeatAvailability(const Flight& flight) const {
+    std::map<SeatNumber, bool> seatAvailability;
+    try {
+        std::string query = "SELECT seat_number, is_available FROM flight_seat_availability WHERE flight_id = ?";
+        auto prepareResult = _connection->prepareStatement(query);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for getting seat availability");
+            return seatAvailability;
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setInt(stmtId, 1, flight.getId());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for getting seat availability");
+            return seatAvailability;
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for getting seat availability");
+            return seatAvailability;
+        }
+
+        auto dbResult = std::move(result.value());
+        while (dbResult->next().value()) {
+
+            auto seatNumberResult = dbResult->getString("seat_number");
+            auto isAvailableResult = dbResult->getInt("is_available");
+
+            if (!seatNumberResult || !isAvailableResult) {
+                if (_logger) _logger->warning("Invalid seat availability data");
+                continue;
+            }
+
+            auto seatNumber = SeatNumber::create(seatNumberResult.value(), flight.getAircraft()->getSeatLayout());
+            if (!seatNumber) {
+                if (_logger) _logger->warning("Invalid seat number: " + seatNumberResult.value());
+                continue;
+            }
+
+            seatAvailability[*seatNumber] = isAvailableResult.value() != 0;
+        }
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error getting seat availability: " + std::string(e.what()));
+    }
+    return seatAvailability;
+}
+
+Result<bool> FlightRepository::reserveSeat(const Flight& flight, const SeatNumber& seatNumber) {
+    try {
+        if (_logger) _logger->debug("Reserving seat " + seatNumber.toString() + " for flight " + flight.getFlightNumber().toString());
+
+        // First check if seat is available
+        std::string checkQuery = "SELECT COUNT(*) FROM flight_seat_availability WHERE flight_id = ? AND seat_number = ? AND is_available = TRUE";
+        auto checkPrepareResult = _connection->prepareStatement(checkQuery);
+        if (!checkPrepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for checking seat availability");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int checkStmtId = checkPrepareResult.value();
+
+        auto setFlightIdResult = _connection->setInt(checkStmtId, 1, flight.getId());
+        auto setSeatNumberResult = _connection->setString(checkStmtId, 2, seatNumber.toString());
+        
+        if (!setFlightIdResult || !setSeatNumberResult) {
+            _connection->freeStatement(checkStmtId);
+            if (_logger) _logger->error("Failed to set parameters for checking seat availability");
+            return Failure<bool>(CoreError("Failed to set parameters", "PARAM_FAILED"));
+        }
+
+        auto checkResult = _connection->executeQueryStatement(checkStmtId);
+        _connection->freeStatement(checkStmtId);
+
+        if (!checkResult) {
+            if (_logger) _logger->error("Failed to execute query for checking seat availability");
+            return Failure<bool>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(checkResult.value());
+        if (!dbResult->next().value()) {
+            if (_logger) _logger->error("Failed to get seat availability count");
+            return Failure<bool>(CoreError("Failed to get seat availability count", "COUNT_FAILED"));
+        }
+
+        auto countResult = dbResult->getInt(0);
+        if (!countResult) {
+            if (_logger) _logger->error("Failed to get count result");
+            return Failure<bool>(CoreError("Failed to get count result", "COUNT_FAILED"));
+        }
+
+        if (countResult.value() == 0) {
+            if (_logger) _logger->error("Seat is not available");
+            return Failure<bool>(CoreError("Seat is not available", "SEAT_NOT_AVAILABLE"));
+        }
+
+        // Now try to reserve the seat
+        std::string updateQuery = "UPDATE flight_seat_availability SET is_available = FALSE WHERE flight_id = ? AND seat_number = ? AND is_available = TRUE";
+        auto updatePrepareResult = _connection->prepareStatement(updateQuery);
+        if (!updatePrepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for reserving seat");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int updateStmtId = updatePrepareResult.value();
+
+        setFlightIdResult = _connection->setInt(updateStmtId, 1, flight.getId());
+        setSeatNumberResult = _connection->setString(updateStmtId, 2, seatNumber.toString());
+        
+        if (!setFlightIdResult || !setSeatNumberResult) {
+            _connection->freeStatement(updateStmtId);
+            if (_logger) _logger->error("Failed to set parameters for reserving seat");
+            return Failure<bool>(CoreError("Failed to set parameters", "PARAM_FAILED"));
+        }
+
+        auto updateResult = _connection->executeStatement(updateStmtId);
+        _connection->freeStatement(updateStmtId);
+
+        if (!updateResult) {
+            if (_logger) _logger->error("Failed to execute update for reserving seat");
+            return Failure<bool>(CoreError("Failed to execute update", "UPDATE_FAILED"));
+        }
+
+        bool success = updateResult.value() > 0;
+        if (!success) {
+            if (_logger) _logger->error("Failed to reserve seat - no rows affected");
+            return Failure<bool>(CoreError("Failed to reserve seat", "RESERVE_FAILED"));
+        }
+
+        if (_logger) _logger->debug("Seat reservation successful");
+        return Success(true);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error reserving seat: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<bool> FlightRepository::releaseSeat(const Flight& flight, const SeatNumber& seatNumber) {
+    try {
+        if (_logger) _logger->debug("Releasing seat " + seatNumber.toString() + " for flight " + flight.getFlightNumber().toString());
+
+        std::string query = "UPDATE flight_seat_availability SET is_available = TRUE WHERE flight_id = ? AND seat_number = ? AND is_available = FALSE";
+        auto prepareResult = _connection->prepareStatement(query);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for releasing seat");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setInt(stmtId, 1, flight.getId());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set flight_id parameter");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        setParamResult = _connection->setString(stmtId, 2, seatNumber.toString());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set seat_number parameter");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute update for releasing seat");
+            return Failure<bool>(CoreError("Failed to execute update", "UPDATE_FAILED"));
+        }
+
+        bool success = result.value() > 0;
+        if (_logger) _logger->debug("Seat release " + std::string(success ? "successful" : "failed"));
+        return Success(success);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error releasing seat: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<std::vector<SeatNumber>> FlightRepository::getAvailableSeats(const Flight& flight) {
+    try {
+        if (_logger) _logger->debug("Getting available seats for flight " + flight.getFlightNumber().toString());
+
+        std::string query = "SELECT seat_number FROM flight_seat_availability WHERE flight_id = ? AND is_available = TRUE";
+        auto prepareResult = _connection->prepareStatement(query);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for getting available seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setInt(stmtId, 1, flight.getId());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for getting available seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for getting available seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        std::vector<SeatNumber> availableSeats;
+        auto dbResult = std::move(result.value());
+        while (dbResult->next().value()) {
+            auto seatNumberResult = dbResult->getString("seat_number");
+            if (!seatNumberResult) {
+                if (_logger) _logger->warning("Invalid seat number data");
+                continue;
+            }
+
+            auto seatNumber = SeatNumber::create(seatNumberResult.value(), flight.getAircraft()->getSeatLayout());
+            if (!seatNumber) {
+                if (_logger) _logger->warning("Invalid seat number: " + seatNumberResult.value());
+                continue;
+            }
+
+            availableSeats.push_back(*seatNumber);
+        }
+
+        if (_logger) _logger->debug("Found " + std::to_string(availableSeats.size()) + " available seats");
+        return Success(availableSeats);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error getting available seats: " + std::string(e.what()));
+        return Failure<std::vector<SeatNumber>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<std::vector<SeatNumber>> FlightRepository::getReservedSeats(const Flight& flight) {
+    try {
+        if (_logger) _logger->debug("Getting reserved seats for flight " + flight.getFlightNumber().toString());
+
+        std::string query = "SELECT seat_number FROM flight_seat_availability WHERE flight_id = ? AND is_available = FALSE";
+        auto prepareResult = _connection->prepareStatement(query);
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for getting reserved seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setInt(stmtId, 1, flight.getId());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for getting reserved seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for getting reserved seats");
+            return Failure<std::vector<SeatNumber>>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        std::vector<SeatNumber> reservedSeats;
+        auto dbResult = std::move(result.value());
+        while (dbResult->next().value()) {
+            auto seatNumberResult = dbResult->getString("seat_number");
+            if (!seatNumberResult) {
+                if (_logger) _logger->warning("Invalid seat number data");
+                continue;
+            }
+
+            auto seatNumber = SeatNumber::create(seatNumberResult.value(), flight.getAircraft()->getSeatLayout());
+            if (!seatNumber) {
+                if (_logger) _logger->warning("Invalid seat number: " + seatNumberResult.value());
+                continue;
+            }
+
+            reservedSeats.push_back(*seatNumber);
+        }
+
+        if (_logger) _logger->debug("Found " + std::to_string(reservedSeats.size()) + " reserved seats");
+        return Success(reservedSeats);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error getting reserved seats: " + std::string(e.what()));
+        return Failure<std::vector<SeatNumber>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}
+
+Result<bool> FlightRepository::isSeatAvailable(const Flight& flight, const SeatNumber& seatNumber) {
+    if (_logger) _logger->debug("Checking if seat is available for flight: " + flight.getFlightNumber().toString() + ", seat: " + seatNumber.toString());
+
+    auto checkPrepareResult = _connection->prepareStatement(
+        "SELECT COUNT(*) FROM flight_seat_availability WHERE flight_id = ? AND seat_number = ? AND is_available = TRUE"
+    );
+
+    if (!checkPrepareResult) {
+        if (_logger) _logger->error("Failed to prepare statement for checking seat availability");
+        return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+    }
+    int checkStmtId = checkPrepareResult.value();
+
+    auto setFlightIdResult = _connection->setInt(checkStmtId, 1, flight.getId());
+    auto setSeatNumberResult = _connection->setString(checkStmtId, 2, seatNumber.toString());
+    
+    if (!setFlightIdResult || !setSeatNumberResult) {
+        _connection->freeStatement(checkStmtId);
+        if (_logger) _logger->error("Failed to set parameters for checking seat availability");
+        return Failure<bool>(CoreError("Failed to set parameters", "PARAM_FAILED"));
+    }
+
+    auto checkResult = _connection->executeQueryStatement(checkStmtId);
+    _connection->freeStatement(checkStmtId);
+
+    if (!checkResult) {
+        if (_logger) _logger->error("Failed to execute query for checking seat availability");
+        return Failure<bool>(CoreError("Failed to execute query", "QUERY_FAILED"));
+    }
+
+    auto dbResult = std::move(checkResult.value());
+    if (!dbResult->next().value()) {
+        if (_logger) _logger->error("Failed to get seat availability count");
+        return Failure<bool>(CoreError("Failed to get seat availability count", "COUNT_FAILED"));
+    }
+
+    auto countResult = dbResult->getInt(0);
+    if (!countResult) {
+        if (_logger) _logger->error("Failed to get count result");
+        return Failure<bool>(CoreError("Failed to get count result", "COUNT_FAILED"));
+    }
+
+    return Success(countResult.value() > 0);
 }

@@ -52,6 +52,25 @@ public:
     Result<bool> isSeatAvailable(const FlightNumber& number, const std::string& seatNumber);
     Result<std::vector<std::string>> getAvailableSeats(const FlightNumber& number, const std::string& seatClass);
     Result<bool> updateFlightStatus(const FlightNumber& number, FlightStatus status);
+
+    Result<bool> cancelFlight(const FlightNumber& number, const std::string& reason);
+    Result<bool> delayFlight(const FlightNumber& number, const std::tm& newDepartureTime);
+    
+    // Seat management business rules
+    Result<bool> reserveSeat(const FlightNumber& number, const std::string& seatNumber);
+    Result<bool> releaseSeat(const FlightNumber& number, const std::string& seatNumber);
+    
+    // Flight capacity management
+    Result<int> getRemainingCapacity(const FlightNumber& number);
+    Result<bool> isFlightFull(const FlightNumber& number);
+    
+    // Business validation
+    Result<bool> canBoardPassenger(const FlightNumber& number, const PassportNumber& passport);
+    Result<bool> isFlightDepartureImminent(const FlightNumber& number);
+    
+    // Schedule management
+    Result<std::vector<Flight>> getConflictingFlights(const AircraftSerial& serial, const Schedule& schedule);
+    Result<bool> validateScheduleForAircraft(const AircraftSerial& serial, const Schedule& schedule);
 };
 
 #endif // FLIGHT_SERVICE_H 

@@ -108,6 +108,14 @@ public:
     }
 
     const std::map<SeatClass, int> &getSeatCounts() const { return _seatCounts; }
+
+    int getTotalSeatCount() const {
+        int total = 0;
+        for (const auto &[seatClass, count] : _seatCounts) {
+            total += count;
+        }
+        return total;
+    }
 };
 
 #endif
