@@ -1,38 +1,54 @@
 #ifndef AIRCRAFT_SERVICE_H
 #define AIRCRAFT_SERVICE_H
 
-#include "../repositories/MySQLRepository/AircraftRepository.h"
 #include "../core/entities/Aircraft.h"
-#include "../core/value_objects/aircraft_serial/AircraftSerial.h"
-#include "../core/value_objects/seat_class_map/SeatClassMap.h"
-#include "../core/exceptions/Result.h"
+#include "../repositories/MySQLRepository/AircraftRepository.h"
+#include "../repositories/MySQLRepository/FlightRepository.h"
+#include "../repositories/MySQLRepository/TicketRepository.h"
 #include "../utils/Logger.h"
-#include "InterfaceService.h"
 #include <memory>
 #include <vector>
+#include <string>
 
-class AircraftService : public IService<Aircraft>
-{
+class AircraftService {
 private:
-    std::shared_ptr<AircraftRepository> _repository;
+    std::shared_ptr<AircraftRepository> _aircraftRepository;
+    std::shared_ptr<FlightRepository> _flightRepository;
+    std::shared_ptr<TicketRepository> _ticketRepository;
+    std::shared_ptr<Logger> _logger;
+
+    // Private helper methods
+    Result<Aircraft> getAircraftById(int id);
+    Result<bool> existsById(const int& id);
+    Result<bool> deleteById(const int& id);
 
 public:
-    explicit AircraftService(std::shared_ptr<AircraftRepository> repository)
-        : _repository(std::move(repository)) {}
+    AircraftService(
+        std::shared_ptr<AircraftRepository> aircraftRepository,
+        std::shared_ptr<FlightRepository> flightRepository,
+        std::shared_ptr<TicketRepository> ticketRepository,
+        std::shared_ptr<Logger> logger = nullptr
+    ) : _aircraftRepository(std::move(aircraftRepository))
+      , _flightRepository(std::move(flightRepository))
+      , _ticketRepository(std::move(ticketRepository))
+      , _logger(std::move(logger)) {
+        if (!_logger) {
+            _logger = Logger::getInstance();
+        }
+    }
 
-    // Implementation of IService interface
-    Result<Aircraft> getById(const int &id) override;
-    Result<std::vector<Aircraft>> getAll() override;
-    Result<bool> exists(const int &id) override;
-    Result<size_t> count() override;
-    Result<Aircraft> create(const Aircraft &entity) override;
-    Result<Aircraft> update(const Aircraft &entity) override;
-    Result<bool> deleteById(const int &id) override;
-
-    // Aircraft-specific operations
-    Result<Aircraft> getAircraftBySerialNumber(const AircraftSerial &serial);
-    Result<bool> aircraftExistsBySerialNumber(const AircraftSerial &serial);
-    Result<bool> deleteAircraftBySerialNumber(const AircraftSerial &serial);
+    // Core CRUD operations
+    Result<Aircraft> getAircraft(const AircraftSerial& serial);
+    Result<std::vector<Aircraft>> getAllAircraft();
+    Result<bool> aircraftExists(const AircraftSerial& serial);
+    Result<Aircraft> createAircraft(const Aircraft& aircraft);
+    Result<Aircraft> updateAircraft(const Aircraft& aircraft);
+    Result<bool> deleteAircraft(const AircraftSerial& serial);
+    
+    // Business operations
+    Result<std::vector<std::string>> getAvailableSeatClasses(const AircraftSerial& serial);
+    Result<std::vector<std::string>> getAvailableSeats(const AircraftSerial& serial, const std::string& seatClass);
+    Result<bool> isSeatAvailable(const AircraftSerial& serial, const std::string& seatNumber);
 };
 
 #endif // AIRCRAFT_SERVICE_H

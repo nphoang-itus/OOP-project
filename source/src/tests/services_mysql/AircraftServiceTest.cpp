@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include "../../services/AircraftService.h"
 #include "../../repositories/MySQLRepository/AircraftRepository.h"
+#include "../../repositories/MySQLRepository/FlightRepository.h"
+#include "../../repositories/MySQLRepository/TicketRepository.h"
+#include "../../repositories/MySQLRepository/PassengerRepository.h"
 #include "../../core/entities/Aircraft.h"
-#include "../../core/value_objects/aircraft_serial/AircraftSerial.h"
-#include "../../core/value_objects/seat_class_map/SeatClassMap.h"
-#include "../../core/value_objects/seat_class_map/SeatClass.h"
 #include "../../utils/Logger.h"
 #include "../../database/MySQLXConnection.h"
 #include <memory>
@@ -12,10 +12,13 @@
 class AircraftServiceTest : public ::testing::Test
 {
 protected:
-    std::shared_ptr<AircraftRepository> repository;
-    std::shared_ptr<AircraftService> service;
-    std::shared_ptr<MySQLXConnection> db;
-    std::shared_ptr<Logger> logger;
+    std::shared_ptr<AircraftRepository> _aircraftRepository;
+    std::shared_ptr<FlightRepository> _flightRepository;
+    std::shared_ptr<TicketRepository> _ticketRepository;
+    std::shared_ptr<PassengerRepository> _passengerRepository;
+    std::shared_ptr<AircraftService> _service;
+    std::shared_ptr<MySQLXConnection> _db;
+    std::shared_ptr<Logger> _logger;
     AircraftSerial _serial;
     AircraftModel _model;
     SeatClassMap _seatLayout;
@@ -23,20 +26,23 @@ protected:
     void SetUp() override
     {
         // Setup database connection
-        db = MySQLXConnection::getInstance();
-        auto result = db->connect("localhost", "nphoang", "phucHoang133205", "airlines_db", 33060);
+        _db = MySQLXConnection::getInstance();
+        auto result = _db->connect("localhost", "nphoang", "phucHoang133205", "airlines_db", 33060);
         ASSERT_TRUE(result.has_value()) << "Failed to connect to database: " << result.error().message;
 
         // Setup logger
-        logger = Logger::getInstance();
-        logger->setMinLevel(LogLevel::DEBUG);
+        _logger = Logger::getInstance();
+        _logger->setMinLevel(LogLevel::DEBUG);
 
         // Setup repositories and service
-        repository = std::make_shared<AircraftRepository>(db, logger);
-        service = std::make_shared<AircraftService>(repository);
+        _aircraftRepository = std::make_shared<AircraftRepository>(_db, _logger);
+        _flightRepository = std::make_shared<FlightRepository>(_db, _logger);
+        _passengerRepository = std::make_shared<PassengerRepository>(_db, _logger);
+        _ticketRepository = std::make_shared<TicketRepository>(_db, _passengerRepository, _flightRepository, _logger);
+        _service = std::make_shared<AircraftService>(_aircraftRepository, _flightRepository, _ticketRepository, _logger);
 
         // Setup test aircraft serial
-        auto serialResult = AircraftSerial::create("VN199");
+        auto serialResult = AircraftSerial::create("VN113");
         ASSERT_TRUE(serialResult.has_value());
         _serial = *serialResult;
 
@@ -56,10 +62,10 @@ protected:
     void TearDown() override
     {
         // Clean up test data
-        auto result = db->execute("DELETE FROM aircraft WHERE serial_number = 'VN199'");
+        auto result = _db->execute("DELETE FROM aircraft WHERE serial_number = 'VN113'");
         ASSERT_TRUE(result.has_value()) << "Failed to clean up test data: " << result.error().message;
         
-        db->disconnect();
+        _db->disconnect();
     }
 
     // Helper method to create a test aircraft
@@ -69,17 +75,17 @@ protected:
     }
 };
 
-// Test getById
-TEST_F(AircraftServiceTest, GetByIdSuccess)
+// Test getAircraft
+TEST_F(AircraftServiceTest, GetAircraftSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
     ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->getById(createResult->getId());
+    auto result = _service->getAircraft(_serial);
 
     // Assert
     ASSERT_TRUE(result.has_value());
@@ -88,58 +94,77 @@ TEST_F(AircraftServiceTest, GetByIdSuccess)
     EXPECT_EQ(result.value().getSeatLayout().toString(), _seatLayout.toString());
 }
 
-TEST_F(AircraftServiceTest, GetByIdFailure)
+TEST_F(AircraftServiceTest, GetAircraftNotFound)
 {
+    // Arrange
+    auto nonExistentSerialResult = AircraftSerial::create("VN999");
+    ASSERT_TRUE(nonExistentSerialResult.has_value());
+
     // Act
-    auto result = service->getById(999);
+    auto result = _service->getAircraft(nonExistentSerialResult.value());
 
     // Assert
     ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }
 
-// Test getAll
-TEST_F(AircraftServiceTest, GetAllSuccess)
+// Test getAllAircraft
+TEST_F(AircraftServiceTest, GetAllAircraftSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    repository->create(aircraftResult.value());
-
-    // Create another aircraft
-    auto serialResult = AircraftSerial::create("VN320");
-    ASSERT_TRUE(serialResult.has_value());
-
-    auto seatLayoutResult = SeatClassMap::create({
-        {SeatClassRegistry::getByName("ECONOMY").value(), 50}, // E001-E050
-        {SeatClassRegistry::getByName("BUSINESS").value(), 10} // B01-B10
-    });
-    ASSERT_TRUE(seatLayoutResult.has_value());
-
-    auto aircraftResult2 = Aircraft::create(
-        serialResult.value(),
-        "Airbus A320",
-        seatLayoutResult.value());
-    ASSERT_TRUE(aircraftResult2.has_value());
-
-    repository->create(aircraftResult2.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->getAll();
+    auto result = _service->getAllAircraft();
 
     // Assert
     ASSERT_TRUE(result.has_value());
-    EXPECT_GE(result.value().size(), 2);
+    EXPECT_GE(result.value().size(), 1);
 }
 
-// Test create
-TEST_F(AircraftServiceTest, CreateSuccess)
+// Test aircraftExists
+TEST_F(AircraftServiceTest, AircraftExistsSuccess)
+{
+    // Arrange
+    auto aircraftResult = createTestAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    // Act
+    auto result = _service->aircraftExists(_serial);
+
+    // Assert
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result.value());
+}
+
+TEST_F(AircraftServiceTest, AircraftExistsNotFound)
+{
+    // Arrange
+    auto nonExistentSerialResult = AircraftSerial::create("VN999");
+    ASSERT_TRUE(nonExistentSerialResult.has_value());
+
+    // Act
+    auto result = _service->aircraftExists(nonExistentSerialResult.value());
+
+    // Assert
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result.value());
+}
+
+// Test createAircraft
+TEST_F(AircraftServiceTest, CreateAircraftSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
 
     // Act
-    auto result = service->create(aircraftResult.value());
+    auto result = _service->createAircraft(aircraftResult.value());
 
     // Assert
     ASSERT_TRUE(result.has_value());
@@ -148,28 +173,29 @@ TEST_F(AircraftServiceTest, CreateSuccess)
     EXPECT_EQ(result.value().getSeatLayout().toString(), _seatLayout.toString());
 }
 
-TEST_F(AircraftServiceTest, CreateFailureDuplicateSerial)
+TEST_F(AircraftServiceTest, CreateAircraftDuplicateSerial)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->create(aircraftResult.value());
+    auto result = _service->createAircraft(aircraftResult.value());
 
     // Assert
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Aircraft with serial number already exists");
+    EXPECT_EQ(result.error().code, "DUPLICATE_SERIAL");
 }
 
-// Test update
-TEST_F(AircraftServiceTest, UpdateSuccess)
+// Test updateAircraft
+TEST_F(AircraftServiceTest, UpdateAircraftSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
     ASSERT_TRUE(createResult.has_value());
 
     // Create a new aircraft with updated model
@@ -182,14 +208,14 @@ TEST_F(AircraftServiceTest, UpdateSuccess)
     updatedAircraft.setId(createResult.value().getId());
 
     // Act
-    auto result = service->update(updatedAircraft);
+    auto result = _service->updateAircraft(updatedAircraft);
 
     // Assert
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value().getModel(), "Boeing 737 MAX");
 }
 
-TEST_F(AircraftServiceTest, UpdateFailureNotFound)
+TEST_F(AircraftServiceTest, UpdateAircraftNotFound)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
@@ -198,183 +224,149 @@ TEST_F(AircraftServiceTest, UpdateFailureNotFound)
     aircraft.setId(999);
 
     // Act
-    auto result = service->update(aircraft);
+    auto result = _service->updateAircraft(aircraft);
 
     // Assert
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Aircraft not found");
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }
 
-// Test deleteById
-TEST_F(AircraftServiceTest, DeleteByIdSuccess)
+// Test deleteAircraft
+TEST_F(AircraftServiceTest, DeleteAircraftSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
     ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->deleteById(createResult->getId());
+    auto result = _service->deleteAircraft(_serial);
 
     // Assert
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value());
 
     // Verify aircraft no longer exists
-    auto existsResult = service->exists(createResult->getId());
+    auto existsResult = _service->aircraftExists(_serial);
     ASSERT_TRUE(existsResult.has_value());
     EXPECT_FALSE(existsResult.value());
 }
 
-TEST_F(AircraftServiceTest, DeleteByIdFailure)
-{
-    // Act
-    auto result = service->deleteById(999);
-
-    // Assert
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Aircraft not found");
-}
-
-// Test exists
-TEST_F(AircraftServiceTest, ExistsSuccess)
-{
-    // Arrange
-    auto aircraftResult = createTestAircraft();
-    ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Act
-    auto result = service->exists(createResult->getId());
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
-}
-
-TEST_F(AircraftServiceTest, ExistsFailure)
-{
-    // Act
-    auto result = service->exists(999);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value());
-}
-
-// Test count
-TEST_F(AircraftServiceTest, CountSuccess)
-{
-    // Arrange
-    auto aircraftResult = createTestAircraft();
-    ASSERT_TRUE(aircraftResult.has_value());
-    repository->create(aircraftResult.value());
-
-    // Act
-    auto result = service->count();
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_GE(result.value(), 1);
-}
-
-// Test getAircraftBySerialNumber
-TEST_F(AircraftServiceTest, GetAircraftBySerialNumberSuccess)
-{
-    // Arrange
-    auto aircraftResult = createTestAircraft();
-    ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Act
-    auto result = service->getAircraftBySerialNumber(_serial);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getModel(), _model);
-    EXPECT_EQ(result.value().getSerial().toString(), _serial.toString());
-    EXPECT_EQ(result.value().getSeatLayout().toString(), _seatLayout.toString());
-}
-
-TEST_F(AircraftServiceTest, GetAircraftBySerialNumberFailure)
+TEST_F(AircraftServiceTest, DeleteAircraftNotFound)
 {
     // Arrange
     auto nonExistentSerialResult = AircraftSerial::create("VN999");
     ASSERT_TRUE(nonExistentSerialResult.has_value());
 
     // Act
-    auto result = service->getAircraftBySerialNumber(nonExistentSerialResult.value());
+    auto result = _service->deleteAircraft(nonExistentSerialResult.value());
 
     // Assert
     ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }
 
-// Test aircraftExistsBySerialNumber
-TEST_F(AircraftServiceTest, AircraftExistsBySerialNumberSuccess)
+// Test getAvailableSeatClasses
+TEST_F(AircraftServiceTest, GetAvailableSeatClassesSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
     ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->aircraftExistsBySerialNumber(_serial);
+    auto result = _service->getAvailableSeatClasses(_serial);
 
     // Assert
     ASSERT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
+    auto seatClasses = result.value();
+    EXPECT_EQ(seatClasses.size(), 3);
+    EXPECT_TRUE(std::find(seatClasses.begin(), seatClasses.end(), "ECONOMY") != seatClasses.end());
+    EXPECT_TRUE(std::find(seatClasses.begin(), seatClasses.end(), "BUSINESS") != seatClasses.end());
+    EXPECT_TRUE(std::find(seatClasses.begin(), seatClasses.end(), "FIRST") != seatClasses.end());
 }
 
-TEST_F(AircraftServiceTest, AircraftExistsBySerialNumberFailure)
+TEST_F(AircraftServiceTest, GetAvailableSeatClassesNotFound)
 {
     // Arrange
     auto nonExistentSerialResult = AircraftSerial::create("VN999");
     ASSERT_TRUE(nonExistentSerialResult.has_value());
 
     // Act
-    auto result = service->aircraftExistsBySerialNumber(nonExistentSerialResult.value());
+    auto result = _service->getAvailableSeatClasses(nonExistentSerialResult.value());
 
     // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value());
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }
 
-// Test deleteAircraftBySerialNumber
-TEST_F(AircraftServiceTest, DeleteAircraftBySerialNumberSuccess)
+// Test getAvailableSeats
+TEST_F(AircraftServiceTest, GetAvailableSeatsSuccess)
 {
     // Arrange
     auto aircraftResult = createTestAircraft();
     ASSERT_TRUE(aircraftResult.has_value());
-    auto createResult = repository->create(aircraftResult.value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
     ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->deleteAircraftBySerialNumber(_serial);
+    auto result = _service->getAvailableSeats(_serial, "ECONOMY");
+
+    // Assert
+    ASSERT_TRUE(result.has_value());
+    auto availableSeats = result.value();
+    EXPECT_EQ(availableSeats.size(), 100); // All economy seats should be available
+    EXPECT_TRUE(std::find(availableSeats.begin(), availableSeats.end(), "E001") != availableSeats.end());
+    EXPECT_TRUE(std::find(availableSeats.begin(), availableSeats.end(), "E100") != availableSeats.end());
+}
+
+TEST_F(AircraftServiceTest, GetAvailableSeatsInvalidClass)
+{
+    // Arrange
+    auto aircraftResult = createTestAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    // Act
+    auto result = _service->getAvailableSeats(_serial, "INVALID");
+
+    // Assert
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "INVALID_SEAT_CLASS");
+}
+
+// Test isSeatAvailable
+TEST_F(AircraftServiceTest, IsSeatAvailableSuccess)
+{
+    // Arrange
+    auto aircraftResult = createTestAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
+
+    // Act
+    auto result = _service->isSeatAvailable(_serial, "E001");
 
     // Assert
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value());
-
-    // Verify aircraft no longer exists
-    auto existsResult = service->aircraftExistsBySerialNumber(_serial);
-    ASSERT_TRUE(existsResult.has_value());
-    EXPECT_FALSE(existsResult.value());
 }
 
-TEST_F(AircraftServiceTest, DeleteAircraftBySerialNumberFailure)
+TEST_F(AircraftServiceTest, IsSeatAvailableInvalidSeat)
 {
     // Arrange
-    auto nonExistentSerialResult = AircraftSerial::create("VN999");
-    ASSERT_TRUE(nonExistentSerialResult.has_value());
+    auto aircraftResult = createTestAircraft();
+    ASSERT_TRUE(aircraftResult.has_value());
+    auto createResult = _aircraftRepository->create(aircraftResult.value());
+    ASSERT_TRUE(createResult.has_value());
 
     // Act
-    auto result = service->deleteAircraftBySerialNumber(nonExistentSerialResult.value());
+    auto result = _service->isSeatAvailable(_serial, "INVALID");
 
     // Assert
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Aircraft not found");
+    EXPECT_EQ(result.error().code, "INVALID_SEAT_NUMBER");
 }

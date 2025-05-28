@@ -144,16 +144,12 @@ namespace Tables {
             ColumnName[STATUS] + " = ? " + 
             "WHERE " + ColumnName[ID] + " = ?";
         const std::string DELETE_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[ID] + " = ?";
-        // const std::string FIND_BY_NUMBER_QUERY = std::format (
-        //     "SELECT * FROM {} WHERE {} = ?",
-        //     NAME_TABLE, ColumnName[FLIGHT_NUMBER]
-        // );
         const std::string FIND_BY_NUMBER_QUERY = getOrderedSelectClause() + " WHERE f." + ColumnName[FLIGHT_NUMBER] + " = ?";
-
         const std::string EXISTS_FLIGHT_QUERY = std::format (
             "SELECT COUNT(*) FROM {} WHERE {} = ?",
             NAME_TABLE, ColumnName[FLIGHT_NUMBER]
         );
+        const std::string FIND_AIRCRAFT = getOrderedSelectClause() + " WHERE a." + Aircraft::ColumnName[Aircraft::SERIAL] + " = ?";
     }
 
     namespace Passenger {
