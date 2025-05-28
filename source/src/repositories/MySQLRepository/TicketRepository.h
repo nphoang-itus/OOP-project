@@ -49,6 +49,7 @@ public:
     Result<Ticket> findByTicketNumber(const TicketNumber& ticketNumber);
     Result<bool> existsTicket(const TicketNumber& ticketNumber);
     Result<std::vector<Ticket>> findByPassengerId(int passengerId);
+    Result<std::vector<Ticket>> findByFlightId(int flightId);
     Result<std::vector<Ticket>> findBySerialNumber(const AircraftSerial& serial);
 };
 

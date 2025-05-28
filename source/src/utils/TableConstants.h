@@ -149,7 +149,7 @@ namespace Tables {
             "SELECT COUNT(*) FROM {} WHERE {} = ?",
             NAME_TABLE, ColumnName[FLIGHT_NUMBER]
         );
-        const std::string FIND_AIRCRAFT = getOrderedSelectClause() + " WHERE a." + Aircraft::ColumnName[Aircraft::SERIAL] + " = ?";
+        const std::string FIND_FLIGHT_BY_SERIAL = getOrderedSelectClause() + " WHERE a." + Aircraft::ColumnName[Aircraft::SERIAL] + " = ?";
     }
 
     namespace Passenger {

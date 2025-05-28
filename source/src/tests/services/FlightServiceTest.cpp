@@ -79,35 +79,6 @@ protected:
     }
 };
 
-// Test getById
-TEST_F(FlightServiceTest, GetByIdSuccess)
-{
-    // Arrange
-    auto flightResult = createFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    auto createResult = mockRepository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Act
-    auto result = service->getById(1);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getFlightNumber(), _flightNumber);
-    EXPECT_EQ(result.value().getRoute(), _route);
-    EXPECT_EQ(result.value().getSchedule(), _schedule);
-    EXPECT_EQ(result.value().getAircraft()->getId(), _aircraft->getId());
-}
-
-TEST_F(FlightServiceTest, GetByIdFailure)
-{
-    // Act
-    auto result = service->getById(999);
-
-    // Assert
-    ASSERT_FALSE(result.has_value());
-}
-
 // Test getAll
 TEST_F(FlightServiceTest, GetAllSuccess)
 {
@@ -130,7 +101,7 @@ TEST_F(FlightServiceTest, GetAllSuccess)
     mockRepository->create(flightResult2.value());
 
     // Act
-    auto result = service->getAll();
+    auto result = service->getAllFlights();
 
     // Assert
     ASSERT_TRUE(result.has_value());
@@ -145,7 +116,7 @@ TEST_F(FlightServiceTest, CreateSuccess)
     ASSERT_TRUE(flightResult.has_value());
 
     // Act
-    auto result = service->create(flightResult.value());
+    auto result = service->createFlight(flightResult.value());
 
     // Assert
     ASSERT_TRUE(result.has_value());
@@ -163,7 +134,7 @@ TEST_F(FlightServiceTest, CreateFailureDuplicateFlightNumber)
     mockRepository->create(flightResult.value());
 
     // Act
-    auto result = service->create(flightResult.value());
+    auto result = service->createFlight(flightResult.value());
 
     // Assert
     ASSERT_FALSE(result.has_value());

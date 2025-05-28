@@ -89,7 +89,7 @@ Result<bool> AircraftService::deleteAircraft(const AircraftSerial& serial) {
     }
 
     // Business rule: Check if aircraft is used in any flights
-    auto flightsResult = _flightRepository->findAircraft(serial);
+    auto flightsResult = _flightRepository->findFlightByAircraft(serial);
     if (!flightsResult) {
         if (_logger) _logger->error("Failed to check aircraft flights");
         return Failure<bool>(flightsResult.error());

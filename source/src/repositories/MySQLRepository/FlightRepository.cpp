@@ -564,7 +564,7 @@ Result<Flight> FlightRepository::findByFlightNumber(const FlightNumber& number) 
         auto dbResult = std::move(result.value());
         if (!dbResult->next().value()) {
             if (_logger) _logger->warning("Flight not found with flight number: " + number.toString());
-            return Failure<Flight>(CoreError("Flight not found with flight number: " + number.toString()));
+            return Failure<Flight>(CoreError("Flight not found with flight number: " + number.toString(), "NOT_FOUND"));
         }
 
         // Get flight data
@@ -687,21 +687,21 @@ Result<bool> FlightRepository::existsFlight(const FlightNumber& number) {
     }
 }
 
-Result<std::vector<Aircraft>> FlightRepository::findAircraft(const AircraftSerial& serial) {
+Result<std::vector<Flight>> FlightRepository::findFlightByAircraft(const AircraftSerial& serial) {
     try {
         if (!_logger) _logger->debug("Finding aircraft exists");
 
-        auto prepareResult = _connection->prepareStatement(FIND_AIRCRAFT);
+        auto prepareResult = _connection->prepareStatement(FIND_FLIGHT_BY_SERIAL);
         if (!prepareResult) {
             if (_logger) _logger->error("Failed to prepare statement for finding aircraft by serial: " + serial.toString());
-            return Failure<std::vector<Aircraft>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+            return Failure<std::vector<Flight>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
         }
         int stmtId = prepareResult.value();
         auto setParamResult = _connection->setString(stmtId, 1, serial.toString());
         if (!setParamResult) {
             _connection->freeStatement(stmtId);
             if (_logger) _logger->error("Failed to set parameter for finding flight by serial: " + serial.toString());
-            return Failure<std::vector<Aircraft>>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+            return Failure<std::vector<Flight>>(CoreError("Failed to set parameter", "PARAM_FAILED"));
         }
 
         auto result = _connection->executeQueryStatement(stmtId);
@@ -709,28 +709,53 @@ Result<std::vector<Aircraft>> FlightRepository::findAircraft(const AircraftSeria
 
         if (!result) {
             if (_logger) _logger->error("Failed to execute query for finding flight by serial: " + serial.toString());
-            return Failure<std::vector<Aircraft>>(CoreError("Failed to execute query", "QUERY_FAILED"));
+            return Failure<std::vector<Flight>>(CoreError("Failed to execute query", "QUERY_FAILED"));
         }
 
-        std::vector<Aircraft> aircraftList;
+        std::vector<Flight> flights;
         auto dbResult = std::move(result.value());
 
         while (dbResult->next().value()) {
             auto idResult = dbResult->getInt(ColumnName[ID]);
-            if (!idResult) break;
+            if (!idResult) break;  // Break if we can't get the ID, indicating end of results
             
-            // Get aircraft data
+            auto flightNumberResult = dbResult->getString(ColumnName[FLIGHT_NUMBER]);
+            auto departureCodeResult = dbResult->getString(ColumnName[DEPARTURE_CODE]);
+            auto departureNameResult = dbResult->getString(ColumnName[DEPARTURE_NAME]);
+            auto arrivalCodeResult = dbResult->getString(ColumnName[ARRIVAL_CODE]);
+            auto arrivalNameResult = dbResult->getString(ColumnName[ARRIVAL_NAME]);
             auto aircraftIdResult = dbResult->getInt(ColumnName[AIRCRAFT_ID]);
-            auto serialNumberResult = dbResult->getString(Tables::Aircraft::ColumnName[Tables::Aircraft::SERIAL]);
-            auto modelResult = dbResult->getString(Tables::Aircraft::ColumnName[Tables::Aircraft::MODEL]);
-            auto economySeatsResult = dbResult->getInt(Tables::Aircraft::ColumnName[Tables::Aircraft::ECONOMY_SEATS]);
-            auto businessSeatsResult = dbResult->getInt(Tables::Aircraft::ColumnName[Tables::Aircraft::BUSINESS_SEATS]);
-            auto firstSeatsResult = dbResult->getInt(Tables::Aircraft::ColumnName[Tables::Aircraft::FIRST_SEATS]);
+            auto departureTimeResult = dbResult->getDateTime(ColumnName[DEPARTURE_TIME]);
+            auto arrivalTimeResult = dbResult->getDateTime(ColumnName[ARRIVAL_TIME]);
+            auto statusResult = dbResult->getString(ColumnName[STATUS]);
 
-            if (!serialNumberResult || !modelResult || !economySeatsResult || !businessSeatsResult || !firstSeatsResult) {
+            // Get aircraft data
+            auto serialNumberResult = dbResult->getString("serial_number");
+            auto modelResult = dbResult->getString("model");
+            auto economySeatsResult = dbResult->getInt("economy_seats");
+            auto businessSeatsResult = dbResult->getInt("business_seats");
+            auto firstSeatsResult = dbResult->getInt("first_seats");
+
+            if (!flightNumberResult || !departureCodeResult || !departureNameResult || 
+                !arrivalCodeResult || !arrivalNameResult || !aircraftIdResult || 
+                !departureTimeResult || !arrivalTimeResult || !statusResult ||
+                !serialNumberResult || !modelResult || !economySeatsResult || !businessSeatsResult || !firstSeatsResult) {
                 if (_logger) _logger->warning("Skipping invalid flight data");
                 continue;
             }
+
+            // Create route string
+            std::stringstream routeStr;
+            routeStr << std::format (
+                "{}({})-{}({})",
+                departureNameResult.value(), departureCodeResult.value(),
+                arrivalNameResult.value(), arrivalCodeResult.value()
+            );
+
+            // Create schedule string
+            std::stringstream scheduleStr;
+            scheduleStr << std::put_time(&departureTimeResult.value(), "%Y-%m-%d %H:%M") << "|"
+                       << std::put_time(&arrivalTimeResult.value(), "%Y-%m-%d %H:%M");
 
             // Create aircraft
             std::stringstream seatLayoutStr;
@@ -762,13 +787,41 @@ Result<std::vector<Aircraft>> FlightRepository::findAircraft(const AircraftSeria
                 continue;
             }
             aircraft->setId(aircraftIdResult.value());
-            aircraftList.push_back(aircraft.value());
+
+            // Create flight
+            auto flightNumber = FlightNumber::create(flightNumberResult.value());
+            if (!flightNumber) {
+                if (_logger) _logger->warning("Invalid flight number: " + flightNumberResult.value());
+                continue;
+            }
+
+            auto route = Route::create(routeStr.str());
+            if (!route) {
+                if (_logger) _logger->warning("Invalid route: " + routeStr.str());
+                continue;
+            }
+
+            auto schedule = Schedule::create(scheduleStr.str());
+            if (!schedule) {
+                if (_logger) _logger->warning("Invalid schedule: " + scheduleStr.str());
+                continue;
+            }
+
+            auto flight = Flight::create(*flightNumber, *route, *schedule, std::make_shared<Aircraft>(*aircraft));
+            if (!flight) {
+                if (_logger) _logger->warning("Failed to create flight");
+                continue;
+            }
+
+            flight->setId(idResult.value());
+            flight->setStatus(FlightStatusUtil::fromString(statusResult.value()));
+            flights.push_back(*flight);
         }
 
-        if (_logger) _logger->debug("Successfully found " + std::to_string(aircraftList.size()) + " aircraft");
-        return Success(aircraftList);
+        if (_logger) _logger->debug("Successfully found " + std::to_string(flights.size()) + " aircraft");
+        return Success(flights);
     } catch (const std::exception& e) {
         if (_logger) _logger->error("Error finding all flights: " + std::string(e.what()));
-        return Failure<std::vector<Aircraft>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+        return Failure<std::vector<Flight>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
     }
 }

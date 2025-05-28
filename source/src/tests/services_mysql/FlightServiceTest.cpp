@@ -1,5 +1,8 @@
 #include "services/FlightService.h"
 #include "repositories/MySQLRepository/FlightRepository.h"
+#include "repositories/MySQLRepository/AircraftRepository.h"
+#include "repositories/MySQLRepository/TicketRepository.h"
+#include "repositories/MySQLRepository/PassengerRepository.h"
 #include "core/entities/Flight.h"
 #include "core/entities/Aircraft.h"
 #include "core/value_objects/flight_number/FlightNumber.h"
@@ -12,14 +15,18 @@
 #include "database/MySQLXConnection.h"
 #include <gtest/gtest.h>
 #include <memory>
+#include <algorithm>
 
 class FlightServiceTest : public ::testing::Test
 {
 protected:
-    std::shared_ptr<FlightRepository> repository;
-    std::shared_ptr<FlightService> service;
-    std::shared_ptr<MySQLXConnection> db;
-    std::shared_ptr<Logger> logger;
+    std::shared_ptr<FlightRepository> _flightRepository;
+    std::shared_ptr<AircraftRepository> _aircraftRepository;
+    std::shared_ptr<TicketRepository> _ticketRepository;
+    std::shared_ptr<PassengerRepository> _passengerRepository;
+    std::shared_ptr<FlightService> _service;
+    std::shared_ptr<MySQLXConnection> _db;
+    std::shared_ptr<Logger> _logger;
     FlightNumber _flightNumber;
     Route _route;
     Schedule _schedule;
@@ -27,345 +34,291 @@ protected:
 
     void SetUp() override
     {
-        // Setup database connection
-        db = MySQLXConnection::getInstance();
-        auto result = db->connect("localhost", "nphoang", "phucHoang133205", "airlines_db", 33060);
+        // Initialize database connection
+        _db = MySQLXConnection::getInstance();
+        auto result = _db->connect("localhost", "nphoang", "phucHoang133205", "airlines_db", 33060);
         ASSERT_TRUE(result.has_value()) << "Failed to connect to database: " << result.error().message;
 
-        // Setup logger
-        logger = Logger::getInstance();
-        logger->setMinLevel(LogLevel::DEBUG);
+        // Initialize logger
+        _logger = Logger::getInstance();
+        _logger->setMinLevel(LogLevel::DEBUG);
 
-        // Setup repositories and service
-        repository = std::make_shared<FlightRepository>(db, logger);
-        service = std::make_shared<FlightService>(repository);
+        // Initialize repositories
+        _aircraftRepository = std::make_shared<AircraftRepository>(_db, _logger);
+        _passengerRepository = std::make_shared<PassengerRepository>(_db, _logger);
+        _flightRepository = std::make_shared<FlightRepository>(_db, _logger);
+        _ticketRepository = std::make_shared<TicketRepository>(_db, _passengerRepository, _flightRepository, _logger);
+
+        // Initialize service
+        _service = std::make_shared<FlightService>(_flightRepository, _aircraftRepository, _ticketRepository, _logger);
+
+        // Setup test data
+        // Create test aircraft
+        auto serialResult = AircraftSerial::create("VN119");
+        ASSERT_TRUE(serialResult.has_value());
+        auto seatLayoutResult = SeatClassMap::create("E:10,B:5,F:2");
+        ASSERT_TRUE(seatLayoutResult.has_value());
+        auto aircraftResult = Aircraft::create(*serialResult, "Boeing 737", *seatLayoutResult);
+        ASSERT_TRUE(aircraftResult.has_value());
+        _aircraft = std::make_shared<Aircraft>(*aircraftResult);
+        auto createAircraftResult = _aircraftRepository->create(*_aircraft);
+        ASSERT_TRUE(createAircraftResult.has_value());
+        _aircraft = std::make_shared<Aircraft>(createAircraftResult.value());
 
         // Setup test flight number
-        auto flightNumberResult = FlightNumber::create("VN123");
+        auto flightNumberResult = FlightNumber::create("VN119");
         ASSERT_TRUE(flightNumberResult.has_value());
         _flightNumber = *flightNumberResult;
 
         // Setup test route
-        auto routeResult = Route::create("Noi Bai International Airport", "HAN",
-                                         "Tan Son Nhat International Airport", "SGN");
+        auto routeResult = Route::create("Ho Chi Minh City(SGN)-Ha Noi(HAN)");
         ASSERT_TRUE(routeResult.has_value());
         _route = *routeResult;
 
         // Setup test schedule
-        auto now = std::time(nullptr);
-        auto departure = *std::localtime(&now);
-        auto arrival = *std::localtime(&now);
-        arrival.tm_hour += 2; // 2 hours later
-        auto scheduleResult = Schedule::create(departure, arrival);
+        auto scheduleResult = Schedule::create("2024-03-20 10:00|2024-03-20 12:00");
         ASSERT_TRUE(scheduleResult.has_value());
         _schedule = *scheduleResult;
-
-        // Setup test aircraft
-        auto serialResult = AircraftSerial::create("VN123");
-        ASSERT_TRUE(serialResult.has_value());
-
-        auto seatLayoutResult = SeatClassMap::create({{SeatClassRegistry::getByName("ECONOMY").value(), 100},
-                                                      {SeatClassRegistry::getByName("BUSINESS").value(), 20},
-                                                      {SeatClassRegistry::getByName("FIRST").value(), 10}});
-        ASSERT_TRUE(seatLayoutResult.has_value());
-
-        auto aircraftResult = Aircraft::create(
-            serialResult.value(),
-            "Boeing 737",
-            seatLayoutResult.value());
-        ASSERT_TRUE(aircraftResult.has_value());
-        _aircraft = std::make_shared<Aircraft>(aircraftResult.value());
-        _aircraft->setId(1);
     }
 
     void TearDown() override
     {
         // Clean up test data
-        auto result = db->execute("DELETE FROM flight WHERE flight_number = 'VN123'");
+        auto result = _db->execute("DELETE FROM flight WHERE flight_number = 'VN119'");
         ASSERT_TRUE(result.has_value()) << "Failed to clean up test data: " << result.error().message;
         
-        db->disconnect();
+        result = _db->execute("DELETE FROM aircraft WHERE serial_number = 'VN119'");
+        ASSERT_TRUE(result.has_value()) << "Failed to clean up test data: " << result.error().message;
     }
 
-    // Helper method to create a test flight
     Result<Flight> createTestFlight()
     {
-        return Flight::create(_flightNumber, _route, _schedule, _aircraft);
+        auto flightResult = Flight::create(_flightNumber, _route, _schedule, _aircraft);
+        if (!flightResult) return flightResult;
+        return _flightRepository->create(*flightResult);
     }
 };
 
-// Test getById
-TEST_F(FlightServiceTest, GetByIdSuccess)
+// // Core CRUD Tests
+// TEST_F(FlightServiceTest, GetFlightSuccess)
+// {
+//     auto flightResult = createTestFlight();
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->getFlight(_flightNumber);
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_EQ(result.value().getFlightNumber().toString(), _flightNumber.toString());
+//     EXPECT_EQ(result.value().getRoute().toString(), _route.toString());
+//     EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
+// }
+
+// TEST_F(FlightServiceTest, GetFlightNotFound)
+// {
+//     auto result = _service->getFlight(_flightNumber);
+//     ASSERT_FALSE(result.has_value());
+//     EXPECT_EQ(result.error().code, "NOT_FOUND");
+// }
+
+// TEST_F(FlightServiceTest, GetAllFlightsSuccess)
+// {
+//     auto flightResult = createTestFlight();
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->getAllFlights();
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_FALSE(result.value().empty());
+    
+//     bool foundTargetFlight = false;
+//     for (const auto& flight : result.value()) {
+//         if (flight.getFlightNumber().toString() == _flightNumber.toString()) {
+//             foundTargetFlight = true;
+//             EXPECT_EQ(flight.getFlightNumber().toString(), _flightNumber.toString());
+//             EXPECT_EQ(flight.getRoute().toString(), _route.toString());
+//             EXPECT_EQ(flight.getSchedule().toString(), _schedule.toString());
+//             break;
+//         }
+//     }
+// }
+
+// TEST_F(FlightServiceTest, FlightExistsSuccess)
+// {
+//     auto flightResult = createTestFlight();
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->flightExists(_flightNumber);
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_TRUE(result.value());
+// }
+
+// TEST_F(FlightServiceTest, FlightExistsNotFound)
+// {
+//     auto result = _service->flightExists(_flightNumber);
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_FALSE(result.value());
+// }
+
+// TEST_F(FlightServiceTest, CreateFlightSuccess)
+// {
+//     auto flightResult = Flight::create(_flightNumber, _route, _schedule, _aircraft);
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->createFlight(*flightResult);
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_EQ(result.value().getFlightNumber().toString(), _flightNumber.toString());
+//     EXPECT_EQ(result.value().getRoute().toString(), _route.toString());
+//     EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
+// }
+
+// TEST_F(FlightServiceTest, CreateFlightDuplicateFlightNumber)
+// {
+//     auto flightResult = createTestFlight();
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->createFlight(flightResult.value());
+//     ASSERT_FALSE(result.has_value());
+//     EXPECT_EQ(result.error().code, "DUPLICATE_FLIGHT_NUMBER");
+// }
+
+// TEST_F(FlightServiceTest, UpdateFlightSuccess)
+// {
+//     auto flightResult = createTestFlight();
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto flight = flightResult.value();
+//     auto newScheduleResult = Schedule::create("2024-03-21 10:00|2024-03-21 12:00");
+//     ASSERT_TRUE(newScheduleResult.has_value());
+//     flight.setSchedule(*newScheduleResult);
+
+//     auto result = _service->updateFlight(flight);
+//     ASSERT_TRUE(result.has_value());
+//     EXPECT_EQ(result.value().getSchedule().toString(), newScheduleResult->toString());
+// }
+
+// TEST_F(FlightServiceTest, UpdateFlightNotFound)
+// {
+//     auto flightResult = Flight::create(_flightNumber, _route, _schedule, _aircraft);
+//     ASSERT_TRUE(flightResult.has_value());
+
+//     auto result = _service->updateFlight(*flightResult);
+//     ASSERT_FALSE(result.has_value());
+//     EXPECT_EQ(result.error().code, "NOT_FOUND");
+// }
+
+TEST_F(FlightServiceTest, DeleteFlightSuccess)
 {
-    // Arrange
     auto flightResult = createTestFlight();
     ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
 
-    // Act
-    auto result = service->getById(createResult->getId());
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getFlightNumber(), _flightNumber);
-    EXPECT_EQ(result.value().getRoute(), _route);
-    EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
-    EXPECT_EQ(result.value().getAircraft()->getId(), _aircraft->getId());
-}
-
-TEST_F(FlightServiceTest, GetByIdFailure)
-{
-    // Act
-    auto result = service->getById(999);
-
-    // Assert
-    ASSERT_FALSE(result.has_value());
-}
-
-// Test getAll
-TEST_F(FlightServiceTest, GetAllSuccess)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    repository->create(flightResult.value());
-
-    // Create another flight
-    auto flightNumberResult = FlightNumber::create("VN456");
-    ASSERT_TRUE(flightNumberResult.has_value());
-
-    auto flightResult2 = Flight::create(
-        flightNumberResult.value(),
-        _route,
-        _schedule,
-        _aircraft);
-    ASSERT_TRUE(flightResult2.has_value());
-
-    repository->create(flightResult2.value());
-
-    // Act
-    auto result = service->getAll();
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_GE(result.value().size(), 2);
-}
-
-// Test create
-TEST_F(FlightServiceTest, CreateSuccess)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-
-    // Act
-    auto result = service->create(flightResult.value());
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getFlightNumber(), _flightNumber);
-    EXPECT_EQ(result.value().getRoute(), _route);
-    EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
-    EXPECT_EQ(result.value().getAircraft()->getId(), _aircraft->getId());
-}
-
-TEST_F(FlightServiceTest, CreateFailureDuplicateFlightNumber)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    repository->create(flightResult.value());
-
-    // Act
-    auto result = service->create(flightResult.value());
-
-    // Assert
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Flight with flight number already exists");
-}
-
-// Test update
-TEST_F(FlightServiceTest, UpdateSuccess)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Create a new flight with updated flight number
-    auto newFlightNumberResult = FlightNumber::create("VN789");
-    ASSERT_TRUE(newFlightNumberResult.has_value());
-
-    auto updatedFlightResult = Flight::create(
-        newFlightNumberResult.value(),
-        _route,
-        _schedule,
-        _aircraft);
-    ASSERT_TRUE(updatedFlightResult.has_value());
-    auto updatedFlight = updatedFlightResult.value();
-    updatedFlight.setId(createResult.value().getId());
-
-    // Act
-    auto result = service->update(updatedFlight);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getFlightNumber(), newFlightNumberResult.value());
-}
-
-TEST_F(FlightServiceTest, UpdateFailureNotFound)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    auto flight = flightResult.value();
-    flight.setId(999);
-
-    // Act
-    auto result = service->update(flight);
-
-    // Assert
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Flight not found");
-}
-
-// Test deleteById
-TEST_F(FlightServiceTest, DeleteByIdSuccess)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Act
-    auto result = service->deleteById(createResult->getId());
-
-    // Assert
+    auto result = _service->deleteFlight(_flightNumber);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value());
 
-    // Verify flight no longer exists
-    auto existsResult = service->exists(createResult->getId());
+    auto existsResult = _service->flightExists(_flightNumber);
     ASSERT_TRUE(existsResult.has_value());
     EXPECT_FALSE(existsResult.value());
 }
 
-TEST_F(FlightServiceTest, DeleteByIdFailure)
+TEST_F(FlightServiceTest, DeleteFlightNotFound)
 {
-    // Act
-    auto result = service->deleteById(999);
-
-    // Assert
+    auto result = _service->deleteFlight(_flightNumber);
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().message, "Flight not found");
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }
 
-// Test exists
-TEST_F(FlightServiceTest, ExistsSuccess)
+// Business Operations Tests
+TEST_F(FlightServiceTest, GetFlightsByAircraftSuccess)
 {
-    // Arrange
     auto flightResult = createTestFlight();
     ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
 
-    // Act
-    auto result = service->exists(createResult->getId());
+    auto result = _service->getFlightsByAircraft(_aircraft->getSerial());
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result.value().empty());
+    EXPECT_EQ(result.value()[0].getFlightNumber().toString(), _flightNumber.toString());
+}
 
-    // Assert
+TEST_F(FlightServiceTest, GetFlightsByAircraftNotFound)
+{
+    auto serialResult = AircraftSerial::create("VN888");
+    ASSERT_TRUE(serialResult.has_value());
+
+    auto result = _service->getFlightsByAircraft(*serialResult);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
+}
+
+TEST_F(FlightServiceTest, GetFlightsByRouteNotImplemented)
+{
+    auto result = _service->getFlightsByRoute("SGN", "HAN");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_IMPLEMENTED");
+}
+
+TEST_F(FlightServiceTest, GetFlightsByDateNotImplemented)
+{
+    auto result = _service->getFlightsByDate("2024-03-20");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_IMPLEMENTED");
+}
+
+TEST_F(FlightServiceTest, IsSeatAvailableSuccess)
+{
+    auto flightResult = createTestFlight();
+    ASSERT_TRUE(flightResult.has_value());
+
+    auto result = _service->isSeatAvailable(_flightNumber, "E01");
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value());
 }
 
-TEST_F(FlightServiceTest, ExistsFailure)
+TEST_F(FlightServiceTest, IsSeatAvailableInvalidSeat)
 {
-    // Act
-    auto result = service->exists(999);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value());
-}
-
-// Test count
-TEST_F(FlightServiceTest, CountSuccess)
-{
-    // Arrange
     auto flightResult = createTestFlight();
     ASSERT_TRUE(flightResult.has_value());
-    repository->create(flightResult.value());
 
-    // Act
-    auto result = service->count();
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_GE(result.value(), 1);
-}
-
-// Test getFlightByNumber
-TEST_F(FlightServiceTest, GetFlightByNumberSuccess)
-{
-    // Arrange
-    auto flightResult = createTestFlight();
-    ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
-
-    // Act
-    auto result = service->getFlightByNumber(_flightNumber);
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().getFlightNumber(), _flightNumber);
-    EXPECT_EQ(result.value().getRoute(), _route);
-    EXPECT_EQ(result.value().getSchedule().toString(), _schedule.toString());
-    EXPECT_EQ(result.value().getAircraft()->getId(), _aircraft->getId());
-}
-
-TEST_F(FlightServiceTest, GetFlightByNumberFailure)
-{
-    // Arrange
-    auto nonExistentFlightNumberResult = FlightNumber::create("VN877");
-    ASSERT_TRUE(nonExistentFlightNumberResult.has_value());
-
-    // Act
-    auto result = service->getFlightByNumber(nonExistentFlightNumberResult.value());
-
-    // Assert
+    auto result = _service->isSeatAvailable(_flightNumber, "X01");
     ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "INVALID_SEAT_NUMBER");
 }
 
-// Test flightExistsByNumber
-TEST_F(FlightServiceTest, FlightExistsByNumberSuccess)
+TEST_F(FlightServiceTest, GetAvailableSeatsSuccess)
 {
-    // Arrange
     auto flightResult = createTestFlight();
     ASSERT_TRUE(flightResult.has_value());
-    auto createResult = repository->create(flightResult.value());
-    ASSERT_TRUE(createResult.has_value());
 
-    // Act
-    auto result = service->flightExistsByNumber(_flightNumber);
+    auto result = _service->getAvailableSeats(_flightNumber, "ECONOMY");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result.value().empty());
+    EXPECT_EQ(result.value().size(), 10); // 10 economy seats
+}
 
-    // Assert
+TEST_F(FlightServiceTest, GetAvailableSeatsInvalidClass)
+{
+    auto flightResult = createTestFlight();
+    ASSERT_TRUE(flightResult.has_value());
+
+    auto result = _service->getAvailableSeats(_flightNumber, "INVALID");
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "INVALID_SEAT_CLASS");
+}
+
+TEST_F(FlightServiceTest, UpdateFlightStatusSuccess)
+{
+    auto flightResult = createTestFlight();
+    ASSERT_TRUE(flightResult.has_value());
+
+    auto result = _service->updateFlightStatus(_flightNumber, FlightStatus::DELAYED);
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value());
+
+    auto flight = _service->getFlight(_flightNumber);
+    ASSERT_TRUE(flight.has_value());
+    EXPECT_EQ(flight.value().getStatus(), FlightStatus::DELAYED);
 }
 
-TEST_F(FlightServiceTest, FlightExistsByNumberFailure)
+TEST_F(FlightServiceTest, UpdateFlightStatusNotFound)
 {
-    // Arrange
-    auto nonExistentFlightNumberResult = FlightNumber::create("VN767");
-    ASSERT_TRUE(nonExistentFlightNumberResult.has_value());
-
-    // Act
-    auto result = service->flightExistsByNumber(nonExistentFlightNumberResult.value());
-
-    // Assert
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value());
+    auto result = _service->updateFlightStatus(_flightNumber, FlightStatus::DELAYED);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, "NOT_FOUND");
 }

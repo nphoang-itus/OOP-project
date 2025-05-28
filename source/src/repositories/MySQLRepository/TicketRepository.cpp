@@ -605,3 +605,55 @@ Result<std::vector<Ticket>> TicketRepository::findBySerialNumber(const AircraftS
         return Failure<std::vector<Ticket>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
     }
 }
+
+Result<std::vector<Ticket>> TicketRepository::findByFlightId(int flightId) {
+    try {
+        if (_logger) _logger->debug("Finding tickets by flight id: " + std::to_string(flightId));
+
+        auto prepareResult = _connection->prepareStatement("SELECT id FROM ticket WHERE flight_id = ?");
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for finding tickets by flight id");
+            return Failure<std::vector<Ticket>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setInt(stmtId, 1, flightId);
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            if (_logger) _logger->error("Failed to set parameter for finding tickets by flight id");
+            return Failure<std::vector<Ticket>>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for finding tickets by flight id");
+            return Failure<std::vector<Ticket>>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        std::vector<Ticket> tickets;
+
+        while (dbResult->next().value()) {
+            auto idResult = dbResult->getInt("id");
+            if (!idResult) {
+                if (_logger) _logger->error("Failed to get ticket id");
+                return Failure<std::vector<Ticket>>(CoreError("Failed to get ticket id", "DATA_ERROR"));
+            }
+
+            auto ticketResult = findById(idResult.value());
+            if (!ticketResult) {
+                return Failure<std::vector<Ticket>>(ticketResult.error());
+            }
+
+            tickets.push_back(ticketResult.value());
+        }
+
+        if (_logger) _logger->debug("Successfully found " + std::to_string(tickets.size()) + " tickets for flight id: " + std::to_string(flightId));
+        return Success(tickets);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error finding tickets by flight id: " + std::string(e.what()));
+        return Failure<std::vector<Ticket>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}

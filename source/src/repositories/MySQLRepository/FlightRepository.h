@@ -36,7 +36,7 @@ public:
     // Phương thức riêng của FLight
     Result<Flight> findByFlightNumber(const FlightNumber& number);
     Result<bool> existsFlight(const FlightNumber& number);
-    Result<std::vector<Aircraft>> findAircraft(const AircraftSerial& serial);
+    Result<std::vector<Flight>> findFlightByAircraft(const AircraftSerial& serial);
 };
 
 #endif // FLIGHT_REPOSITORY_H 
