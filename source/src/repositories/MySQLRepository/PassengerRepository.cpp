@@ -506,3 +506,58 @@ Result<bool> PassengerRepository::existsPassport(const PassportNumber& passport)
         return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
     }
 }
+
+Result<bool> PassengerRepository::deleteByPassportNumber(const PassportNumber& passport) {
+    try {
+        if (_logger) _logger->debug("Deleting passenger with passport: " + passport.toString());
+
+        // First check if passenger exists
+        auto existsResult = existsPassport(passport);
+        if (!existsResult) {
+            if (_logger) _logger->error("Failed to check passenger existence");
+            return Failure<bool>(CoreError("Failed to check passenger existence", "DB_ERROR"));
+        }
+        if (!existsResult.value()) {
+            if (_logger) _logger->error("Passenger not found with passport: " + passport.toString());
+            return Failure<bool>(CoreError("Passenger not found with passport: " + passport.toString(), "DB_ERROR"));
+        }
+
+        // Start transaction
+        _connection->beginTransaction();
+
+        // Delete passenger
+        auto prepareResult = _connection->prepareStatement(DELETE_BY_PASSPORT_QUERY);
+        if (!prepareResult) {
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to prepare statement for deleting passenger");
+            return Failure<bool>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto setParamResult = _connection->setString(stmtId, 1, passport.toString());
+        if (!setParamResult) {
+            _connection->freeStatement(stmtId);
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to set parameter for deleting passenger");
+            return Failure<bool>(CoreError("Failed to set parameter", "PARAM_FAILED"));
+        }
+
+        auto result = _connection->executeStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            _connection->rollbackTransaction();
+            if (_logger) _logger->error("Failed to execute statement for deleting passenger");
+            return Failure<bool>(CoreError("Failed to execute statement", "EXECUTE_FAILED"));
+        }
+
+        _connection->commitTransaction();
+
+        if (_logger) _logger->debug("Successfully deleted passenger with passport: " + passport.toString());
+        return Success(true);
+    } catch (const std::exception& e) {
+        _connection->rollbackTransaction();
+        if (_logger) _logger->error("Error deleting passenger: " + std::string(e.what()));
+        return Failure<bool>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}

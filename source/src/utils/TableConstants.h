@@ -212,6 +212,7 @@ namespace Tables {
             "SELECT COUNT(*) FROM {} WHERE {} = ?",
             NAME_TABLE, ColumnName[PASSPORT_NUMBER]
         );
+        const std::string DELETE_BY_PASSPORT_QUERY = "DELETE FROM " + std::string(NAME_TABLE) + " WHERE " + ColumnName[PASSPORT_NUMBER] + " = ?";
     }
 
     namespace Ticket {

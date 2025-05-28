@@ -25,6 +25,7 @@ public:
     Result<Passenger> update(const Passenger& passenger) override;
     Result<bool> deleteById(const int& id) override;
     
+    Result<bool> deleteByPassportNumber(const PassportNumber& passport);
     Result<Passenger> findByPassportNumber(const PassportNumber& passport);
     Result<bool> existsPassport(const PassportNumber& passport);
 };
