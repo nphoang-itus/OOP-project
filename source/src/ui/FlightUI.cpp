@@ -1,6 +1,8 @@
 #include "FlightUI.h"
+#include "utils/utils.h"
 #include <iomanip>
 #include <sstream>
+#include <ctime>
 #include <wx/textdlg.h>
 #include <wx/choice.h>
 
@@ -65,6 +67,18 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
     {
         flightList->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
     }
+
+    // Adjust specific column widths for better display
+    flightList->SetColumnWidth(0, 60);  // ID - shorter
+    flightList->SetColumnWidth(1, 100); // Số hiệu
+    flightList->SetColumnWidth(2, 110); // Điểm đi
+    flightList->SetColumnWidth(3, 110); // Điểm đến
+    flightList->SetColumnWidth(4, 110); // Ngày khởi hành
+    flightList->SetColumnWidth(5, 90);  // Giờ khởi hành
+    flightList->SetColumnWidth(6, 110); // Ngày đến
+    flightList->SetColumnWidth(7, 90);  // Giờ đến
+    flightList->SetColumnWidth(8, 120); // Máy bay
+    flightList->SetColumnWidth(9, 100); // Trạng thái
 
     // Create info label
     infoLabel = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxSize(800, 50));
@@ -133,10 +147,18 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     wxTextCtrl *destinationCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *aircraftLabel = new wxStaticText(panel, wxID_ANY, "Số hiệu máy bay:");
     wxTextCtrl *aircraftCtrl = new wxTextCtrl(panel, wxID_ANY);
-    wxStaticText *departureLabel = new wxStaticText(panel, wxID_ANY, "Thời gian khởi hành (YYYY-MM-DD HH:MM):");
-    wxTextCtrl *departureCtrl = new wxTextCtrl(panel, wxID_ANY);
-    wxStaticText *arrivalLabel = new wxStaticText(panel, wxID_ANY, "Thời gian đến (YYYY-MM-DD HH:MM):");
-    wxTextCtrl *arrivalCtrl = new wxTextCtrl(panel, wxID_ANY);
+
+    // Departure date and time separate inputs
+    wxStaticText *departureDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày khởi hành (YYYY-MM-DD):");
+    wxTextCtrl *departureDateCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxStaticText *departureTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ khởi hành (HH:MM):");
+    wxTextCtrl *departureTimeCtrl = new wxTextCtrl(panel, wxID_ANY);
+
+    // Arrival date and time separate inputs
+    wxStaticText *arrivalDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày đến (YYYY-MM-DD):");
+    wxTextCtrl *arrivalDateCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxStaticText *arrivalTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ đến (HH:MM):");
+    wxTextCtrl *arrivalTimeCtrl = new wxTextCtrl(panel, wxID_ANY);
 
     // Add form fields to sizer
     sizer->Add(flightNumberLabel, 0, wxALL, 5);
@@ -147,10 +169,14 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     sizer->Add(destinationCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(aircraftLabel, 0, wxALL, 5);
     sizer->Add(aircraftCtrl, 0, wxEXPAND | wxALL, 5);
-    sizer->Add(departureLabel, 0, wxALL, 5);
-    sizer->Add(departureCtrl, 0, wxEXPAND | wxALL, 5);
-    sizer->Add(arrivalLabel, 0, wxALL, 5);
-    sizer->Add(arrivalCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(departureDateLabel, 0, wxALL, 5);
+    sizer->Add(departureDateCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(departureTimeLabel, 0, wxALL, 5);
+    sizer->Add(departureTimeCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(arrivalDateLabel, 0, wxALL, 5);
+    sizer->Add(arrivalDateCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(arrivalTimeLabel, 0, wxALL, 5);
+    sizer->Add(arrivalTimeCtrl, 0, wxEXPAND | wxALL, 5);
 
     // Add spacer to push buttons to bottom
     sizer->AddStretchSpacer(1);
@@ -179,16 +205,23 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
         std::string origin = originCtrl->GetValue().ToStdString();
         std::string destination = destinationCtrl->GetValue().ToStdString();
         std::string aircraft = aircraftCtrl->GetValue().ToStdString();
-        std::string departure = departureCtrl->GetValue().ToStdString();
-        std::string arrival = arrivalCtrl->GetValue().ToStdString();
+        std::string departureDate = departureDateCtrl->GetValue().ToStdString();
+        std::string departureTime = departureTimeCtrl->GetValue().ToStdString();
+        std::string arrivalDate = arrivalDateCtrl->GetValue().ToStdString();
+        std::string arrivalTime = arrivalTimeCtrl->GetValue().ToStdString();
 
         if (flightNumber.empty() || origin.empty() || destination.empty() ||
-            aircraft.empty() || departure.empty() || arrival.empty())
+            aircraft.empty() || departureDate.empty() || departureTime.empty() ||
+            arrivalDate.empty() || arrivalTime.empty())
         {
             wxMessageBox("Vui lòng điền đầy đủ thông tin", "Lỗi", wxOK | wxICON_ERROR);
             dialog->Destroy();
             return;
         }
+
+        // Combine date and time for processing
+        std::string departure = departureDate + " " + departureTime + ":00";
+        std::string arrival = arrivalDate + " " + arrivalTime + ":00";
 
         // Create flight using factory method would be called here
         // For now just show success message
@@ -229,7 +262,27 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     flightList->GetItem(item);
     std::string currentDestination = item.GetText().ToStdString();
 
-    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Sửa chuyến bay", wxDefaultPosition, wxSize(500, 500));
+    item.SetColumn(4);
+    flightList->GetItem(item);
+    std::string currentDepartureDate = item.GetText().ToStdString();
+
+    item.SetColumn(5);
+    flightList->GetItem(item);
+    std::string currentDepartureTime = item.GetText().ToStdString();
+
+    item.SetColumn(6);
+    flightList->GetItem(item);
+    std::string currentArrivalDate = item.GetText().ToStdString();
+
+    item.SetColumn(7);
+    flightList->GetItem(item);
+    std::string currentArrivalTime = item.GetText().ToStdString();
+
+    item.SetColumn(8);
+    flightList->GetItem(item);
+    std::string currentAircraft = item.GetText().ToStdString();
+
+    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Sửa chuyến bay", wxDefaultPosition, wxSize(500, 700));
     wxPanel *panel = new wxPanel(dialog);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -239,6 +292,22 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     wxTextCtrl *originCtrl = new wxTextCtrl(panel, wxID_ANY, currentOrigin);
     wxStaticText *destinationLabel = new wxStaticText(panel, wxID_ANY, "Điểm đến:");
     wxTextCtrl *destinationCtrl = new wxTextCtrl(panel, wxID_ANY, currentDestination);
+
+    wxStaticText *aircraftLabel = new wxStaticText(panel, wxID_ANY, "Máy bay:");
+    wxTextCtrl *aircraftCtrl = new wxTextCtrl(panel, wxID_ANY, currentAircraft);
+
+    // Departure date and time separate inputs
+    wxStaticText *departureDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày khởi hành (YYYY-MM-DD):");
+    wxTextCtrl *departureDateCtrl = new wxTextCtrl(panel, wxID_ANY, currentDepartureDate);
+    wxStaticText *departureTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ khởi hành (HH:MM):");
+    wxTextCtrl *departureTimeCtrl = new wxTextCtrl(panel, wxID_ANY, currentDepartureTime);
+
+    // Arrival date and time separate inputs
+    wxStaticText *arrivalDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày đến (YYYY-MM-DD):");
+    wxTextCtrl *arrivalDateCtrl = new wxTextCtrl(panel, wxID_ANY, currentArrivalDate);
+    wxStaticText *arrivalTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ đến (HH:MM):");
+    wxTextCtrl *arrivalTimeCtrl = new wxTextCtrl(panel, wxID_ANY, currentArrivalTime);
+
     wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Trạng thái:");
     wxChoice *statusChoice = new wxChoice(panel, wxID_ANY);
     statusChoice->Append("SCHEDULED");
@@ -256,6 +325,16 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     sizer->Add(originCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(destinationLabel, 0, wxALL, 5);
     sizer->Add(destinationCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(aircraftLabel, 0, wxALL, 5);
+    sizer->Add(aircraftCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(departureDateLabel, 0, wxALL, 5);
+    sizer->Add(departureDateCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(departureTimeLabel, 0, wxALL, 5);
+    sizer->Add(departureTimeCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(arrivalDateLabel, 0, wxALL, 5);
+    sizer->Add(arrivalDateCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(arrivalTimeLabel, 0, wxALL, 5);
+    sizer->Add(arrivalTimeCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(statusLabel, 0, wxALL, 5);
     sizer->Add(statusChoice, 0, wxEXPAND | wxALL, 5);
 
@@ -275,7 +354,7 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     wxBoxSizer *dialogSizer = new wxBoxSizer(wxVERTICAL);
     dialogSizer->Add(panel, 1, wxEXPAND | wxALL, 10);
     dialog->SetSizer(dialogSizer);
-    dialog->SetMinSize(wxSize(500, 500));
+    dialog->SetMinSize(wxSize(500, 700));
     dialog->Fit();
 
     if (dialog->ShowModal() == wxID_OK)
@@ -283,7 +362,16 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
         std::string flightNumber = flightNumberCtrl->GetValue().ToStdString();
         std::string origin = originCtrl->GetValue().ToStdString();
         std::string destination = destinationCtrl->GetValue().ToStdString();
+        std::string aircraft = aircraftCtrl->GetValue().ToStdString();
+        std::string departureDate = departureDateCtrl->GetValue().ToStdString();
+        std::string departureTime = departureTimeCtrl->GetValue().ToStdString();
+        std::string arrivalDate = arrivalDateCtrl->GetValue().ToStdString();
+        std::string arrivalTime = arrivalTimeCtrl->GetValue().ToStdString();
         std::string status = statusChoice->GetStringSelection().ToStdString();
+
+        // Combine date and time for processing if needed
+        std::string departure = departureDate + " " + departureTime + ":00";
+        std::string arrival = arrivalDate + " " + arrivalTime + ":00";
 
         wxMessageBox("Cập nhật chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
         RefreshFlightList();
@@ -333,19 +421,66 @@ void FlightWindow::OnSearchById(wxCommandEvent &event)
         // Clear current list
         flightList->DeleteAllItems();
 
-        // Search for flight by ID (simulated for now)
-        long index = flightList->InsertItem(0, wxString::Format("%ld", id));
-        flightList->SetItem(index, 1, "VN" + wxString::Format("%03ld", id));
-        flightList->SetItem(index, 2, "HAN");
-        flightList->SetItem(index, 3, "SGN");
-        flightList->SetItem(index, 4, "2025-05-29");
-        flightList->SetItem(index, 5, "07:30");
-        flightList->SetItem(index, 6, "2025-05-29");
-        flightList->SetItem(index, 7, "09:30");
-        flightList->SetItem(index, 8, "VN123");
-        flightList->SetItem(index, 9, "SCHEDULED");
+        // Search through all flights to find the one with matching ID
+        auto result = flightService->getAllFlights();
+        if (result.has_value())
+        {
+            const auto &flights = result.value();
+            bool found = false;
+            for (const auto &flight : flights)
+            {
+                if (flight.getId() == id)
+                {
+                    long index = flightList->InsertItem(0, wxString::Format("%d", flight.getId()));
+                    flightList->SetItem(index, 1, flight.getFlightNumber().toString());
+                    flightList->SetItem(index, 2, flight.getRoute().getOrigin());
+                    flightList->SetItem(index, 3, flight.getRoute().getDestination());
 
-        infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay có ID: %ld", id));
+                    // Parse schedule information properly
+                    const auto &schedule = flight.getSchedule();
+                    const std::tm &departure = schedule.getDeparture();
+                    const std::tm &arrival = schedule.getArrival();
+
+                    // Set departure date and time using utils function
+                    std::string departureDateTime = convertTimeToString(departure);
+                    flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+                    flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+
+                    // Set arrival date and time using utils function
+                    std::string arrivalDateTime = convertTimeToString(arrival);
+                    flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+                    flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
+
+                    // Aircraft info
+                    if (flight.getAircraft())
+                    {
+                        flightList->SetItem(index, 8, flight.getAircraft()->getSerial().toString());
+                    }
+                    else
+                    {
+                        flightList->SetItem(index, 8, "N/A");
+                    }
+
+                    // Status
+                    flightList->SetItem(index, 9, "SCHEDULED");
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay có ID: %ld", id));
+            }
+            else
+            {
+                infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay có ID: %ld", id));
+            }
+        }
+        else
+        {
+            wxMessageBox("Không thể tải danh sách chuyến bay", "Lỗi", wxOK | wxICON_ERROR);
+        }
     }
 }
 
@@ -364,19 +499,58 @@ void FlightWindow::OnSearchByFlightNumber(wxCommandEvent &event)
         // Clear current list
         flightList->DeleteAllItems();
 
-        // Search for flight by number (simulated for now)
-        long index = flightList->InsertItem(0, "1");
-        flightList->SetItem(index, 1, flightNumber);
-        flightList->SetItem(index, 2, "HAN");
-        flightList->SetItem(index, 3, "SGN");
-        flightList->SetItem(index, 4, "2025-05-29");
-        flightList->SetItem(index, 5, "07:30");
-        flightList->SetItem(index, 6, "2025-05-29");
-        flightList->SetItem(index, 7, "09:30");
-        flightList->SetItem(index, 8, "VN123");
-        flightList->SetItem(index, 9, "SCHEDULED");
+        // Create FlightNumber object and search
+        auto flightNumberResult = FlightNumber::create(flightNumber.ToStdString());
+        if (flightNumberResult.has_value())
+        {
+            auto result = flightService->getFlight(flightNumberResult.value());
+            if (result.has_value())
+            {
+                const auto &flight = result.value();
+                long index = flightList->InsertItem(0, wxString::Format("%d", flight.getId()));
+                flightList->SetItem(index, 1, flight.getFlightNumber().toString());
+                flightList->SetItem(index, 2, flight.getRoute().getOrigin());
+                flightList->SetItem(index, 3, flight.getRoute().getDestination());
 
-        infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay: %s", flightNumber));
+                // Parse schedule information properly
+                const auto &schedule = flight.getSchedule();
+                const std::tm &departure = schedule.getDeparture();
+                const std::tm &arrival = schedule.getArrival();
+
+                // Set departure date and time using utils function
+                std::string departureDateTime = convertTimeToString(departure);
+                flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+                flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+
+                // Set arrival date and time using utils function
+                std::string arrivalDateTime = convertTimeToString(arrival);
+                flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+                flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
+
+                // Aircraft info
+                if (flight.getAircraft())
+                {
+                    flightList->SetItem(index, 8, flight.getAircraft()->getSerial().toString());
+                }
+                else
+                {
+                    flightList->SetItem(index, 8, "N/A");
+                }
+
+                // Status
+                flightList->SetItem(index, 9, "SCHEDULED");
+
+                infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay: %s", flightNumber));
+            }
+            else
+            {
+                infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay: %s", flightNumber));
+            }
+        }
+        else
+        {
+            wxMessageBox("Số hiệu chuyến bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        }
     }
 }
 
@@ -408,11 +582,20 @@ void FlightWindow::RefreshFlightList()
             flightList->SetItem(index, 2, flight.getRoute().getOrigin());
             flightList->SetItem(index, 3, flight.getRoute().getDestination());
 
-            // For schedule, we'll use simplified display
-            flightList->SetItem(index, 4, flight.getSchedule().toString());
-            flightList->SetItem(index, 5, "N/A");
-            flightList->SetItem(index, 6, "N/A");
-            flightList->SetItem(index, 7, "N/A");
+            // Parse schedule information properly
+            const auto &schedule = flight.getSchedule();
+            const std::tm &departure = schedule.getDeparture();
+            const std::tm &arrival = schedule.getArrival();
+
+            // Set departure date and time using utils function
+            std::string departureDateTime = convertTimeToString(departure);
+            flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+            flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+
+            // Set arrival date and time using utils function
+            std::string arrivalDateTime = convertTimeToString(arrival);
+            flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
+            flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
 
             // Aircraft info
             if (flight.getAircraft())
