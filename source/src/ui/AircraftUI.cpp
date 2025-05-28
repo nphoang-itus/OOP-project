@@ -26,7 +26,7 @@ EVT_LIST_ITEM_SELECTED(ID_AIRCRAFT_LIST, AircraftWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
 AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftService> aircraftService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), aircraftService(aircraftService)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1200, 600)), aircraftService(aircraftService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -46,15 +46,18 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     searchByRegistrationButton = new wxButton(panel, ID_SEARCH_REGISTRATION, "Tìm theo số đăng ký", wxDefaultPosition, wxSize(250, 50));
 
     // Create aircraft list
-    aircraftList = new wxListCtrl(panel, ID_AIRCRAFT_LIST, wxDefaultPosition, wxSize(700, 300),
+    aircraftList = new wxListCtrl(panel, ID_AIRCRAFT_LIST, wxDefaultPosition, wxSize(900, 300),
                                   wxLC_REPORT | wxLC_SINGLE_SEL);
     aircraftList->InsertColumn(0, "ID");
     aircraftList->InsertColumn(1, "Số đăng ký");
     aircraftList->InsertColumn(2, "Loại máy bay");
-    aircraftList->InsertColumn(3, "Số ghế");
-    aircraftList->InsertColumn(4, "Trạng thái");
+    aircraftList->InsertColumn(3, "Ghế thường");
+    aircraftList->InsertColumn(4, "Ghế thương gia");
+    aircraftList->InsertColumn(5, "Ghế hạng nhất");
+    aircraftList->InsertColumn(6, "Tổng ghế");
+    aircraftList->InsertColumn(7, "Trạng thái");
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 8; ++i)
     {
         aircraftList->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
     }
@@ -114,7 +117,7 @@ void AircraftWindow::OnShowAircraft(wxCommandEvent &event)
 
 void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
 {
-    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Add Aircraft", wxDefaultPosition, wxSize(400, 300));
+    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Add Aircraft", wxDefaultPosition, wxSize(400, 500));
     wxPanel *panel = new wxPanel(dialog);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -122,17 +125,25 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
     wxTextCtrl *registrationCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Type:");
     wxTextCtrl *typeCtrl = new wxTextCtrl(panel, wxID_ANY);
-    wxStaticText *seatsLabel = new wxStaticText(panel, wxID_ANY, "Seats:");
-    wxTextCtrl *seatsCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Economy Seats:");
+    wxTextCtrl *economySeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
+    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Business Seats:");
+    wxTextCtrl *businessSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
+    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "First Seats:");
+    wxTextCtrl *firstSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
     wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Status (A/I):");
-    wxTextCtrl *statusCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxTextCtrl *statusCtrl = new wxTextCtrl(panel, wxID_ANY, "A");
 
     sizer->Add(registrationLabel, 0, wxALL, 5);
     sizer->Add(registrationCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(typeLabel, 0, wxALL, 5);
     sizer->Add(typeCtrl, 0, wxEXPAND | wxALL, 5);
-    sizer->Add(seatsLabel, 0, wxALL, 5);
-    sizer->Add(seatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(economySeatsLabel, 0, wxALL, 5);
+    sizer->Add(economySeatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(businessSeatsLabel, 0, wxALL, 5);
+    sizer->Add(businessSeatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(firstSeatsLabel, 0, wxALL, 5);
+    sizer->Add(firstSeatsCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(statusLabel, 0, wxALL, 5);
     sizer->Add(statusCtrl, 0, wxEXPAND | wxALL, 5);
 
@@ -149,19 +160,31 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
     {
         std::string registration = registrationCtrl->GetValue().ToStdString();
         std::string type = typeCtrl->GetValue().ToStdString();
-        long seats;
-        if (!seatsCtrl->GetValue().ToLong(&seats))
+        
+        long economySeats, businessSeats, firstSeats;
+        if (!economySeatsCtrl->GetValue().ToLong(&economySeats))
         {
-            seats = 0;
+            economySeats = 0;
         }
+        if (!businessSeatsCtrl->GetValue().ToLong(&businessSeats))
+        {
+            businessSeats = 0;
+        }
+        if (!firstSeatsCtrl->GetValue().ToLong(&firstSeats))
+        {
+            firstSeats = 0;
+        }
+        
         std::string status = statusCtrl->GetValue().ToStdString();
         if (status.empty())
         {
             status = "A";
         }
 
-        // Create seat layout string
-        std::string seatLayout = "ECONOMY:" + std::to_string(seats);
+        // Create seat layout string with proper format
+        std::string seatLayout = "E:" + std::to_string(economySeats) + 
+                               ",B:" + std::to_string(businessSeats) + 
+                               ",F:" + std::to_string(firstSeats);
 
         // Create aircraft using factory method
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
@@ -211,7 +234,7 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
 
     const Aircraft &aircraft = *aircraftResult;
 
-    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Edit Aircraft", wxDefaultPosition, wxSize(400, 300));
+    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Edit Aircraft", wxDefaultPosition, wxSize(400, 500));
     wxPanel *panel = new wxPanel(dialog);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -219,8 +242,12 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     wxTextCtrl *registrationCtrl = new wxTextCtrl(panel, wxID_ANY, aircraft.getSerial().toString());
     wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Type:");
     wxTextCtrl *typeCtrl = new wxTextCtrl(panel, wxID_ANY, aircraft.getModel());
-    wxStaticText *seatsLabel = new wxStaticText(panel, wxID_ANY, "Seats:");
-    wxTextCtrl *seatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("ECONOMY")));
+    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Economy Seats:");
+    wxTextCtrl *economySeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("E")));
+    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Business Seats:");
+    wxTextCtrl *businessSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("B")));
+    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "First Seats:");
+    wxTextCtrl *firstSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("F")));
     wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Status (A/I):");
     wxTextCtrl *statusCtrl = new wxTextCtrl(panel, wxID_ANY, "A");
 
@@ -228,8 +255,12 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     sizer->Add(registrationCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(typeLabel, 0, wxALL, 5);
     sizer->Add(typeCtrl, 0, wxEXPAND | wxALL, 5);
-    sizer->Add(seatsLabel, 0, wxALL, 5);
-    sizer->Add(seatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(economySeatsLabel, 0, wxALL, 5);
+    sizer->Add(economySeatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(businessSeatsLabel, 0, wxALL, 5);
+    sizer->Add(businessSeatsCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(firstSeatsLabel, 0, wxALL, 5);
+    sizer->Add(firstSeatsCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(statusLabel, 0, wxALL, 5);
     sizer->Add(statusCtrl, 0, wxEXPAND | wxALL, 5);
 
@@ -246,19 +277,31 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     {
         std::string registration = registrationCtrl->GetValue().ToStdString();
         std::string type = typeCtrl->GetValue().ToStdString();
-        long seats;
-        if (!seatsCtrl->GetValue().ToLong(&seats))
+        
+        long economySeats, businessSeats, firstSeats;
+        if (!economySeatsCtrl->GetValue().ToLong(&economySeats))
         {
-            seats = 0;
+            economySeats = 0;
         }
+        if (!businessSeatsCtrl->GetValue().ToLong(&businessSeats))
+        {
+            businessSeats = 0;
+        }
+        if (!firstSeatsCtrl->GetValue().ToLong(&firstSeats))
+        {
+            firstSeats = 0;
+        }
+        
         std::string status = statusCtrl->GetValue().ToStdString();
         if (status.empty())
         {
             status = "A";
         }
 
-        // Create seat layout string
-        std::string seatLayout = "ECONOMY:" + std::to_string(seats);
+        // Create seat layout string with proper format
+        std::string seatLayout = "E:" + std::to_string(economySeats) + 
+                               ",B:" + std::to_string(businessSeats) + 
+                               ",F:" + std::to_string(firstSeats);
 
         // Create aircraft using factory method
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
@@ -342,8 +385,18 @@ void AircraftWindow::RefreshAircraftList()
         aircraftList->InsertItem(index, wxString::Format("%d", a.getId()));
         aircraftList->SetItem(index, 1, wxString::FromUTF8(a.getSerial().toString().c_str()));
         aircraftList->SetItem(index, 2, wxString::FromUTF8(a.getModel().c_str()));
-        aircraftList->SetItem(index, 3, wxString::Format("%d", a.getSeatCount("ECONOMY")));
-        aircraftList->SetItem(index, 4, "A"); // Default status
+
+        // Display seat counts for each class
+        int economySeats = a.getSeatCount("E");
+        int businessSeats = a.getSeatCount("B");
+        int firstSeats = a.getSeatCount("F");
+        int totalSeats = economySeats + businessSeats + firstSeats;
+
+        aircraftList->SetItem(index, 3, wxString::Format("%d", economySeats));
+        aircraftList->SetItem(index, 4, wxString::Format("%d", businessSeats));
+        aircraftList->SetItem(index, 5, wxString::Format("%d", firstSeats));
+        aircraftList->SetItem(index, 6, wxString::Format("%d", totalSeats));
+        aircraftList->SetItem(index, 7, "A"); // Default status
     }
 }
 
@@ -372,8 +425,18 @@ void AircraftWindow::OnSearchById(wxCommandEvent &event)
     aircraftList->InsertItem(0, wxString::Format("%d", a.getId()));
     aircraftList->SetItem(0, 1, wxString::FromUTF8(a.getSerial().toString().c_str()));
     aircraftList->SetItem(0, 2, wxString::FromUTF8(a.getModel().c_str()));
-    aircraftList->SetItem(0, 3, wxString::Format("%d", a.getSeatCount("ECONOMY")));
-    aircraftList->SetItem(0, 4, "A"); // Default status
+
+    // Display seat counts for each class
+    int economySeats = a.getSeatCount("E");
+    int businessSeats = a.getSeatCount("B");
+    int firstSeats = a.getSeatCount("F");
+    int totalSeats = economySeats + businessSeats + firstSeats;
+
+    aircraftList->SetItem(0, 3, wxString::Format("%d", economySeats));
+    aircraftList->SetItem(0, 4, wxString::Format("%d", businessSeats));
+    aircraftList->SetItem(0, 5, wxString::Format("%d", firstSeats));
+    aircraftList->SetItem(0, 6, wxString::Format("%d", totalSeats));
+    aircraftList->SetItem(0, 7, "A"); // Default status
 }
 
 void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
@@ -394,6 +457,16 @@ void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
     aircraftList->InsertItem(0, wxString::Format("%d", a.getId()));
     aircraftList->SetItem(0, 1, wxString::FromUTF8(a.getSerial().toString().c_str()));
     aircraftList->SetItem(0, 2, wxString::FromUTF8(a.getModel().c_str()));
-    aircraftList->SetItem(0, 3, wxString::Format("%d", a.getSeatCount("ECONOMY")));
-    aircraftList->SetItem(0, 4, "A"); // Default status
+
+    // Display seat counts for each class
+    int economySeats = a.getSeatCount("E");
+    int businessSeats = a.getSeatCount("B");
+    int firstSeats = a.getSeatCount("F");
+    int totalSeats = economySeats + businessSeats + firstSeats;
+
+    aircraftList->SetItem(0, 3, wxString::Format("%d", economySeats));
+    aircraftList->SetItem(0, 4, wxString::Format("%d", businessSeats));
+    aircraftList->SetItem(0, 5, wxString::Format("%d", firstSeats));
+    aircraftList->SetItem(0, 6, wxString::Format("%d", totalSeats));
+    aircraftList->SetItem(0, 7, "A"); // Default status
 }
