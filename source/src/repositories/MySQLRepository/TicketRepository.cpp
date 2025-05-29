@@ -657,3 +657,85 @@ Result<std::vector<Ticket>> TicketRepository::findByFlightId(int flightId) {
         return Failure<std::vector<Ticket>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
     }
 }
+
+Result<std::vector<Ticket>> TicketRepository::findByCriteria(
+    const std::map<std::string, std::string>& params,
+    std::optional<int> limit,
+    std::optional<std::string> sortBy,
+    bool sortAscending) {
+    
+    try {
+        if (_logger) _logger->debug("Finding tickets by criteria");
+
+        // Build query
+        std::stringstream query;
+        query << "SELECT * FROM " << Tables::Ticket::NAME_TABLE << " WHERE 1=1";
+        
+        // Add conditions
+        for (const auto& [key, value] : params) {
+            if (key == "minPrice") {
+                query << " AND price >= " << value;
+            } else if (key == "maxPrice") {
+                query << " AND price <= " << value;
+            } else if (key == "flightNumber") {
+                query << " AND flight_id IN (SELECT id FROM " << Tables::Flight::NAME_TABLE 
+                     << " WHERE flight_number = '" << value << "')";
+            } else if (key == "status") {
+                query << " AND status = '" << value << "'";
+            } else if (key == "passport") {
+                query << " AND passenger_id IN (SELECT id FROM " << Tables::Passenger::NAME_TABLE 
+                     << " WHERE passport_number = '" << value << "')";
+            }
+        }
+
+        // Add sorting
+        if (sortBy) {
+            query << " ORDER BY " << *sortBy << (sortAscending ? " ASC" : " DESC");
+        }
+
+        // Add limit
+        if (limit) {
+            query << " LIMIT " << *limit;
+        }
+
+        // Execute query
+        auto prepareResult = _connection->prepareStatement(query.str());
+        if (!prepareResult) {
+            if (_logger) _logger->error("Failed to prepare statement for finding tickets by criteria");
+            return Failure<std::vector<Ticket>>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
+        }
+        int stmtId = prepareResult.value();
+
+        auto result = _connection->executeQueryStatement(stmtId);
+        _connection->freeStatement(stmtId);
+
+        if (!result) {
+            if (_logger) _logger->error("Failed to execute query for finding tickets by criteria");
+            return Failure<std::vector<Ticket>>(CoreError("Failed to execute query", "QUERY_FAILED"));
+        }
+
+        auto dbResult = std::move(result.value());
+        std::vector<Ticket> tickets;
+
+        while (dbResult->next().value()) {
+            auto idResult = dbResult->getInt(Tables::Ticket::ColumnName[Tables::Ticket::ID]);
+            if (!idResult) {
+                if (_logger) _logger->error("Failed to get ticket id");
+                return Failure<std::vector<Ticket>>(CoreError("Failed to get ticket id", "DATA_ERROR"));
+            }
+
+            auto ticketResult = findById(idResult.value());
+            if (!ticketResult) {
+                return Failure<std::vector<Ticket>>(ticketResult.error());
+            }
+
+            tickets.push_back(ticketResult.value());
+        }
+
+        if (_logger) _logger->debug("Successfully found " + std::to_string(tickets.size()) + " tickets by criteria");
+        return Success(tickets);
+    } catch (const std::exception& e) {
+        if (_logger) _logger->error("Error finding tickets by criteria: " + std::string(e.what()));
+        return Failure<std::vector<Ticket>>(CoreError("Database error: " + std::string(e.what()), "DB_ERROR"));
+    }
+}

@@ -16,6 +16,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
+#include <optional>
 
 class TicketRepository : public IRepository<Ticket> {
 private:
@@ -51,6 +53,10 @@ public:
     Result<std::vector<Ticket>> findByPassengerId(int passengerId);
     Result<std::vector<Ticket>> findByFlightId(int flightId);
     Result<std::vector<Ticket>> findBySerialNumber(const AircraftSerial& serial);
+    Result<std::vector<Ticket>> findByCriteria(const std::map<std::string, std::string>& params, 
+                                             std::optional<int> limit = std::nullopt,
+                                             std::optional<std::string> sortBy = std::nullopt,
+                                             bool sortAscending = true);
 };
 
 #endif
