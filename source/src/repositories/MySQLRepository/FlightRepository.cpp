@@ -8,6 +8,15 @@
 
 using namespace Tables::Flight;
 
+/**
+ * @brief Tìm kiếm chuyến bay theo ID
+ * 
+ * Phương thức này thực hiện truy vấn cơ sở dữ liệu để tìm chuyến bay theo ID.
+ * Bao gồm cả thông tin máy bay và tình trạng ghế ngồi.
+ * 
+ * @param id ID của chuyến bay cần tìm
+ * @return Result<Flight> Kết quả chứa đối tượng Flight hoặc lỗi
+ */
 Result<Flight> FlightRepository::findById(const int& id) {
     try {
         if (_logger) _logger->debug("Finding flight by id: " + std::to_string(id));
@@ -117,6 +126,14 @@ Result<Flight> FlightRepository::findById(const int& id) {
     }
 }
 
+/**
+ * @brief Lấy tất cả chuyến bay từ cơ sở dữ liệu
+ * 
+ * Phương thức này truy vấn tất cả chuyến bay có trong cơ sở dữ liệu,
+ * bao gồm thông tin chi tiết về máy bay và tuyến đường.
+ * 
+ * @return Result<std::vector<Flight>> Vector chứa tất cả chuyến bay hoặc lỗi
+ */
 Result<std::vector<Flight>> FlightRepository::findAll() {
     try {
         if (_logger) _logger->debug("Finding all flights");
@@ -241,6 +258,15 @@ Result<std::vector<Flight>> FlightRepository::findAll() {
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của chuyến bay theo ID
+ * 
+ * Phương thức này kiểm tra xem có chuyến bay nào với ID được cung cấp
+ * tồn tại trong cơ sở dữ liệu hay không.
+ * 
+ * @param id ID của chuyến bay cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không tồn tại, hoặc lỗi
+ */
 Result<bool> FlightRepository::exists(const int& id) {
     try {
         if (_logger) _logger->debug("Checking existence of flight with id: " + std::to_string(id));
@@ -288,6 +314,11 @@ Result<bool> FlightRepository::exists(const int& id) {
     }
 }
 
+/**
+ * @brief Đếm tổng số chuyến bay trong cơ sở dữ liệu
+ * 
+ * @return Result<size_t> Số lượng chuyến bay hoặc lỗi
+ */
 Result<size_t> FlightRepository::count() {
     try {
         if (_logger) _logger->debug("Counting total flights");
@@ -319,6 +350,15 @@ Result<size_t> FlightRepository::count() {
     }
 }
 
+/**
+ * @brief Tạo mới một chuyến bay trong cơ sở dữ liệu
+ * 
+ * Phương thức này tạo một chuyến bay mới và tự động tạo các bản ghi
+ * tình trạng ghế ngồi tương ứng với cấu hình ghế của máy bay.
+ * 
+ * @param flight Đối tượng Flight cần tạo
+ * @return Result<Flight> Chuyến bay đã được tạo với ID hoặc lỗi
+ */
 Result<Flight> FlightRepository::create(const Flight& flight) {
     try {
         if (_logger) _logger->debug("Creating new flight");
@@ -434,6 +474,12 @@ Result<Flight> FlightRepository::create(const Flight& flight) {
     }
 }
 
+/**
+ * @brief Cập nhật thông tin chuyến bay
+ * 
+ * @param flight Đối tượng Flight chứa thông tin cần cập nhật
+ * @return Result<Flight> Chuyến bay đã được cập nhật hoặc lỗi
+ */
 Result<Flight> FlightRepository::update(const Flight& flight) {
     try {
         if (_logger) _logger->debug("Updating flight with id: " + std::to_string(flight.getId()));
@@ -500,6 +546,12 @@ Result<Flight> FlightRepository::update(const Flight& flight) {
     }
 }
 
+/**
+ * @brief Xóa chuyến bay theo ID
+ * 
+ * @param id ID của chuyến bay cần xóa
+ * @return Result<bool> True nếu xóa thành công hoặc lỗi
+ */
 Result<bool> FlightRepository::deleteById(const int& id) {
     try {
         if (_logger) _logger->debug("Deleting flight with id: " + std::to_string(id));
@@ -555,6 +607,12 @@ Result<bool> FlightRepository::deleteById(const int& id) {
     }
 }
 
+/**
+ * @brief Ánh xạ dữ liệu từ hàng cơ sở dữ liệu thành đối tượng Flight
+ * 
+ * @param row Map chứa dữ liệu hàng từ cơ sở dữ liệu
+ * @return Flight Đối tượng Flight được tạo từ dữ liệu
+ */
 Flight FlightRepository::mapRowToFlight(const std::map<std::string, std::string>& row) const {
     auto id = std::stoi(row.at(ColumnName[ID]));
     auto flightNumber = FlightNumber::create(row.at(ColumnName[FLIGHT_NUMBER])).value();
@@ -592,6 +650,12 @@ Flight FlightRepository::mapRowToFlight(const std::map<std::string, std::string>
     return flight;
 }
 
+/**
+ * @brief Tìm kiếm chuyến bay theo số hiệu chuyến bay
+ * 
+ * @param number Số hiệu chuyến bay cần tìm
+ * @return Result<Flight> Chuyến bay tìm được hoặc lỗi
+ */
 Result<Flight> FlightRepository::findByFlightNumber(const FlightNumber& number) {
     try {
         if (_logger) _logger->debug("Finding flight by flight number: " + number.toString());
@@ -697,6 +761,12 @@ Result<Flight> FlightRepository::findByFlightNumber(const FlightNumber& number) 
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của chuyến bay theo số hiệu
+ * 
+ * @param number Số hiệu chuyến bay cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không hoặc lỗi
+ */
 Result<bool> FlightRepository::existsFlight(const FlightNumber& number) {
     try {
         if (_logger) _logger->debug("Checking existence of flight with flight number: " + number.toString());
@@ -744,6 +814,12 @@ Result<bool> FlightRepository::existsFlight(const FlightNumber& number) {
     }
 }
 
+/**
+ * @brief Tìm kiếm các chuyến bay theo số seri máy bay
+ * 
+ * @param serial Số seri của máy bay
+ * @return Result<std::vector<Flight>> Danh sách chuyến bay sử dụng máy bay này hoặc lỗi
+ */
 Result<std::vector<Flight>> FlightRepository::findFlightByAircraft(const AircraftSerial& serial) {
     try {
         if (!_logger) _logger->debug("Finding aircraft exists");
@@ -883,6 +959,12 @@ Result<std::vector<Flight>> FlightRepository::findFlightByAircraft(const Aircraf
     }
 }
 
+/**
+ * @brief Lấy thông tin tình trạng tất cả ghế ngồi của chuyến bay
+ * 
+ * @param flight Chuyến bay cần lấy thông tin ghế
+ * @return std::map<SeatNumber, bool> Map với key là số ghế và value là trạng thái available
+ */
 std::map<SeatNumber, bool> FlightRepository::getSeatAvailability(const Flight& flight) const {
     std::map<SeatNumber, bool> seatAvailability;
     try {
@@ -934,6 +1016,16 @@ std::map<SeatNumber, bool> FlightRepository::getSeatAvailability(const Flight& f
     return seatAvailability;
 }
 
+/**
+ * @brief Đặt trước một ghế ngồi cho chuyến bay
+ * 
+ * Phương thức này kiểm tra tính khả dụng của ghế trước khi đặt.
+ * Chỉ cho phép đặt ghế nếu ghế đang available.
+ * 
+ * @param flight Chuyến bay cần đặt ghế
+ * @param seatNumber Số ghế cần đặt
+ * @return Result<bool> True nếu đặt thành công hoặc lỗi
+ */
 Result<bool> FlightRepository::reserveSeat(const Flight& flight, const SeatNumber& seatNumber) {
     try {
         if (_logger) _logger->debug("Reserving seat " + seatNumber.toString() + " for flight " + flight.getFlightNumber().toString());
@@ -1021,6 +1113,13 @@ Result<bool> FlightRepository::reserveSeat(const Flight& flight, const SeatNumbe
     }
 }
 
+/**
+ * @brief Hủy đặt ghế ngồi cho chuyến bay
+ * 
+ * @param flight Chuyến bay cần hủy đặt ghế
+ * @param seatNumber Số ghế cần hủy đặt
+ * @return Result<bool> True nếu hủy thành công hoặc lỗi
+ */
 Result<bool> FlightRepository::releaseSeat(const Flight& flight, const SeatNumber& seatNumber) {
     try {
         if (_logger) _logger->debug("Releasing seat " + seatNumber.toString() + " for flight " + flight.getFlightNumber().toString());
@@ -1064,6 +1163,12 @@ Result<bool> FlightRepository::releaseSeat(const Flight& flight, const SeatNumbe
     }
 }
 
+/**
+ * @brief Lấy danh sách các ghế còn trống cho chuyến bay
+ * 
+ * @param flight Chuyến bay cần kiểm tra
+ * @return Result<std::vector<SeatNumber>> Danh sách ghế còn trống hoặc lỗi
+ */
 Result<std::vector<SeatNumber>> FlightRepository::getAvailableSeats(const Flight& flight) {
     try {
         if (_logger) _logger->debug("Getting available seats for flight " + flight.getFlightNumber().toString());
@@ -1117,6 +1222,12 @@ Result<std::vector<SeatNumber>> FlightRepository::getAvailableSeats(const Flight
     }
 }
 
+/**
+ * @brief Lấy danh sách các ghế đã được đặt cho chuyến bay
+ * 
+ * @param flight Chuyến bay cần kiểm tra
+ * @return Result<std::vector<SeatNumber>> Danh sách ghế đã được đặt hoặc lỗi
+ */
 Result<std::vector<SeatNumber>> FlightRepository::getReservedSeats(const Flight& flight) {
     try {
         if (_logger) _logger->debug("Getting reserved seats for flight " + flight.getFlightNumber().toString());
@@ -1170,6 +1281,13 @@ Result<std::vector<SeatNumber>> FlightRepository::getReservedSeats(const Flight&
     }
 }
 
+/**
+ * @brief Kiểm tra xem một ghế có còn trống hay không
+ * 
+ * @param flight Chuyến bay cần kiểm tra
+ * @param seatNumber Số ghế cần kiểm tra
+ * @return Result<bool> True nếu ghế còn trống hoặc lỗi
+ */
 Result<bool> FlightRepository::isSeatAvailable(const Flight& flight, const SeatNumber& seatNumber) {
     if (_logger) _logger->debug("Checking if seat is available for flight: " + flight.getFlightNumber().toString() + ", seat: " + seatNumber.toString());
 

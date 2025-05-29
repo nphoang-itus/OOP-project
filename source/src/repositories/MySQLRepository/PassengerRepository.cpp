@@ -7,6 +7,15 @@
 
 using namespace Tables::Passenger;
 
+/**
+ * @brief Tìm kiếm hành khách theo ID
+ * 
+ * Phương thức này thực hiện truy vấn cơ sở dữ liệu để tìm hành khách theo ID,
+ * bao gồm tất cả thông tin cá nhân và liên lạc.
+ * 
+ * @param id ID của hành khách cần tìm
+ * @return Result<Passenger> Kết quả chứa đối tượng Passenger hoặc lỗi
+ */
 Result<Passenger> PassengerRepository::findById(const int& id) {
     try {
         if (_logger) _logger->debug("Finding passenger by id: " + std::to_string(id));
@@ -71,6 +80,14 @@ Result<Passenger> PassengerRepository::findById(const int& id) {
     }
 }
 
+/**
+ * @brief Lấy tất cả hành khách từ cơ sở dữ liệu
+ * 
+ * Phương thức này truy vấn tất cả hành khách có trong cơ sở dữ liệu,
+ * bao gồm thông tin cá nhân và thông tin liên lạc.
+ * 
+ * @return Result<std::vector<Passenger>> Vector chứa tất cả hành khách hoặc lỗi
+ */
 Result<std::vector<Passenger>> PassengerRepository::findAll() {
     try {
         if (_logger) _logger->debug("Finding all passengers");
@@ -136,6 +153,12 @@ Result<std::vector<Passenger>> PassengerRepository::findAll() {
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của hành khách theo ID
+ * 
+ * @param id ID của hành khách cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không tồn tại, hoặc lỗi
+ */
 Result<bool> PassengerRepository::exists(const int& id) {
     try {
         if (_logger) _logger->debug("Checking existence of passenger with id: " + std::to_string(id));
@@ -183,6 +206,11 @@ Result<bool> PassengerRepository::exists(const int& id) {
     }
 }
 
+/**
+ * @brief Đếm tổng số hành khách trong cơ sở dữ liệu
+ * 
+ * @return Result<size_t> Số lượng hành khách hoặc lỗi
+ */
 Result<size_t> PassengerRepository::count() {
     try {
         if (_logger) _logger->debug("Counting total passengers");
@@ -214,6 +242,15 @@ Result<size_t> PassengerRepository::count() {
     }
 }
 
+/**
+ * @brief Tạo mới một hành khách trong cơ sở dữ liệu
+ * 
+ * Phương thức này tạo một hành khách mới với tất cả thông tin cá nhân
+ * bao gồm số hộ chiếu, tên, email, số điện thoại và địa chỉ.
+ * 
+ * @param passenger Đối tượng Passenger cần tạo
+ * @return Result<Passenger> Hành khách đã được tạo với ID hoặc lỗi
+ */
 Result<Passenger> PassengerRepository::create(const Passenger& passenger) {
     try {
         if (_logger) _logger->debug("Creating new passenger");
@@ -276,6 +313,12 @@ Result<Passenger> PassengerRepository::create(const Passenger& passenger) {
     }
 }
 
+/**
+ * @brief Cập nhật thông tin hành khách trong cơ sở dữ liệu
+ * 
+ * @param passenger Đối tượng Passenger chứa thông tin cần cập nhật
+ * @return Result<Passenger> Hành khách đã được cập nhật hoặc lỗi
+ */
 Result<Passenger> PassengerRepository::update(const Passenger& passenger) {
     try {
         if (_logger) _logger->debug("Updating passenger with id: " + std::to_string(passenger.getId()));
@@ -341,6 +384,12 @@ Result<Passenger> PassengerRepository::update(const Passenger& passenger) {
     }
 }
 
+/**
+ * @brief Xóa hành khách theo ID
+ * 
+ * @param id ID của hành khách cần xóa
+ * @return Result<bool> True nếu xóa thành công hoặc lỗi
+ */
 Result<bool> PassengerRepository::deleteById(const int& id) {
     try {
         if (_logger) _logger->debug("Deleting passenger with id: " + std::to_string(id));
@@ -396,6 +445,12 @@ Result<bool> PassengerRepository::deleteById(const int& id) {
     }
 }
 
+/**
+ * @brief Tìm kiếm hành khách theo số hộ chiếu
+ * 
+ * @param passport Số hộ chiếu của hành khách cần tìm
+ * @return Result<Passenger> Hành khách tìm được hoặc lỗi
+ */
 Result<Passenger> PassengerRepository::findByPassportNumber(const PassportNumber& passport) {
     try {
         if (_logger) _logger->debug("Finding passenger by passport number: " + passport.toString());
@@ -460,6 +515,12 @@ Result<Passenger> PassengerRepository::findByPassportNumber(const PassportNumber
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của hành khách theo số hộ chiếu
+ * 
+ * @param passport Số hộ chiếu cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không hoặc lỗi
+ */
 Result<bool> PassengerRepository::existsPassport(const PassportNumber& passport) {
     try {
         if (_logger) _logger->debug("Checking existence of passenger with passport number: " + passport.toString());
@@ -507,6 +568,12 @@ Result<bool> PassengerRepository::existsPassport(const PassportNumber& passport)
     }
 }
 
+/**
+ * @brief Xóa hành khách theo số hộ chiếu
+ * 
+ * @param passport Số hộ chiếu của hành khách cần xóa
+ * @return Result<bool> True nếu xóa thành công hoặc lỗi
+ */
 Result<bool> PassengerRepository::deleteByPassportNumber(const PassportNumber& passport) {
     try {
         if (_logger) _logger->debug("Deleting passenger with passport: " + passport.toString());

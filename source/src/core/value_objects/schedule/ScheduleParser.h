@@ -1,3 +1,9 @@
+/**
+ * @file ScheduleParser.h
+ * @brief Định nghĩa lớp ScheduleParser để phân tích chuỗi lịch trình bay
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef SCHEDULE_PARSER_H
 #define SCHEDULE_PARSER_H
 
@@ -6,8 +12,20 @@
 #include <optional>
 #include <ctime>
 
+/**
+ * @class ScheduleParser
+ * @brief Lớp tiện ích để phân tích chuỗi lịch trình bay
+ * 
+ * Lớp này cung cấp chức năng phân tích chuỗi lịch trình bay
+ * có định dạng "YYYY-MM-DD HH:mm|YYYY-MM-DD HH:mm" thành các thành phần thời gian riêng biệt.
+ */
 class ScheduleParser {
 public:
+    /**
+     * @brief Phân tích chuỗi lịch trình thành thời gian khởi hành và thời gian đến
+     * @param value Chuỗi có định dạng "YYYY-MM-DD HH:mm|YYYY-MM-DD HH:mm"
+     * @return Optional tuple của (thời_gian_khởi_hành, thời_gian_đến) nếu thành công, nullopt nếu không
+     */
     static std::optional<std::tuple<std::tm, std::tm>> parse(const std::string& value) {
         size_t dashPos = value.find('|');
         if (dashPos == std::string::npos) return std::nullopt;
@@ -40,4 +58,4 @@ public:
     }
 };
 
-#endif 
+#endif

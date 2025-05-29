@@ -1,4 +1,10 @@
-// core/enums/FlightStatus.cpp
+/**
+ * @file FlightStatus.cpp
+ * @brief Implementation của FlightStatusUtil cho chuyển đổi trạng thái chuyến bay
+ * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @version 1.0
+ */
+
 #include "FlightStatus.h"
 #include <stdexcept>
 

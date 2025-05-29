@@ -1,18 +1,40 @@
+/**
+ * @file RouteError.h
+ * @brief Định nghĩa các lỗi xác thực tuyến đường bay và tiện ích xử lý lỗi
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef ROUTE_ERROR_H
 #define ROUTE_ERROR_H
 
 #include <string>
 #include "../../exceptions/ValidationResult.h"
 
+/**
+ * @enum RouteError
+ * @brief Liệt kê các lỗi xác thực tuyến đường bay có thể xảy ra
+ */
 enum class RouteError {
-    EMPTY_ROUTE,
-    INVALID_FORMAT,
-    INVALID_ORIGIN_CODE,
-    INVALID_DESTINATION_CODE,
-    SAME_ORIGIN_DESTINATION
+    EMPTY_ROUTE,                ///< Tuyến đường rỗng
+    INVALID_FORMAT,            ///< Định dạng tuyến đường không hợp lệ
+    INVALID_ORIGIN_CODE,       ///< Mã sân bay xuất phát không hợp lệ
+    INVALID_DESTINATION_CODE,  ///< Mã sân bay đích không hợp lệ
+    SAME_ORIGIN_DESTINATION    ///< Điểm xuất phát và điểm đến giống nhau
 };
 
+/**
+ * @struct RouteErrorHelper
+ * @brief Struct hỗ trợ để quản lý thông báo lỗi và mã lỗi tuyến đường bay
+ * 
+ * Struct này cung cấp các phương thức tiện ích để chuyển đổi lỗi tuyến đường bay
+ * thành biểu diễn chuỗi và thông báo thân thiện với người dùng.
+ */
 struct RouteErrorHelper {
+    /**
+     * @brief Chuyển đổi RouteError thành biểu diễn chuỗi
+     * @param error Lỗi cần chuyển đổi
+     * @return Biểu diễn chuỗi của mã lỗi
+     */
     static std::string toString(RouteError error) {
         switch (error) {
             case RouteError::EMPTY_ROUTE: return "EMPTY_ROUTE";
@@ -24,6 +46,11 @@ struct RouteErrorHelper {
         }
     }
 
+    /**
+     * @brief Lấy thông báo dễ đọc cho RouteError
+     * @param error Lỗi cần lấy thông báo
+     * @return Thông báo lỗi thân thiện với người dùng
+     */
     static std::string getMessage(RouteError error) {
         switch (error) {
             case RouteError::EMPTY_ROUTE: return "Route cannot be empty";
@@ -35,9 +62,14 @@ struct RouteErrorHelper {
         }
     }
 
+    /**
+     * @brief Thêm lỗi tuyến đường bay vào kết quả xác thực
+     * @param result Kết quả xác thực để thêm lỗi vào
+     * @param error Lỗi cần thêm
+     */
     static void addError(ValidationResult& result, RouteError error) {
         result.addError("route", getMessage(error), toString(error));
     }
 };
 
-#endif 
+#endif

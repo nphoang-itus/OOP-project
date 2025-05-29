@@ -7,6 +7,17 @@
  * 
  * @copyright Copyright (c) 2025
  * 
+ * @details
+ * File này chứa implementation đầy đủ của MySQLXConnection và MySQLXResult.
+ * Sử dụng MySQL X DevAPI để giao tiếp với MySQL Server 8.0+.
+ * 
+ * Tính năng chính:
+ * - Connection management với automatic retry
+ * - Prepared statement với parameter binding
+ * - Transaction control với isolation levels
+ * - Result set processing với type conversion
+ * - Comprehensive error handling và logging
+ * - Thread-safe operations với mutex protection
  */
 
 #include "MySQLXConnection.h"

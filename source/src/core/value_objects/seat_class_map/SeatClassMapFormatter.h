@@ -1,24 +1,33 @@
+/**
+ * @file SeatClassMapFormatter.h
+ * @brief Định nghĩa lớp SeatClassMapFormatter để định dạng bản đồ hạng ghế
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef SEAT_CLASS_MAP_FORMATTER_H
 #define SEAT_CLASS_MAP_FORMATTER_H
 
 #include <string>
 #include <unordered_map>
 #include <sstream>
+#include <algorithm>
 #include "SeatClass.h"
 
+/**
+ * @class SeatClassMapFormatter
+ * @brief Lớp tiện ích để định dạng bản đồ hạng ghế
+ * 
+ * Lớp này cung cấp các phương thức để định dạng bản đồ hạng ghế
+ * thành biểu diễn chuỗi với các tùy chọn định dạng khác nhau.
+ */
 class SeatClassMapFormatter {
 public:
-    // Format SeatClassMap to string
+    /**
+     * @brief Định dạng bản đồ hạng ghế thành chuỗi mặc định
+     * @param classMap Map chứa hạng ghế và số lượng
+     * @return Chuỗi đã định dạng theo "TÊN_HẠNG:SỐ_LƯỢNG,TÊN_HẠNG:SỐ_LƯỢNG,..."
+     */
     static std::string toString(const std::unordered_map<SeatClass, int>& classMap) {
-        // std::stringstream ss;
-        // bool first = true;
-        // for (const auto& [seatClass, count] : classMap) {
-        //     if (!first) ss << ",";
-        //     ss << seatClass.getName() << ":" << count;
-        //     first = false;
-        // }
-        // return ss.str();
-
         std::vector<std::string> parts;
         for (const auto& [seatClass, count] : classMap) {
             parts.push_back(seatClass.getName() + ":" + std::to_string(count));
@@ -35,16 +44,13 @@ public:
         return result;
     }
 
-    // Format SeatClassMap to string with custom separator
+    /**
+     * @brief Định dạng bản đồ hạng ghế thành chuỗi với dấu phân cách tùy chỉnh
+     * @param classMap Map chứa hạng ghế và số lượng
+     * @param separator Dấu phân cách giữa các mục
+     * @return Chuỗi đã định dạng với dấu phân cách tùy chỉnh
+     */
     static std::string toString(const std::unordered_map<SeatClass, int>& classMap, const std::string& separator) {
-        // std::stringstream ss;
-        // bool first = true;
-        // for (const auto& [seatClass, count] : classMap) {
-        //     if (!first) ss << separator;
-        //     ss << seatClass.getName() << ":" << count;
-        //     first = false;
-        // }
-        // return ss.str();
         std::vector<std::string> parts;
         for (const auto& [seatClass, count] : classMap) {
             parts.push_back(seatClass.getName() + ":" + std::to_string(count));
@@ -61,7 +67,13 @@ public:
         return result;
     }
 
-    // Format SeatClassMap to string with custom formatting
+    /**
+     * @brief Định dạng bản đồ hạng ghế thành chuỗi với định dạng tùy chỉnh
+     * @param classMap Map chứa hạng ghế và số lượng
+     * @param separator Dấu phân cách giữa các mục
+     * @param keyValueSeparator Dấu phân cách giữa tên hạng và số lượng
+     * @return Chuỗi đã định dạng với các dấu phân cách tùy chỉnh
+     */
     static std::string toString(const std::unordered_map<SeatClass, int>& classMap, 
                                 const std::string& separator,
                                 const std::string& keyValueSeparator) {
@@ -82,4 +94,4 @@ public:
     }
 };
 
-#endif 
+#endif
