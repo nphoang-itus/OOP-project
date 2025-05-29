@@ -1,3 +1,13 @@
+// [DEBUG] Building prepared statement from: DELETE FROM flight WHERE id = ?
+// [DEBUG] Built final query: DELETE FROM flight WHERE id = '13'
+// [DEBUG] Executing prepared statement: DELETE FROM flight WHERE id = '13'
+// [ERROR] MySQL error executing statement: CDK Error: Cannot delete or update a parent row: a foreign key constraint fails (`airlines_db`.`flight_seat_availability`, CONSTRAINT `flight_seat_availability_ibfk_1` FOREIGN KEY (`flight_id`) REFERENCES `flight` (`id`))
+// [DEBUG] Freeing prepared statement with ID: 76
+// [DEBUG] Statement freed successfully
+// [DEBUG] Rolling back database transaction
+// [DEBUG] Transaction rolled back successfully
+// [ERROR] Failed to execute statement for deleting flight
+
 #include "FlightUI.h"
 #include "utils/utils.h"
 #include "../core/value_objects/flight_number/FlightNumber.h"
@@ -46,71 +56,61 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    wxBoxSizer *contentSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Create back button
+    // Back button row
+    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     backButton = new wxButton(panel, ID_BACK, "Back", wxDefaultPosition, wxSize(100, 30));
     buttonSizer->Add(backButton, 0, wxALL, 10);
+    mainSizer->Add(buttonSizer, 0, wxALIGN_LEFT);
 
-    // Create main function buttons
-    showButton = new wxButton(panel, ID_SHOW, "Hiển thị thông tin chuyến bay", wxDefaultPosition, wxSize(250, 50));
+    // Title
+    wxStaticText *titleText = new wxStaticText(panel, wxID_ANY, "QUẢN LÝ CHUYẾN BAY", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    wxFont titleFont = titleText->GetFont();
+    titleFont.SetPointSize(18);
+    titleFont.SetWeight(wxFONTWEIGHT_BOLD);
+    titleText->SetFont(titleFont);
+    mainSizer->Add(titleText, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 10);
+
+    // Main function buttons (2 rows)
+    wxBoxSizer *buttonRow1 = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer *buttonRow2 = new wxBoxSizer(wxHORIZONTAL);
+
+    showButton = new wxButton(panel, ID_SHOW, "Hiển thị thông tin", wxDefaultPosition, wxSize(250, 50));
     addButton = new wxButton(panel, ID_ADD, "Thêm chuyến bay", wxDefaultPosition, wxSize(250, 50));
-    editButton = new wxButton(panel, ID_EDIT, "Sửa thông tin chuyến bay", wxDefaultPosition, wxSize(250, 50));
+    editButton = new wxButton(panel, ID_EDIT, "Sửa thông tin", wxDefaultPosition, wxSize(250, 50));
     deleteButton = new wxButton(panel, ID_DELETE, "Xóa chuyến bay", wxDefaultPosition, wxSize(250, 50));
+    buttonRow1->Add(showButton, 0, wxALL, 10);
+    buttonRow1->Add(addButton, 0, wxALL, 10);
+    buttonRow1->Add(editButton, 0, wxALL, 10);
+    buttonRow1->Add(deleteButton, 0, wxALL, 10);
+
     searchByIdButton = new wxButton(panel, ID_SEARCH_ID, "Tìm theo ID", wxDefaultPosition, wxSize(250, 50));
     searchByFlightNumberButton = new wxButton(panel, ID_SEARCH_FLIGHT_NUMBER, "Tìm theo số hiệu", wxDefaultPosition, wxSize(250, 50));
-    viewAvailableSeatsButton = new wxButton(panel, wxID_ANY, "Xem ghế trống", wxDefaultPosition, wxSize(180, 40));
-    checkSeatAvailabilityButton = new wxButton(panel, wxID_ANY, "Kiểm tra ghế", wxDefaultPosition, wxSize(180, 40));
+    viewAvailableSeatsButton = new wxButton(panel, wxID_ANY, "Xem ghế trống", wxDefaultPosition, wxSize(250, 50));
+    checkSeatAvailabilityButton = new wxButton(panel, wxID_ANY, "Kiểm tra ghế", wxDefaultPosition, wxSize(250, 50));
+    buttonRow2->Add(searchByIdButton, 0, wxALL, 10);
+    buttonRow2->Add(searchByFlightNumberButton, 0, wxALL, 10);
+    buttonRow2->Add(viewAvailableSeatsButton, 0, wxALL, 10);
+    buttonRow2->Add(checkSeatAvailabilityButton, 0, wxALL, 10);
 
-    // Create flight list
-    flightList = new wxListCtrl(panel, ID_FLIGHT_LIST, wxDefaultPosition, wxSize(1000, 300),
-                                wxLC_REPORT | wxLC_SINGLE_SEL);
-    flightList->InsertColumn(0, "ID");
-    flightList->InsertColumn(1, "Số hiệu");
-    flightList->InsertColumn(2, "Điểm đi");
-    flightList->InsertColumn(3, "Điểm đến");
-    flightList->InsertColumn(4, "Ngày khởi hành");
-    flightList->InsertColumn(5, "Giờ khởi hành");
-    flightList->InsertColumn(6, "Ngày đến");
-    flightList->InsertColumn(7, "Giờ đến");
-    flightList->InsertColumn(8, "Máy bay");
-    flightList->InsertColumn(9, "Trạng thái");
-    flightList->InsertColumn(10, "Thông tin ghế");
+    mainSizer->Add(buttonRow1, 0, wxALIGN_CENTER);
+    mainSizer->Add(buttonRow2, 0, wxALIGN_CENTER);
 
-    // Adjust specific column widths for better display
-    flightList->SetColumnWidth(0, 60);   // ID
-    flightList->SetColumnWidth(1, 120);  // Số hiệu
-    flightList->SetColumnWidth(2, 140);  // Điểm đi
-    flightList->SetColumnWidth(3, 140);  // Điểm đến
-    flightList->SetColumnWidth(4, 120);  // Ngày khởi hành
-    flightList->SetColumnWidth(5, 100);  // Giờ khởi hành
-    flightList->SetColumnWidth(6, 120);  // Ngày đến
-    flightList->SetColumnWidth(7, 100);  // Giờ đến
-    flightList->SetColumnWidth(8, 140);  // Máy bay
-    flightList->SetColumnWidth(9, 120);  // Trạng thái
-    flightList->SetColumnWidth(10, 400); // Thông tin ghế
-
-    // Add buttons to content sizer (2 hàng ngang)
-    wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
-    row1->Add(showButton, 0, wxALL, 10);
-    row1->Add(addButton, 0, wxALL, 10);
-    row1->Add(editButton, 0, wxALL, 10);
-    row1->Add(deleteButton, 0, wxALL, 10);
-
-    wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
-    row2->Add(searchByIdButton, 0, wxALL, 10);
-    row2->Add(searchByFlightNumberButton, 0, wxALL, 10);
-    row2->Add(viewAvailableSeatsButton, 0, wxALL, 10);
-    row2->Add(checkSeatAvailabilityButton, 0, wxALL, 10);
-
-    contentSizer->Add(row1, 0, wxALIGN_CENTER);
-    contentSizer->Add(row2, 0, wxALIGN_CENTER);
-    contentSizer->Add(flightList, 1, wxALL | wxEXPAND, 10);
-
-    // Add sizers to main sizer
-    mainSizer->Add(buttonSizer, 0, wxEXPAND);
-    mainSizer->Add(contentSizer, 1, wxEXPAND);
+    // Flight list
+    flightList = new wxListCtrl(panel, ID_FLIGHT_LIST, wxDefaultPosition, wxSize(1300, 400),
+                                wxLC_REPORT | wxLC_SINGLE_SEL | wxBORDER_SUNKEN);
+    flightList->InsertColumn(0, "ID", wxLIST_FORMAT_LEFT, 60);
+    flightList->InsertColumn(1, "Số hiệu", wxLIST_FORMAT_LEFT, 120);
+    flightList->InsertColumn(2, "Điểm đi", wxLIST_FORMAT_LEFT, 140);
+    flightList->InsertColumn(3, "Điểm đến", wxLIST_FORMAT_LEFT, 140);
+    flightList->InsertColumn(4, "Ngày khởi hành", wxLIST_FORMAT_LEFT, 120);
+    flightList->InsertColumn(5, "Giờ khởi hành", wxLIST_FORMAT_LEFT, 100);
+    flightList->InsertColumn(6, "Ngày đến", wxLIST_FORMAT_LEFT, 120);
+    flightList->InsertColumn(7, "Giờ đến", wxLIST_FORMAT_LEFT, 100);
+    flightList->InsertColumn(8, "Máy bay", wxLIST_FORMAT_LEFT, 140);
+    flightList->InsertColumn(9, "Trạng thái", wxLIST_FORMAT_LEFT, 120);
+    flightList->InsertColumn(10, "Thông tin ghế", wxLIST_FORMAT_LEFT, 400);
+    mainSizer->Add(flightList, 1, wxEXPAND | wxALL, 20);
 
     panel->SetSizer(mainSizer);
     Centre();
@@ -644,6 +644,34 @@ void FlightWindow::OnDeleteFlight(wxCommandEvent &event)
     wxString msg = wxString::Format("Bạn có chắc chắn muốn xóa chuyến bay %s?", flightNumber);
     if (wxMessageBox(msg, "Xác nhận", wxYES_NO | wxICON_QUESTION) == wxYES)
     {
+        auto flightNumberResult = FlightNumber::create(flightNumber);
+        if (!flightNumberResult)
+        {
+            wxMessageBox("Số hiệu chuyến bay không hợp lệ!", "Lỗi", wxOK | wxICON_ERROR);
+            return;
+        }
+        // Lấy flight để log ID
+        auto flightResult = flightService->getFlight(flightNumberResult.value());
+        int flightId = -1;
+        if (flightResult && flightResult.value().getId() > 0)
+        {
+            flightId = flightResult.value().getId();
+        }
+        wxLogMessage("[DEBUG] Đang xóa chuyến bay: %s, ID: %d", flightNumber, flightId);
+        auto result = flightService->deleteFlight(flightNumberResult.value());
+        if (!result)
+        {
+            wxString errMsg = result.error().message;
+            if (errMsg.Contains("Failed to execute statement"))
+            {
+                wxMessageBox("Không thể xóa chuyến bay. Có thể dữ liệu chuyến bay bị lỗi hoặc ID không hợp lệ. Hãy kiểm tra lại dữ liệu!", "Lỗi", wxOK | wxICON_ERROR);
+            }
+            else
+            {
+                wxMessageBox("Lỗi khi xóa chuyến bay: " + errMsg, "Lỗi", wxOK | wxICON_ERROR);
+            }
+            return;
+        }
         wxMessageBox("Xóa chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
         RefreshFlightList();
     }
