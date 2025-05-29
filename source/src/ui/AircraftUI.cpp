@@ -11,7 +11,10 @@ enum
     ID_DELETE = 5,
     ID_AIRCRAFT_LIST = 6,
     ID_SEARCH_ID = 7,
-    ID_SEARCH_REGISTRATION = 8
+    ID_SEARCH_REGISTRATION = 8,
+    ID_VIEW_SEAT_CLASSES = 9,
+    ID_VIEW_AVAILABLE_SEATS = 10,
+    ID_CHECK_SEAT_AVAILABILITY = 11
 };
 
 BEGIN_EVENT_TABLE(AircraftWindow, wxFrame)
@@ -22,11 +25,14 @@ EVT_BUTTON(ID_EDIT, AircraftWindow::OnEditAircraft)
 EVT_BUTTON(ID_DELETE, AircraftWindow::OnDeleteAircraft)
 EVT_BUTTON(ID_SEARCH_ID, AircraftWindow::OnSearchById)
 EVT_BUTTON(ID_SEARCH_REGISTRATION, AircraftWindow::OnSearchByRegistration)
+EVT_BUTTON(ID_VIEW_SEAT_CLASSES, AircraftWindow::OnViewSeatClasses)
+EVT_BUTTON(ID_VIEW_AVAILABLE_SEATS, AircraftWindow::OnViewAvailableSeats)
+EVT_BUTTON(ID_CHECK_SEAT_AVAILABILITY, AircraftWindow::OnCheckSeatAvailability)
 EVT_LIST_ITEM_SELECTED(ID_AIRCRAFT_LIST, AircraftWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
 AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftService> aircraftService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1200, 600)), aircraftService(aircraftService)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), aircraftService(aircraftService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -45,6 +51,11 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     searchByIdButton = new wxButton(panel, ID_SEARCH_ID, "Tìm theo ID", wxDefaultPosition, wxSize(250, 50));
     searchByRegistrationButton = new wxButton(panel, ID_SEARCH_REGISTRATION, "Tìm theo số đăng ký", wxDefaultPosition, wxSize(250, 50));
 
+    // Add new business operation buttons
+    viewSeatClassesButton = new wxButton(panel, ID_VIEW_SEAT_CLASSES, "Xem hạng ghế", wxDefaultPosition, wxSize(250, 50));
+    viewAvailableSeatsButton = new wxButton(panel, ID_VIEW_AVAILABLE_SEATS, "Xem ghế trống", wxDefaultPosition, wxSize(250, 50));
+    checkSeatAvailabilityButton = new wxButton(panel, ID_CHECK_SEAT_AVAILABILITY, "Kiểm tra ghế", wxDefaultPosition, wxSize(250, 50));
+
     // Create aircraft list
     aircraftList = new wxListCtrl(panel, ID_AIRCRAFT_LIST, wxDefaultPosition, wxSize(900, 300),
                                   wxLC_REPORT | wxLC_SINGLE_SEL);
@@ -57,28 +68,39 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     aircraftList->InsertColumn(6, "Tổng ghế");
     aircraftList->InsertColumn(7, "Trạng thái");
 
-    for (int i = 0; i < 8; ++i)
-    {
-        aircraftList->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
-    }
+    // Set column widths - make aircraft type column wider
+    aircraftList->SetColumnWidth(0, 60);  // ID
+    aircraftList->SetColumnWidth(1, 120); // Số đăng ký
+    aircraftList->SetColumnWidth(2, 150); // Loại máy bay - wider for Boeing A380, etc.
+    aircraftList->SetColumnWidth(3, 100); // Ghế thường
+    aircraftList->SetColumnWidth(4, 120); // Ghế thương gia
+    aircraftList->SetColumnWidth(5, 120); // Ghế hạng nhất
+    aircraftList->SetColumnWidth(6, 80);  // Tổng ghế
+    aircraftList->SetColumnWidth(7, 100); // Trạng thái
 
     // Create info label
     infoLabel = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxSize(600, 50));
     infoLabel->Wrap(600);
 
-    // Add buttons to content sizer (2 hàng ngang)
+    // Add buttons to content sizer (3 hàng ngang)
     wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
     row1->Add(showButton, 0, wxALL, 10);
     row1->Add(addButton, 0, wxALL, 10);
     row1->Add(editButton, 0, wxALL, 10);
-    row1->Add(deleteButton, 0, wxALL, 10);
 
     wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
+    row2->Add(deleteButton, 0, wxALL, 10);
     row2->Add(searchByIdButton, 0, wxALL, 10);
     row2->Add(searchByRegistrationButton, 0, wxALL, 10);
 
+    wxBoxSizer *row3 = new wxBoxSizer(wxHORIZONTAL);
+    row3->Add(viewSeatClassesButton, 0, wxALL, 10);
+    row3->Add(viewAvailableSeatsButton, 0, wxALL, 10);
+    row3->Add(checkSeatAvailabilityButton, 0, wxALL, 10);
+
     contentSizer->Add(row1, 0, wxALIGN_CENTER);
     contentSizer->Add(row2, 0, wxALIGN_CENTER);
+    contentSizer->Add(row3, 0, wxALIGN_CENTER);
     contentSizer->Add(aircraftList, 1, wxALL | wxEXPAND, 10);
     contentSizer->Add(infoLabel, 0, wxALL | wxALIGN_CENTER, 10);
 
@@ -117,21 +139,21 @@ void AircraftWindow::OnShowAircraft(wxCommandEvent &event)
 
 void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
 {
-    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Add Aircraft", wxDefaultPosition, wxSize(400, 500));
+    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Thêm máy bay", wxDefaultPosition, wxSize(400, 500));
     wxPanel *panel = new wxPanel(dialog);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText *registrationLabel = new wxStaticText(panel, wxID_ANY, "Registration:");
+    wxStaticText *registrationLabel = new wxStaticText(panel, wxID_ANY, "Số đăng ký:");
     wxTextCtrl *registrationCtrl = new wxTextCtrl(panel, wxID_ANY);
-    wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Type:");
+    wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Loại máy bay:");
     wxTextCtrl *typeCtrl = new wxTextCtrl(panel, wxID_ANY);
-    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Economy Seats:");
+    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế thường:");
     wxTextCtrl *economySeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
-    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Business Seats:");
+    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế thương gia:");
     wxTextCtrl *businessSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
-    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "First Seats:");
+    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế hạng nhất:");
     wxTextCtrl *firstSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, "");
-    wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Status (A/I):");
+    wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Trạng thái (A/I):");
     wxTextCtrl *statusCtrl = new wxTextCtrl(panel, wxID_ANY, "A");
 
     sizer->Add(registrationLabel, 0, wxALL, 5);
@@ -147,8 +169,8 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
     sizer->Add(statusLabel, 0, wxALL, 5);
     sizer->Add(statusCtrl, 0, wxEXPAND | wxALL, 5);
 
-    wxButton *okButton = new wxButton(panel, wxID_OK, "OK");
-    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Cancel");
+    wxButton *okButton = new wxButton(panel, wxID_OK, "Thêm");
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Hủy");
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     buttonSizer->Add(okButton, 0, wxALL, 5);
     buttonSizer->Add(cancelButton, 0, wxALL, 5);
@@ -190,7 +212,7 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
         if (!aircraftResult)
         {
-            wxMessageBox("Failed to create aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+            wxMessageBox("Không thể tạo máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
             return;
         }
 
@@ -198,10 +220,12 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
         auto saveResult = aircraftService->createAircraft(*aircraftResult);
         if (!saveResult)
         {
-            wxMessageBox("Failed to save aircraft: " + saveResult.error().message, "Error", wxOK | wxICON_ERROR);
+            wxMessageBox("Không thể lưu máy bay: " + saveResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
             return;
         }
 
+        // Show success message
+        wxMessageBox("Đã thêm máy bay thành công!", "Thành công", wxOK | wxICON_INFORMATION);
         RefreshAircraftList();
     }
 
@@ -214,7 +238,7 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     itemIndex = aircraftList->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     if (itemIndex == -1)
     {
-        wxMessageBox("Please select an aircraft to edit", "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Vui lòng chọn một máy bay để chỉnh sửa", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -228,27 +252,27 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     auto aircraftResult = aircraftService->getAircraftById(aircraftId);
     if (!aircraftResult)
     {
-        wxMessageBox("Failed to get aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Không thể lấy thông tin máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
     const Aircraft &aircraft = *aircraftResult;
 
-    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Edit Aircraft", wxDefaultPosition, wxSize(400, 500));
+    wxDialog *dialog = new wxDialog(this, wxID_ANY, "Sửa máy bay", wxDefaultPosition, wxSize(400, 500));
     wxPanel *panel = new wxPanel(dialog);
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText *registrationLabel = new wxStaticText(panel, wxID_ANY, "Registration:");
+    wxStaticText *registrationLabel = new wxStaticText(panel, wxID_ANY, "Số đăng ký:");
     wxTextCtrl *registrationCtrl = new wxTextCtrl(panel, wxID_ANY, aircraft.getSerial().toString());
-    wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Type:");
+    wxStaticText *typeLabel = new wxStaticText(panel, wxID_ANY, "Loại máy bay:");
     wxTextCtrl *typeCtrl = new wxTextCtrl(panel, wxID_ANY, aircraft.getModel());
-    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Economy Seats:");
+    wxStaticText *economySeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế thường:");
     wxTextCtrl *economySeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("E")));
-    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Business Seats:");
+    wxStaticText *businessSeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế thương gia:");
     wxTextCtrl *businessSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("B")));
-    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "First Seats:");
+    wxStaticText *firstSeatsLabel = new wxStaticText(panel, wxID_ANY, "Ghế hạng nhất:");
     wxTextCtrl *firstSeatsCtrl = new wxTextCtrl(panel, wxID_ANY, wxString::Format("%d", aircraft.getSeatCount("F")));
-    wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Status (A/I):");
+    wxStaticText *statusLabel = new wxStaticText(panel, wxID_ANY, "Trạng thái (A/I):");
     wxTextCtrl *statusCtrl = new wxTextCtrl(panel, wxID_ANY, "A");
 
     sizer->Add(registrationLabel, 0, wxALL, 5);
@@ -264,8 +288,8 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     sizer->Add(statusLabel, 0, wxALL, 5);
     sizer->Add(statusCtrl, 0, wxEXPAND | wxALL, 5);
 
-    wxButton *okButton = new wxButton(panel, wxID_OK, "OK");
-    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Cancel");
+    wxButton *okButton = new wxButton(panel, wxID_OK, "Cập nhật");
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Hủy");
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     buttonSizer->Add(okButton, 0, wxALL, 5);
     buttonSizer->Add(cancelButton, 0, wxALL, 5);
@@ -307,7 +331,7 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
         if (!aircraftResult)
         {
-            wxMessageBox("Failed to create aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+            wxMessageBox("Không thể tạo máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
             return;
         }
 
@@ -318,10 +342,12 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
         auto updateResult = aircraftService->updateAircraft(*aircraftResult);
         if (!updateResult)
         {
-            wxMessageBox("Failed to update aircraft: " + updateResult.error().message, "Error", wxOK | wxICON_ERROR);
+            wxMessageBox("Không thể cập nhật máy bay: " + updateResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
             return;
         }
 
+        // Show success message
+        wxMessageBox("Đã cập nhật thông tin máy bay thành công!", "Thành công", wxOK | wxICON_INFORMATION);
         RefreshAircraftList();
     }
 
@@ -334,7 +360,7 @@ void AircraftWindow::OnDeleteAircraft(wxCommandEvent &event)
     itemIndex = aircraftList->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     if (itemIndex == -1)
     {
-        wxMessageBox("Please select an aircraft to delete", "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Vui lòng chọn một máy bay để xóa", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -348,27 +374,31 @@ void AircraftWindow::OnDeleteAircraft(wxCommandEvent &event)
     auto aircraftResult = aircraftService->getAircraftById(aircraftId);
     if (!aircraftResult)
     {
-        wxMessageBox("Failed to get aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Không thể lấy thông tin máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
     const Aircraft &aircraft = *aircraftResult;
-    wxString msg = wxString::Format("Are you sure you want to delete aircraft %s?", aircraft.getSerial().toString());
-    if (wxMessageBox(msg, "Confirm", wxYES_NO | wxICON_QUESTION) == wxYES)
+    wxString msg = wxString::Format("Bạn có chắc chắn muốn xóa máy bay %s?", aircraft.getSerial().toString());
+    if (wxMessageBox(msg, "Xác nhận", wxYES_NO | wxICON_QUESTION) == wxYES)
     {
         auto deleteResult = aircraftService->deleteAircraft(aircraft.getSerial());
         if (!deleteResult)
         {
-            wxMessageBox("Failed to delete aircraft: " + deleteResult.error().message, "Error", wxOK | wxICON_ERROR);
+            wxMessageBox("Không thể xóa máy bay: " + deleteResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
             return;
         }
+
+        // Show success message
+        wxMessageBox("Đã xóa máy bay thành công!", "Thành công", wxOK | wxICON_INFORMATION);
         RefreshAircraftList();
     }
 }
 
 void AircraftWindow::OnListItemSelected(wxListEvent &event)
 {
-    // Do nothing for now
+    // Simply handle the selection event without displaying detailed information
+    event.Skip();
 }
 
 void AircraftWindow::RefreshAircraftList()
@@ -377,7 +407,7 @@ void AircraftWindow::RefreshAircraftList()
     auto aircraftsResult = aircraftService->getAllAircraft();
     if (!aircraftsResult)
     {
-        wxMessageBox("Failed to get aircraft list: " + aircraftsResult.error().message, "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Không thể lấy danh sách máy bay: " + aircraftsResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -405,21 +435,21 @@ void AircraftWindow::RefreshAircraftList()
 
 void AircraftWindow::OnSearchById(wxCommandEvent &event)
 {
-    wxString idStr = wxGetTextFromUser("Enter aircraft ID:", "Search by ID");
+    wxString idStr = wxGetTextFromUser("Nhập ID máy bay:", "Tìm kiếm theo ID");
     if (idStr.IsEmpty())
         return;
 
     long id;
     if (!idStr.ToLong(&id))
     {
-        wxMessageBox("Invalid ID format", "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Định dạng ID không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
     auto aircraftResult = aircraftService->getAircraftById(static_cast<int>(id));
     if (!aircraftResult)
     {
-        wxMessageBox("Failed to get aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Không thể tìm thấy máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -444,14 +474,14 @@ void AircraftWindow::OnSearchById(wxCommandEvent &event)
 
 void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
 {
-    wxString registration = wxGetTextFromUser("Enter aircraft registration:", "Search by Registration");
+    wxString registration = wxGetTextFromUser("Nhập số đăng ký máy bay:", "Tìm kiếm theo số đăng ký");
     if (registration.IsEmpty())
         return;
 
     auto aircraftResult = aircraftService->getAircraft(AircraftSerial::create(registration.ToStdString()).value());
     if (!aircraftResult)
     {
-        wxMessageBox("Failed to get aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
+        wxMessageBox("Không thể tìm thấy máy bay: " + aircraftResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
@@ -472,4 +502,186 @@ void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
     aircraftList->SetItem(0, 5, wxString::Format("%d", firstSeats));
     aircraftList->SetItem(0, 6, wxString::Format("%d", totalSeats));
     aircraftList->SetItem(0, 7, "A"); // Default status
+}
+
+void AircraftWindow::OnViewSeatClasses(wxCommandEvent &event)
+{
+    // Check if an aircraft is selected
+    long itemIndex = -1;
+    itemIndex = aircraftList->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex == -1)
+    {
+        wxMessageBox("Vui lòng chọn một máy bay để xem hạng ghế", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Get aircraft serial from selected item
+    wxListItem item;
+    item.SetId(itemIndex);
+    item.SetColumn(1); // Registration column
+    item.SetMask(wxLIST_MASK_TEXT);
+    aircraftList->GetItem(item);
+    std::string registration = item.GetText().ToStdString();
+
+    auto serialResult = AircraftSerial::create(registration);
+    if (!serialResult)
+    {
+        wxMessageBox("Số đăng ký không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    auto seatClassesResult = aircraftService->getAvailableSeatClasses(*serialResult);
+    if (!seatClassesResult)
+    {
+        wxMessageBox("Không thể lấy thông tin hạng ghế: " + seatClassesResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    const auto &seatClasses = *seatClassesResult;
+    wxString message = "Các hạng ghế có sẵn cho máy bay " + registration + ":\n\n";
+
+    for (const auto &seatClass : seatClasses)
+    {
+        if (seatClass == "ECONOMY")
+            message += "• Hạng thường (Economy)\n";
+        else if (seatClass == "BUSINESS")
+            message += "• Hạng thương gia (Business)\n";
+        else if (seatClass == "FIRST")
+            message += "• Hạng nhất (First Class)\n";
+    }
+
+    if (seatClasses.empty())
+    {
+        message += "Không có hạng ghế nào được cấu hình.";
+    }
+
+    wxMessageBox(message, "Thông tin hạng ghế", wxOK | wxICON_INFORMATION);
+}
+
+void AircraftWindow::OnViewAvailableSeats(wxCommandEvent &event)
+{
+    // Check if an aircraft is selected
+    long itemIndex = -1;
+    itemIndex = aircraftList->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex == -1)
+    {
+        wxMessageBox("Vui lòng chọn một máy bay để xem ghế trống", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Get aircraft serial from selected item
+    wxListItem item;
+    item.SetId(itemIndex);
+    item.SetColumn(1); // Registration column
+    item.SetMask(wxLIST_MASK_TEXT);
+    aircraftList->GetItem(item);
+    std::string registration = item.GetText().ToStdString();
+
+    auto serialResult = AircraftSerial::create(registration);
+    if (!serialResult)
+    {
+        wxMessageBox("Số đăng ký không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Ask user to select seat class
+    wxArrayString choices;
+    choices.Add("ECONOMY");
+    choices.Add("BUSINESS");
+    choices.Add("FIRST");
+
+    wxSingleChoiceDialog dialog(this, "Chọn hạng ghế:", "Chọn hạng ghế", choices);
+    if (dialog.ShowModal() != wxID_OK)
+        return;
+
+    std::string seatClass = dialog.GetStringSelection().ToStdString();
+
+    auto availableSeatsResult = aircraftService->getAvailableSeats(*serialResult, seatClass);
+    if (!availableSeatsResult)
+    {
+        wxMessageBox("Không thể lấy thông tin ghế trống: " + availableSeatsResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    const auto &availableSeats = *availableSeatsResult;
+
+    wxString seatClassName;
+    if (seatClass == "ECONOMY")
+        seatClassName = "Hạng thường";
+    else if (seatClass == "BUSINESS")
+        seatClassName = "Hạng thương gia";
+    else if (seatClass == "FIRST")
+        seatClassName = "Hạng nhất";
+
+    wxString message = wxString::Format("Ghế trống cho máy bay %s - %s:\n\n", registration, seatClassName);
+    message += wxString::Format("Tổng số ghế trống: %zu\n\n", availableSeats.size());
+
+    if (availableSeats.empty())
+    {
+        message += "Không có ghế trống.";
+    }
+    else
+    {
+        message += "Danh sách ghế trống:\n";
+        int count = 0;
+        for (const auto &seat : availableSeats)
+        {
+            message += seat + " ";
+            count++;
+            if (count % 10 == 0)
+                message += "\n"; // New line every 10 seats
+        }
+    }
+
+    wxMessageBox(message, "Thông tin ghế trống", wxOK | wxICON_INFORMATION);
+}
+
+void AircraftWindow::OnCheckSeatAvailability(wxCommandEvent &event)
+{
+    // Check if an aircraft is selected
+    long itemIndex = -1;
+    itemIndex = aircraftList->GetNextItem(itemIndex, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex == -1)
+    {
+        wxMessageBox("Vui lòng chọn một máy bay để kiểm tra ghế", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Get aircraft serial from selected item
+    wxListItem item;
+    item.SetId(itemIndex);
+    item.SetColumn(1); // Registration column
+    item.SetMask(wxLIST_MASK_TEXT);
+    aircraftList->GetItem(item);
+    std::string registration = item.GetText().ToStdString();
+
+    auto serialResult = AircraftSerial::create(registration);
+    if (!serialResult)
+    {
+        wxMessageBox("Số đăng ký không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Ask user to enter seat number
+    wxString seatNumber = wxGetTextFromUser(
+        "Nhập số ghế cần kiểm tra (VD: E001, B001, F001):",
+        "Kiểm tra ghế");
+    if (seatNumber.IsEmpty())
+        return;
+
+    auto availabilityResult = aircraftService->isSeatAvailable(*serialResult, seatNumber.ToStdString());
+    if (!availabilityResult)
+    {
+        wxMessageBox("Không thể kiểm tra ghế: " + availabilityResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    bool isAvailable = *availabilityResult;
+    wxString message = wxString::Format(
+        "Ghế %s trên máy bay %s:\n\n%s",
+        seatNumber,
+        registration,
+        isAvailable ? "✅ TRỐNG - Có thể đặt" : "❌ ĐÃ ĐƯỢC ĐẶT - Không thể đặt");
+
+    wxMessageBox(message, "Kết quả kiểm tra ghế", wxOK | wxICON_INFORMATION);
 }

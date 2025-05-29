@@ -25,6 +25,9 @@ private:
     void OnDeleteAircraft(wxCommandEvent &event);
     void OnSearchById(wxCommandEvent &event);
     void OnSearchByRegistration(wxCommandEvent &event);
+    void OnViewSeatClasses(wxCommandEvent &event);
+    void OnViewAvailableSeats(wxCommandEvent &event);
+    void OnCheckSeatAvailability(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshAircraftList();
 
@@ -37,6 +40,9 @@ private:
     wxButton *deleteButton;
     wxButton *searchByIdButton;
     wxButton *searchByRegistrationButton;
+    wxButton *viewSeatClassesButton;
+    wxButton *viewAvailableSeatsButton;
+    wxButton *checkSeatAvailabilityButton;
     wxListCtrl *aircraftList;
     wxStaticText *infoLabel;
 
