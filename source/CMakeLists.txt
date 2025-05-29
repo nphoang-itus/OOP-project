@@ -134,8 +134,8 @@ target_link_libraries(${PROJECT_NAME}_db_test
 add_executable(${PROJECT_NAME}_service_test
     # src/tests/services_mysql/AircraftServiceTest.cpp
     # src/tests/services_mysql/FlightServiceTest.cpp
-    src/tests/services_mysql/PassengerServiceTest.cpp
-    # src/tests/services_mysql/TicketServiceTest.cpp
+    # src/tests/services_mysql/PassengerServiceTest.cpp
+    src/tests/services_mysql/TicketServiceTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_service_test
