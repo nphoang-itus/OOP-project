@@ -1,3 +1,9 @@
+/**
+ * @file ScheduleFormatter.h
+ * @brief Định nghĩa lớp ScheduleFormatter để định dạng lịch trình bay
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef SCHEDULE_FORMATTER_H
 #define SCHEDULE_FORMATTER_H
 
@@ -6,8 +12,21 @@
 #include <iomanip>
 #include <sstream>
 
+/**
+ * @class ScheduleFormatter
+ * @brief Lớp tiện ích để định dạng lịch trình bay
+ * 
+ * Lớp này cung cấp chức năng định dạng thông tin lịch trình bay
+ * thành biểu diễn chuỗi tiêu chuẩn.
+ */
 class ScheduleFormatter {
 public:
+    /**
+     * @brief Định dạng thời gian khởi hành và thời gian đến thành chuỗi lịch trình tiêu chuẩn
+     * @param departure Thời gian khởi hành
+     * @param arrival Thời gian đến
+     * @return Chuỗi đã định dạng theo "YYYY-MM-DD HH:mm|YYYY-MM-DD HH:mm"
+     */
     static std::string toString(const std::tm& departure, const std::tm& arrival) {
         std::stringstream ss;
         
@@ -31,4 +50,4 @@ public:
     }
 };
 
-#endif 
+#endif

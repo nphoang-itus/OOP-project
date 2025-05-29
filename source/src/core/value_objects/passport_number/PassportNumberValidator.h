@@ -1,3 +1,9 @@
+/**
+ * @file PassportNumberValidator.h
+ * @brief Định nghĩa lớp PassportNumberValidator để xác thực số hộ chiếu
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef PASSPORT_NUMBER_VALIDATOR_H
 #define PASSPORT_NUMBER_VALIDATOR_H
 
@@ -7,12 +13,29 @@
 #include "../../exceptions/ValidationResult.h"
 #include "PassportNumberError.h"
 
+/**
+ * @class PassportNumberValidator
+ * @brief Cung cấp chức năng xác thực cho số hộ chiếu
+ * 
+ * Lớp này chứa các phương thức tĩnh để xác thực số hộ chiếu ở các định dạng khác nhau
+ * và đảm bảo chúng đáp ứng các tiêu chí yêu cầu cho mã quốc gia và định dạng số.
+ */
 class PassportNumberValidator {
 private:
+    /**
+     * @brief Kiểm tra xem chuỗi có rỗng không
+     * @param value Chuỗi cần kiểm tra
+     * @return true nếu chuỗi rỗng, false nếu ngược lại
+     */
     static bool isEmpty(const std::string& value) {
         return value.empty();
     }
 
+    /**
+     * @brief Xác thực xem mã quốc gia có đúng định dạng không
+     * @param countryCode Mã quốc gia cần xác thực
+     * @return true nếu hợp lệ (mã 2-3 chữ cái), false nếu ngược lại
+     */
     static bool isValidCountryCode(const std::string& countryCode) {
         // Check if it's a 2,3-letter country code
         if (countryCode.length() != 2) return false;
@@ -20,6 +43,11 @@ private:
         return std::regex_match(countryCode, countryPattern);
     }
 
+    /**
+     * @brief Xác thực xem số hộ chiếu có đúng định dạng không
+     * @param number Số hộ chiếu cần xác thực
+     * @return true nếu hợp lệ (6-9 chữ số), false nếu ngược lại
+     */
     static bool isValidPassportNumber(const std::string& number) {
         // Check if it's 6-9 digits
         std::regex numberPattern("^[0-9]{6,9}$");
@@ -27,7 +55,11 @@ private:
     }
 
 public:
-    // Validate combined string format (COUNTRY:NUMBER)
+    /**
+     * @brief Xác thực số hộ chiếu từ định dạng chuỗi kết hợp
+     * @param value Chuỗi có định dạng "QUỐC_GIA:SỐ"
+     * @return ValidationResult chứa các lỗi xác thực nếu có
+     */
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
         
@@ -62,7 +94,11 @@ public:
         return result;
     }
 
-    // Validate separate country code and number
+    /**
+     * @brief Xác thực số hộ chiếu từ các thành phần riêng biệt
+     * @param input Cặp chứa mã quốc gia và số
+     * @return ValidationResult chứa các lỗi xác thực nếu có
+     */
     static ValidationResult validate(const std::pair<std::string, std::string>& input) {
         ValidationResult result;
         const auto& [countryCode, number] = input;

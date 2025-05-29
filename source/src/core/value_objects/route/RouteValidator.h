@@ -1,3 +1,9 @@
+/**
+ * @file RouteValidator.h
+ * @brief Định nghĩa lớp RouteValidator để xác thực tuyến đường bay
+ * @author Nhóm dự án OOP
+ */
+
 #ifndef ROUTE_VALIDATOR_H
 #define ROUTE_VALIDATOR_H
 
@@ -7,12 +13,29 @@
 #include "../../exceptions/ValidationResult.h"
 #include "RouteError.h"
 
+/**
+ * @class RouteValidator
+ * @brief Cung cấp chức năng xác thực cho tuyến đường bay
+ * 
+ * Lớp này chứa các phương thức tĩnh để xác thực tuyến đường bay ở các định dạng khác nhau
+ * và đảm bảo chúng đáp ứng các tiêu chí yêu cầu cho mã sân bay và thông tin tuyến đường.
+ */
 class RouteValidator {
 private:
+    /**
+     * @brief Kiểm tra xem chuỗi có rỗng không
+     * @param value Chuỗi cần kiểm tra
+     * @return true nếu chuỗi rỗng, false nếu ngược lại
+     */
     static bool isEmpty(const std::string& value) {
         return value.empty();
     }
 
+    /**
+     * @brief Kiểm tra xem mã sân bay có hợp lệ không
+     * @param code Mã sân bay cần kiểm tra
+     * @return true nếu là mã IATA 3 chữ cái hợp lệ, false nếu không
+     */
     static bool isValidAirportCode(const std::string& code) {
         // Check if it's a valid 3-letter IATA code
         if (code.length() != 3) return false;
@@ -21,7 +44,11 @@ private:
     }
 
 public:
-    // Validate combined string format (ORIGIN(ORIGIN_CODE)-DESTINATION(DESTINATION_CODE))
+    /**
+     * @brief Xác thực tuyến đường từ định dạng chuỗi kết hợp
+     * @param value Chuỗi có định dạng "ĐIỂM_XUẤT_PHÁT(MÃ_XUẤT_PHÁT)-ĐIỂM_ĐẾN(MÃ_ĐIỂM_ĐẾN)"
+     * @return ValidationResult chứa các lỗi xác thực nếu có
+     */
     static ValidationResult validate(const std::string& value) {
         ValidationResult result;
         
@@ -66,7 +93,11 @@ public:
         return result;
     }
 
-    // Validate separate components
+    /**
+     * @brief Xác thực tuyến đường từ các thành phần riêng biệt
+     * @param input Tuple chứa tên và mã của điểm xuất phát và điểm đến
+     * @return ValidationResult chứa các lỗi xác thực nếu có
+     */
     static ValidationResult validate(const std::tuple<std::string, std::string, std::string, std::string>& input) {
         ValidationResult result;
         const auto& [origin, originCode, destination, destinationCode] = input;
@@ -96,4 +127,4 @@ public:
     }
 };
 
-#endif 
+#endif

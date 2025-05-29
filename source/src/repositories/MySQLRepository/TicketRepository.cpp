@@ -7,6 +7,15 @@
 
 // using namespace Tables;
 
+/**
+ * @brief Tìm kiếm vé theo ID
+ * 
+ * Phương thức này thực hiện truy vấn cơ sở dữ liệu để tìm vé theo ID,
+ * bao gồm cả thông tin hành khách và chuyến bay liên quan.
+ * 
+ * @param id ID của vé cần tìm
+ * @return Result<Ticket> Kết quả chứa đối tượng Ticket hoặc lỗi
+ */
 Result<Ticket> TicketRepository::findById(const int& id) {
     try {
         if (_logger) _logger->debug("Finding ticket by id: " + std::to_string(id));
@@ -111,6 +120,14 @@ Result<Ticket> TicketRepository::findById(const int& id) {
     }
 }
 
+/**
+ * @brief Lấy tất cả vé từ cơ sở dữ liệu
+ * 
+ * Phương thức này truy vấn tất cả vé có trong cơ sở dữ liệu.
+ * Sử dụng findById để lấy thông tin chi tiết của từng vé.
+ * 
+ * @return Result<std::vector<Ticket>> Vector chứa tất cả vé hoặc lỗi
+ */
 Result<std::vector<Ticket>> TicketRepository::findAll() {
     try {
         if (_logger) _logger->debug("Finding all tickets");
@@ -156,6 +173,12 @@ Result<std::vector<Ticket>> TicketRepository::findAll() {
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của vé theo ID
+ * 
+ * @param id ID của vé cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không tồn tại, hoặc lỗi
+ */
 Result<bool> TicketRepository::exists(const int& id) {
     try {
         if (_logger) _logger->debug("Checking if ticket exists with id: " + std::to_string(id));
@@ -203,6 +226,11 @@ Result<bool> TicketRepository::exists(const int& id) {
     }
 }
 
+/**
+ * @brief Đếm tổng số vé trong cơ sở dữ liệu
+ * 
+ * @return Result<size_t> Số lượng vé hoặc lỗi
+ */
 Result<size_t> TicketRepository::count() {
     try {
         if (_logger) _logger->debug("Counting total tickets");
@@ -242,6 +270,15 @@ Result<size_t> TicketRepository::count() {
     }
 }
 
+/**
+ * @brief Tạo mới một vé trong cơ sở dữ liệu
+ * 
+ * Phương thức này tạo một vé mới với tất cả thông tin liên quan
+ * bao gồm hành khách, chuyến bay, ghế ngồi và giá vé.
+ * 
+ * @param ticket Đối tượng Ticket cần tạo
+ * @return Result<Ticket> Vé đã được tạo với ID hoặc lỗi
+ */
 Result<Ticket> TicketRepository::create(const Ticket& ticket) {
     try {
         if (_logger) _logger->debug("Creating new ticket");
@@ -300,6 +337,12 @@ Result<Ticket> TicketRepository::create(const Ticket& ticket) {
     }
 }
 
+/**
+ * @brief Cập nhật thông tin vé trong cơ sở dữ liệu
+ * 
+ * @param ticket Đối tượng Ticket chứa thông tin cần cập nhật
+ * @return Result<Ticket> Vé đã được cập nhật hoặc lỗi
+ */
 Result<Ticket> TicketRepository::update(const Ticket& ticket) {
     try {
         if (_logger) _logger->debug("Updating ticket with id: " + std::to_string(ticket.getId()));
@@ -360,6 +403,12 @@ Result<Ticket> TicketRepository::update(const Ticket& ticket) {
     }
 }
 
+/**
+ * @brief Xóa vé theo ID
+ * 
+ * @param id ID của vé cần xóa
+ * @return Result<bool> True nếu xóa thành công hoặc lỗi
+ */
 Result<bool> TicketRepository::deleteById(const int& id) {
     try {
         if (_logger) _logger->debug("Deleting ticket with id: " + std::to_string(id));
@@ -410,6 +459,12 @@ Result<bool> TicketRepository::deleteById(const int& id) {
     }
 }
 
+/**
+ * @brief Tìm kiếm vé theo mã số vé
+ * 
+ * @param ticketNumber Mã số vé cần tìm
+ * @return Result<Ticket> Vé tìm được hoặc lỗi
+ */
 Result<Ticket> TicketRepository::findByTicketNumber(const TicketNumber& ticketNumber) {
     try {
         if (_logger) _logger->debug("Finding ticket by ticket number: " + ticketNumber.getValue());
@@ -455,6 +510,12 @@ Result<Ticket> TicketRepository::findByTicketNumber(const TicketNumber& ticketNu
     }
 }
 
+/**
+ * @brief Kiểm tra sự tồn tại của vé theo mã số vé
+ * 
+ * @param ticketNumber Mã số vé cần kiểm tra
+ * @return Result<bool> True nếu tồn tại, false nếu không hoặc lỗi
+ */
 Result<bool> TicketRepository::existsTicket(const TicketNumber& ticketNumber) {
     try {
         if (_logger) _logger->debug("Checking if ticket exists with ticket number: " + ticketNumber.getValue());
@@ -502,6 +563,12 @@ Result<bool> TicketRepository::existsTicket(const TicketNumber& ticketNumber) {
     }
 }
 
+/**
+ * @brief Tìm kiếm các vé theo ID hành khách
+ * 
+ * @param passengerId ID của hành khách
+ * @return Result<std::vector<Ticket>> Danh sách vé của hành khách hoặc lỗi
+ */
 Result<std::vector<Ticket>> TicketRepository::findByPassengerId(int passengerId) {
     try {
         if (_logger) _logger->debug("Finding tickets by passenger id: " + std::to_string(passengerId));
@@ -554,6 +621,12 @@ Result<std::vector<Ticket>> TicketRepository::findByPassengerId(int passengerId)
     }
 }
 
+/**
+ * @brief Tìm kiếm các vé theo số seri máy bay
+ * 
+ * @param serial Số seri của máy bay
+ * @return Result<std::vector<Ticket>> Danh sách vé trên máy bay này hoặc lỗi
+ */
 Result<std::vector<Ticket>> TicketRepository::findBySerialNumber(const AircraftSerial& serial) {
     try {
         if (_logger) _logger->debug("Finding tickets by aircraft serial number: " + serial.value());
@@ -606,6 +679,12 @@ Result<std::vector<Ticket>> TicketRepository::findBySerialNumber(const AircraftS
     }
 }
 
+/**
+ * @brief Tìm kiếm các vé theo ID chuyến bay
+ * 
+ * @param flightId ID của chuyến bay
+ * @return Result<std::vector<Ticket>> Danh sách vé của chuyến bay hoặc lỗi
+ */
 Result<std::vector<Ticket>> TicketRepository::findByFlightId(int flightId) {
     try {
         if (_logger) _logger->debug("Finding tickets by flight id: " + std::to_string(flightId));
@@ -658,6 +737,21 @@ Result<std::vector<Ticket>> TicketRepository::findByFlightId(int flightId) {
     }
 }
 
+/**
+ * @brief Tìm kiếm vé theo nhiều tiêu chí với tùy chọn sắp xếp và giới hạn
+ * 
+ * Phương thức này cho phép tìm kiếm vé theo nhiều tiêu chí khác nhau như:
+ * - minPrice/maxPrice: Khoảng giá vé
+ * - flightNumber: Số hiệu chuyến bay
+ * - status: Trạng thái vé
+ * - passport: Số hộ chiếu hành khách
+ * 
+ * @param params Map chứa các tham số tìm kiếm
+ * @param limit Số lượng kết quả tối đa (tùy chọn)
+ * @param sortBy Trường để sắp xếp (tùy chọn)
+ * @param sortAscending True để sắp xếp tăng dần, false để giảm dần
+ * @return Result<std::vector<Ticket>> Danh sách vé thỏa mãn điều kiện hoặc lỗi
+ */
 Result<std::vector<Ticket>> TicketRepository::findByCriteria(
     const std::map<std::string, std::string>& params,
     std::optional<int> limit,
