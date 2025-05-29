@@ -45,12 +45,14 @@ public:
         auto aircraftService = std::make_shared<AircraftService>(aircraftRepo, flightRepo, ticketRepo, logger);
         auto flightService = std::make_shared<FlightService>(flightRepo, aircraftRepo, ticketRepo, logger);
         auto passengerService = std::make_shared<PassengerService>(passengerRepo, ticketRepo, flightRepo, logger);
+        auto ticketService = std::make_shared<TicketService>(ticketRepo, passengerRepo, flightRepo, aircraftRepo, logger);
 
         // Create and show main window
         MainWindow *mainWindow = new MainWindow("Quản lý hãng hàng không",
                                                 aircraftService,
                                                 flightService,
-                                                passengerService);
+                                                passengerService,
+                                                ticketService);
         mainWindow->Show(true);
         return true;
     }

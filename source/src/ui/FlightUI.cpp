@@ -6,6 +6,8 @@
 #include "../core/value_objects/aircraft_serial/AircraftSerial.h"
 #include "../core/value_objects/flight_status/FlightStatus.h"
 #include "../core/entities/Flight.h"
+#include "../core/entities/Ticket.h"
+#include "services/TicketService.h"
 #include <iomanip>
 #include <sstream>
 #include <ctime>
@@ -21,7 +23,9 @@ enum
     ID_DELETE = 5,
     ID_FLIGHT_LIST = 6,
     ID_SEARCH_ID = 7,
-    ID_SEARCH_FLIGHT_NUMBER = 8
+    ID_SEARCH_FLIGHT_NUMBER = 8,
+    ID_VIEW_AVAILABLE_SEATS = 9,
+    ID_CHECK_SEAT_AVAILABILITY = 10
 };
 
 wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
@@ -32,11 +36,13 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
                     EVT_BUTTON(ID_DELETE, FlightWindow::OnDeleteFlight)
                         EVT_BUTTON(ID_SEARCH_ID, FlightWindow::OnSearchById)
                             EVT_BUTTON(ID_SEARCH_FLIGHT_NUMBER, FlightWindow::OnSearchByFlightNumber)
-                                EVT_LIST_ITEM_SELECTED(ID_FLIGHT_LIST, FlightWindow::OnListItemSelected)
-                                    wxEND_EVENT_TABLE()
+                                EVT_BUTTON(ID_VIEW_AVAILABLE_SEATS, FlightWindow::OnViewAvailableSeats)
+                                    EVT_BUTTON(ID_CHECK_SEAT_AVAILABILITY, FlightWindow::OnCheckSeatAvailability)
+                                        EVT_LIST_ITEM_SELECTED(ID_FLIGHT_LIST, FlightWindow::OnListItemSelected)
+                                            wxEND_EVENT_TABLE()
 
-                                        FlightWindow::FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService)
-    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1200, 600)), flightService(flightService)
+                                                FlightWindow::FlightWindow(const wxString &title, std::shared_ptr<FlightService> flightService)
+    : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1400, 700)), flightService(flightService)
 {
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -54,6 +60,8 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
     deleteButton = new wxButton(panel, ID_DELETE, "Xóa chuyến bay", wxDefaultPosition, wxSize(250, 50));
     searchByIdButton = new wxButton(panel, ID_SEARCH_ID, "Tìm theo ID", wxDefaultPosition, wxSize(250, 50));
     searchByFlightNumberButton = new wxButton(panel, ID_SEARCH_FLIGHT_NUMBER, "Tìm theo số hiệu", wxDefaultPosition, wxSize(250, 50));
+    viewAvailableSeatsButton = new wxButton(panel, wxID_ANY, "Xem ghế trống", wxDefaultPosition, wxSize(180, 40));
+    checkSeatAvailabilityButton = new wxButton(panel, wxID_ANY, "Kiểm tra ghế", wxDefaultPosition, wxSize(180, 40));
 
     // Create flight list
     flightList = new wxListCtrl(panel, ID_FLIGHT_LIST, wxDefaultPosition, wxSize(1000, 300),
@@ -68,27 +76,20 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
     flightList->InsertColumn(7, "Giờ đến");
     flightList->InsertColumn(8, "Máy bay");
     flightList->InsertColumn(9, "Trạng thái");
-
-    for (int i = 0; i < 10; ++i)
-    {
-        flightList->SetColumnWidth(i, wxLIST_AUTOSIZE_USEHEADER);
-    }
+    flightList->InsertColumn(10, "Thông tin ghế");
 
     // Adjust specific column widths for better display
-    flightList->SetColumnWidth(0, 60);  // ID - shorter
-    flightList->SetColumnWidth(1, 100); // Số hiệu
-    flightList->SetColumnWidth(2, 110); // Điểm đi
-    flightList->SetColumnWidth(3, 110); // Điểm đến
-    flightList->SetColumnWidth(4, 110); // Ngày khởi hành
-    flightList->SetColumnWidth(5, 90);  // Giờ khởi hành
-    flightList->SetColumnWidth(6, 110); // Ngày đến
-    flightList->SetColumnWidth(7, 90);  // Giờ đến
-    flightList->SetColumnWidth(8, 120); // Máy bay
-    flightList->SetColumnWidth(9, 100); // Trạng thái
-
-    // Create info label
-    infoLabel = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxSize(800, 50));
-    infoLabel->Wrap(800);
+    flightList->SetColumnWidth(0, 60);   // ID
+    flightList->SetColumnWidth(1, 120);  // Số hiệu
+    flightList->SetColumnWidth(2, 140);  // Điểm đi
+    flightList->SetColumnWidth(3, 140);  // Điểm đến
+    flightList->SetColumnWidth(4, 120);  // Ngày khởi hành
+    flightList->SetColumnWidth(5, 100);  // Giờ khởi hành
+    flightList->SetColumnWidth(6, 120);  // Ngày đến
+    flightList->SetColumnWidth(7, 100);  // Giờ đến
+    flightList->SetColumnWidth(8, 140);  // Máy bay
+    flightList->SetColumnWidth(9, 120);  // Trạng thái
+    flightList->SetColumnWidth(10, 400); // Thông tin ghế
 
     // Add buttons to content sizer (2 hàng ngang)
     wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
@@ -100,11 +101,12 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
     wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
     row2->Add(searchByIdButton, 0, wxALL, 10);
     row2->Add(searchByFlightNumberButton, 0, wxALL, 10);
+    row2->Add(viewAvailableSeatsButton, 0, wxALL, 10);
+    row2->Add(checkSeatAvailabilityButton, 0, wxALL, 10);
 
     contentSizer->Add(row1, 0, wxALIGN_CENTER);
     contentSizer->Add(row2, 0, wxALIGN_CENTER);
     contentSizer->Add(flightList, 1, wxALL | wxEXPAND, 10);
-    contentSizer->Add(infoLabel, 0, wxALL | wxALIGN_CENTER, 10);
 
     // Add sizers to main sizer
     mainSizer->Add(buttonSizer, 0, wxEXPAND);
@@ -112,6 +114,21 @@ wxBEGIN_EVENT_TABLE(FlightWindow, wxFrame)
 
     panel->SetSizer(mainSizer);
     Centre();
+
+    // Đăng ký sự kiện
+    viewAvailableSeatsButton->Bind(wxEVT_BUTTON, &FlightWindow::OnViewAvailableSeats, this);
+    checkSeatAvailabilityButton->Bind(wxEVT_BUTTON, &FlightWindow::OnCheckSeatAvailability, this);
+}
+
+void FlightWindow::setServices(std::shared_ptr<AircraftService> aircraft,
+                               std::shared_ptr<FlightService> flight,
+                               std::shared_ptr<PassengerService> passenger,
+                               std::shared_ptr<TicketService> ticket)
+{
+    this->aircraftService = aircraft;
+    this->flightService = flight;
+    this->passengerService = passenger;
+    this->ticketService = ticket;
 }
 
 void FlightWindow::OnBack(wxCommandEvent &event)
@@ -120,18 +137,10 @@ void FlightWindow::OnBack(wxCommandEvent &event)
     MainWindow *mainWindow = new MainWindow("Quản lý hãng hàng không",
                                             aircraftService,
                                             flightService,
-                                            passengerService);
+                                            passengerService,
+                                            ticketService);
     mainWindow->Show();
     this->Close();
-}
-
-void FlightWindow::setServices(std::shared_ptr<AircraftService> aircraft,
-                               std::shared_ptr<FlightService> flight,
-                               std::shared_ptr<PassengerService> passenger)
-{
-    this->aircraftService = aircraft;
-    this->flightService = flight;
-    this->passengerService = passenger;
 }
 
 void FlightWindow::OnShowFlight(wxCommandEvent &event)
@@ -149,30 +158,35 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     wxTextCtrl *flightNumberCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *originLabel = new wxStaticText(panel, wxID_ANY, "Điểm đi:");
     wxTextCtrl *originCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxStaticText *originCodeLabel = new wxStaticText(panel, wxID_ANY, "Mã sân bay đi (VD: SGN):");
+    wxTextCtrl *originCodeCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *destinationLabel = new wxStaticText(panel, wxID_ANY, "Điểm đến:");
     wxTextCtrl *destinationCtrl = new wxTextCtrl(panel, wxID_ANY);
+    wxStaticText *destinationCodeLabel = new wxStaticText(panel, wxID_ANY, "Mã sân bay đến (VD: HAN):");
+    wxTextCtrl *destinationCodeCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *aircraftLabel = new wxStaticText(panel, wxID_ANY, "Số hiệu máy bay:");
     wxTextCtrl *aircraftCtrl = new wxTextCtrl(panel, wxID_ANY);
 
-    // Departure date and time separate inputs
     wxStaticText *departureDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày khởi hành (YYYY-MM-DD):");
     wxTextCtrl *departureDateCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *departureTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ khởi hành (HH:MM):");
     wxTextCtrl *departureTimeCtrl = new wxTextCtrl(panel, wxID_ANY);
 
-    // Arrival date and time separate inputs
     wxStaticText *arrivalDateLabel = new wxStaticText(panel, wxID_ANY, "Ngày đến (YYYY-MM-DD):");
     wxTextCtrl *arrivalDateCtrl = new wxTextCtrl(panel, wxID_ANY);
     wxStaticText *arrivalTimeLabel = new wxStaticText(panel, wxID_ANY, "Giờ đến (HH:MM):");
     wxTextCtrl *arrivalTimeCtrl = new wxTextCtrl(panel, wxID_ANY);
 
-    // Add form fields to sizer
     sizer->Add(flightNumberLabel, 0, wxALL, 5);
     sizer->Add(flightNumberCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(originLabel, 0, wxALL, 5);
     sizer->Add(originCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(originCodeLabel, 0, wxALL, 5);
+    sizer->Add(originCodeCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(destinationLabel, 0, wxALL, 5);
     sizer->Add(destinationCtrl, 0, wxEXPAND | wxALL, 5);
+    sizer->Add(destinationCodeLabel, 0, wxALL, 5);
+    sizer->Add(destinationCodeCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(aircraftLabel, 0, wxALL, 5);
     sizer->Add(aircraftCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(departureDateLabel, 0, wxALL, 5);
@@ -183,22 +197,14 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     sizer->Add(arrivalDateCtrl, 0, wxEXPAND | wxALL, 5);
     sizer->Add(arrivalTimeLabel, 0, wxALL, 5);
     sizer->Add(arrivalTimeCtrl, 0, wxEXPAND | wxALL, 5);
-
-    // Add spacer to push buttons to bottom
     sizer->AddStretchSpacer(1);
-
-    // Create button sizer
     wxButton *okButton = new wxButton(panel, wxID_OK, "OK");
     wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, "Cancel");
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     buttonSizer->Add(okButton, 0, wxALL, 5);
     buttonSizer->Add(cancelButton, 0, wxALL, 5);
     sizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxALL, 15);
-
-    // Set panel sizer
     panel->SetSizer(sizer);
-
-    // Create dialog sizer and set minimum size
     wxBoxSizer *dialogSizer = new wxBoxSizer(wxVERTICAL);
     dialogSizer->Add(panel, 1, wxEXPAND | wxALL, 10);
     dialog->SetSizer(dialogSizer);
@@ -209,32 +215,123 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
     {
         std::string flightNumber = flightNumberCtrl->GetValue().ToStdString();
         std::string origin = originCtrl->GetValue().ToStdString();
+        std::string originCode = originCodeCtrl->GetValue().ToStdString();
         std::string destination = destinationCtrl->GetValue().ToStdString();
+        std::string destinationCode = destinationCodeCtrl->GetValue().ToStdString();
         std::string aircraft = aircraftCtrl->GetValue().ToStdString();
         std::string departureDate = departureDateCtrl->GetValue().ToStdString();
         std::string departureTime = departureTimeCtrl->GetValue().ToStdString();
         std::string arrivalDate = arrivalDateCtrl->GetValue().ToStdString();
         std::string arrivalTime = arrivalTimeCtrl->GetValue().ToStdString();
 
-        if (flightNumber.empty() || origin.empty() || destination.empty() ||
-            aircraft.empty() || departureDate.empty() || departureTime.empty() ||
-            arrivalDate.empty() || arrivalTime.empty())
+        if (flightNumber.empty() || origin.empty() || originCode.empty() ||
+            destination.empty() || destinationCode.empty() || aircraft.empty() ||
+            departureDate.empty() || departureTime.empty() || arrivalDate.empty() ||
+            arrivalTime.empty())
         {
             wxMessageBox("Vui lòng điền đầy đủ thông tin", "Lỗi", wxOK | wxICON_ERROR);
             dialog->Destroy();
             return;
         }
 
-        // Combine date and time for processing
-        std::string departure = departureDate + " " + departureTime;
-        std::string arrival = arrivalDate + " " + arrivalTime;
+        // Tạo các value object
+        auto flightNumberResult = FlightNumber::create(flightNumber);
+        if (!flightNumberResult)
+        {
+            wxMessageBox("Số hiệu chuyến bay không hợp lệ: " + flightNumberResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
 
-        // Create flight using factory method would be called here
-        // For now just show success message
-        wxMessageBox("Thêm chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
+        // Kiểm tra máy bay tồn tại
+        auto aircraftSerialResult = AircraftSerial::create(aircraft);
+        if (!aircraftSerialResult)
+        {
+            wxMessageBox("Số hiệu máy bay không hợp lệ: " + aircraftSerialResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Lấy máy bay từ service
+        if (!aircraftService)
+        {
+            wxMessageBox("Không tìm thấy dịch vụ máy bay", "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Kiểm tra máy bay có tồn tại không
+        auto aircraftResult = aircraftService->getAircraft(*aircraftSerialResult);
+        if (!aircraftResult)
+        {
+            wxMessageBox("Không tìm thấy máy bay với số hiệu: " + aircraft, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+        auto aircraftPtr = std::make_shared<Aircraft>(aircraftResult.value());
+
+        // Tạo Route với mã sân bay
+        auto routeResult = Route::create(origin, originCode, destination, destinationCode);
+        if (!routeResult)
+        {
+            wxMessageBox("Tuyến đường không hợp lệ: " + routeResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Tạo Schedule
+        std::string departureDateTime = departureDate + " " + departureTime;
+        std::string arrivalDateTime = arrivalDate + " " + arrivalTime;
+        auto scheduleResult = Schedule::create(departureDateTime, arrivalDateTime);
+        if (!scheduleResult)
+        {
+            wxMessageBox("Lịch trình không hợp lệ: " + scheduleResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Tạo Flight
+        auto flightResult = Flight::create(*flightNumberResult, *routeResult, *scheduleResult, aircraftPtr);
+        if (!flightResult)
+        {
+            wxMessageBox("Không thể tạo chuyến bay: " + flightResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Lưu chuyến bay vào database
+        auto createResult = flightService->createFlight(flightResult.value());
+        if (!createResult)
+        {
+            wxMessageBox("Lỗi khi thêm chuyến bay: " + createResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
+
+        // Kiểm tra lại danh sách chuyến bay vừa lấy về
+        bool found = false;
+        auto allFlightsResult = flightService->getAllFlights();
+        if (allFlightsResult)
+        {
+            for (const auto &f : allFlightsResult.value())
+            {
+                if (f.getFlightNumber().toString() == flightNumber)
+                {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found)
+        {
+            wxMessageBox("Đã thêm chuyến bay nhưng không thấy trong danh sách! Có thể database hoặc service đang lỗi. Vui lòng kiểm tra lại.", "Cảnh báo", wxOK | wxICON_WARNING);
+        }
+        else
+        {
+            wxMessageBox("Thêm chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
+        }
         RefreshFlightList();
     }
-
     dialog->Destroy();
 }
 
@@ -517,7 +614,6 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
 
             wxMessageBox("Cập nhật chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
             RefreshFlightList();
-            infoLabel->SetLabel("Đã cập nhật chuyến bay: " + flightNumber);
         }
         catch (const std::exception &e)
         {
@@ -618,11 +714,11 @@ void FlightWindow::OnSearchById(wxCommandEvent &event)
 
             if (found)
             {
-                infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay có ID: %ld", id));
+                // infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay có ID: %ld", id));
             }
             else
             {
-                infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay có ID: %ld", id));
+                // infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay có ID: %ld", id));
             }
         }
         else
@@ -688,11 +784,11 @@ void FlightWindow::OnSearchByFlightNumber(wxCommandEvent &event)
                 // Status
                 flightList->SetItem(index, 9, "SCHEDULED");
 
-                infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay: %s", flightNumber));
+                // infoLabel->SetLabel(wxString::Format("Tìm thấy chuyến bay: %s", flightNumber));
             }
             else
             {
-                infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay: %s", flightNumber));
+                // infoLabel->SetLabel(wxString::Format("Không tìm thấy chuyến bay: %s", flightNumber));
             }
         }
         else
@@ -707,8 +803,79 @@ void FlightWindow::OnListItemSelected(wxListEvent &event)
     long item = event.GetIndex();
     if (item != -1)
     {
-        wxString info = wxString::Format("Đã chọn chuyến bay ở dòng %ld", item + 1);
-        infoLabel->SetLabel(info);
+        // infoLabel->SetLabel(wxString::Format("Đã chọn chuyến bay ở dòng %ld", item + 1));
+    }
+}
+
+std::string FlightWindow::getSeatInfo(const Flight &flight)
+{
+    if (!flight.getAircraft())
+    {
+        return "N/A";
+    }
+
+    const auto &seatLayout = flight.getAircraft()->getSeatLayout();
+    std::stringstream ss;
+
+    // Get total seats and available seats
+    int totalSeats = seatLayout.getTotalSeatCount();
+    int availableSeats = seatLayout.getTotalAvailableSeatCount();
+
+    // Get seats by class
+    int economySeats = 0;
+    int businessSeats = 0;
+    int firstSeats = 0;
+
+    for (const auto &[seatClass, count] : seatLayout.getSeatCounts())
+    {
+        if (seatClass.getCode() == "E")
+            economySeats = seatLayout.getAvailableSeatCount("E");
+        else if (seatClass.getCode() == "B")
+            businessSeats = seatLayout.getAvailableSeatCount("B");
+        else if (seatClass.getCode() == "F")
+            firstSeats = seatLayout.getAvailableSeatCount("F");
+    }
+
+    // Format seat information
+    ss << "Tổng: " << totalSeats << " ghế, Còn trống: " << availableSeats << " ghế (";
+    if (economySeats > 0)
+        ss << "E:" << economySeats;
+    if (businessSeats > 0)
+        ss << ", B:" << businessSeats;
+    if (firstSeats > 0)
+        ss << ", F:" << firstSeats;
+    ss << ")";
+
+    return ss.str();
+}
+
+// Hàm đồng bộ số ghế đã đặt từ vé vào chuyến bay
+void syncBookedSeatsWithTickets(const std::vector<Ticket> &tickets, std::vector<Flight> &flights)
+{
+    std::map<std::string, Flight *> flightMap;
+    for (auto &flight : flights)
+    {
+        flightMap[flight.getFlightNumber().toString()] = &flight;
+        if (flight.getAircraft())
+        {
+            auto aircraft = flight.getAircraft();
+            auto seatLayout = aircraft->getSeatLayout();
+            seatLayout.initializeBookedSeats();
+            aircraft->setSeatLayout(seatLayout);
+        }
+    }
+    for (const auto &ticket : tickets)
+    {
+        auto flightNum = ticket.getFlight()->getFlightNumber().toString();
+        auto seatNum = ticket.getSeatNumber().toString();
+        std::string seatClass = seatNum.substr(0, 1); // E/B/F
+        if (flightMap.count(flightNum) && flightMap[flightNum]->getAircraft())
+        {
+            auto aircraft = flightMap[flightNum]->getAircraft();
+            auto seatLayout = aircraft->getSeatLayout();
+            seatLayout.bookSeat(seatClass);
+            aircraft->setSeatLayout(seatLayout);
+        }
     }
 }
 
@@ -716,36 +883,63 @@ void FlightWindow::RefreshFlightList()
 {
     flightList->DeleteAllItems();
 
+    // Lấy danh sách chuyến bay và vé
     auto result = flightService->getAllFlights();
+    std::vector<Flight> flights;
     if (result.has_value())
+        flights = result.value();
+    else
     {
-        const auto &flights = result.value();
-        for (size_t i = 0; i < flights.size(); ++i)
-        {
-            const auto &flight = flights[i];
-            long index = flightList->InsertItem(i, wxString::Format("%d", flight.getId()));
+        // infoLabel->SetLabel("Không thể tải danh sách chuyến bay");
+        return;
+    }
+    std::vector<Ticket> tickets;
+    if (ticketService)
+    {
+        auto ticketResult = ticketService->getAllTickets();
+        if (ticketResult.has_value())
+            tickets = ticketResult.value();
+    }
+    // Đồng bộ số ghế đã đặt
+    syncBookedSeatsWithTickets(tickets, flights);
 
-            // Set basic flight information
+    for (size_t i = 0; i < flights.size(); ++i)
+    {
+        const auto &flight = flights[i];
+        try
+        {
+            // Kiểm tra các trường quan trọng
+            if (!flight.getAircraft())
+            {
+                wxLogError("Flight %s thiếu thông tin máy bay!", flight.getFlightNumber().toString());
+                wxMessageBox(wxString::Format("Chuyến bay %s thiếu thông tin máy bay!", flight.getFlightNumber().toString()), "Lỗi dữ liệu", wxOK | wxICON_ERROR);
+                continue;
+            }
+            const auto &route = flight.getRoute();
+            if (route.getOrigin().empty() || route.getDestination().empty() || route.getOriginCode().empty() || route.getDestinationCode().empty())
+            {
+                wxLogError("Flight %s thiếu thông tin route!", flight.getFlightNumber().toString());
+                wxMessageBox(wxString::Format("Chuyến bay %s thiếu thông tin tuyến đường!", flight.getFlightNumber().toString()), "Lỗi dữ liệu", wxOK | wxICON_ERROR);
+                continue;
+            }
+            const auto &schedule = flight.getSchedule();
+            // Nếu schedule lỗi sẽ throw
+            const std::tm &departure = schedule.getDeparture();
+            const std::tm &arrival = schedule.getArrival();
+
+            long index = flightList->InsertItem(i, wxString::Format("%d", flight.getId()));
             flightList->SetItem(index, 1, flight.getFlightNumber().toString());
             flightList->SetItem(index, 2, flight.getRoute().getOrigin());
             flightList->SetItem(index, 3, flight.getRoute().getDestination());
 
-            // Parse schedule information properly
-            const auto &schedule = flight.getSchedule();
-            const std::tm &departure = schedule.getDeparture();
-            const std::tm &arrival = schedule.getArrival();
-
-            // Set departure date and time using utils function
             std::string departureDateTime = convertTimeToString(departure);
-            flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-            flightList->SetItem(index, 5, departureDateTime.substr(11, 5)); // Time: HH:MM
+            flightList->SetItem(index, 4, departureDateTime.substr(0, 10));
+            flightList->SetItem(index, 5, departureDateTime.substr(11, 5));
 
-            // Set arrival date and time using utils function
             std::string arrivalDateTime = convertTimeToString(arrival);
-            flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-            flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5)); // Time: HH:MM
+            flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10));
+            flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));
 
-            // Aircraft info
             if (flight.getAircraft())
             {
                 flightList->SetItem(index, 8, flight.getAircraft()->getSerial().toString());
@@ -754,16 +948,109 @@ void FlightWindow::RefreshFlightList()
             {
                 flightList->SetItem(index, 8, "N/A");
             }
-
-            // Status
             flightList->SetItem(index, 9, "SCHEDULED");
+            flightList->SetItem(index, 10, getSeatInfo(flight));
         }
+        catch (const std::exception &e)
+        {
+            wxLogError("Lỗi khi load chuyến bay %s: %s", flight.getFlightNumber().toString(), e.what());
+            wxMessageBox(wxString::Format("Lỗi khi load chuyến bay %s: %s", flight.getFlightNumber().toString(), e.what()), "Lỗi dữ liệu", wxOK | wxICON_ERROR);
+            continue;
+        }
+    }
+    // wxString statusMsg = wxString::Format("Đã tải %zu chuyến bay", flights.size());
+    // infoLabel->SetLabel(statusMsg);
+}
 
-        wxString statusMsg = wxString::Format("Đã tải %zu chuyến bay", flights.size());
-        infoLabel->SetLabel(statusMsg);
+void FlightWindow::OnViewAvailableSeats(wxCommandEvent &event)
+{
+    long itemIndex = flightList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex == -1)
+    {
+        wxMessageBox("Vui lòng chọn một chuyến bay để xem ghế trống", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    wxString serial = flightList->GetItemText(itemIndex, 8); // Cột máy bay
+    auto serialResult = AircraftSerial::create(serial.ToStdString());
+    if (!serialResult)
+    {
+        wxMessageBox("Số đăng ký máy bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    wxArrayString choices;
+    choices.Add("ECONOMY");
+    choices.Add("BUSINESS");
+    choices.Add("FIRST");
+    wxSingleChoiceDialog dialog(this, "Chọn hạng ghế:", "Chọn hạng ghế", choices);
+    if (dialog.ShowModal() != wxID_OK)
+        return;
+    std::string seatClass = dialog.GetStringSelection().ToStdString();
+    auto availableSeatsResult = aircraftService->getAvailableSeats(*serialResult, seatClass);
+    if (!availableSeatsResult)
+    {
+        wxMessageBox("Không thể lấy thông tin ghế trống: " + availableSeatsResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    const auto &availableSeats = *availableSeatsResult;
+    wxString seatClassName;
+    if (seatClass == "ECONOMY")
+        seatClassName = "Hạng thường";
+    else if (seatClass == "BUSINESS")
+        seatClassName = "Hạng thương gia";
+    else if (seatClass == "FIRST")
+        seatClassName = "Hạng nhất";
+    wxString message = wxString::Format("Ghế trống cho máy bay %s - %s:\n\n", serial, seatClassName);
+    message += wxString::Format("Tổng số ghế trống: %zu\n\n", availableSeats.size());
+    if (availableSeats.empty())
+    {
+        message += "Không có ghế trống.";
     }
     else
     {
-        infoLabel->SetLabel("Không thể tải danh sách chuyến bay");
+        message += "Danh sách ghế trống:\n";
+        int count = 0;
+        for (const auto &seat : availableSeats)
+        {
+            message += seat + " ";
+            count++;
+            if (count % 10 == 0)
+                message += "\n";
+        }
     }
+    wxMessageBox(message, "Thông tin ghế trống", wxOK | wxICON_INFORMATION);
+}
+
+void FlightWindow::OnCheckSeatAvailability(wxCommandEvent &event)
+{
+    long itemIndex = flightList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (itemIndex == -1)
+    {
+        wxMessageBox("Vui lòng chọn một chuyến bay để kiểm tra ghế", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    wxString serial = flightList->GetItemText(itemIndex, 8); // Cột máy bay
+    auto serialResult = AircraftSerial::create(serial.ToStdString());
+    if (!serialResult)
+    {
+        wxMessageBox("Số đăng ký máy bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    wxString seatNumber = wxGetTextFromUser(
+        "Nhập số ghế cần kiểm tra (VD: E001, B001, F001):",
+        "Kiểm tra ghế");
+    if (seatNumber.IsEmpty())
+        return;
+    auto availabilityResult = aircraftService->isSeatAvailable(*serialResult, seatNumber.ToStdString());
+    if (!availabilityResult)
+    {
+        wxMessageBox("Không thể kiểm tra ghế: " + availabilityResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    bool isAvailable = *availabilityResult;
+    wxString message = wxString::Format(
+        "Ghế %s trên máy bay %s:\n\n%s",
+        seatNumber,
+        serial,
+        isAvailable ? "✅ TRỐNG - Có thể đặt" : "❌ ĐÃ ĐƯỢC ĐẶT - Không thể đặt");
+    wxMessageBox(message, "Kết quả kiểm tra ghế", wxOK | wxICON_INFORMATION);
 }

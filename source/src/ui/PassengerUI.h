@@ -14,7 +14,8 @@ public:
     // Store services for navigation back to main window
     void setServices(std::shared_ptr<AircraftService> aircraft,
                      std::shared_ptr<FlightService> flight,
-                     std::shared_ptr<PassengerService> passenger);
+                     std::shared_ptr<PassengerService> passenger,
+                     std::shared_ptr<TicketService> ticket);
 
 private:
     wxPanel *panel;
@@ -34,6 +35,7 @@ private:
     std::shared_ptr<PassengerService> passengerService;
     std::shared_ptr<AircraftService> aircraftService;
     std::shared_ptr<FlightService> flightService;
+    std::shared_ptr<TicketService> ticketService;
 
     // Add CreateUI method declaration
     void CreateUI();

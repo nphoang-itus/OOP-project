@@ -15,7 +15,8 @@ public:
     // Store services for navigation back to main window
     void setServices(std::shared_ptr<AircraftService> aircraft,
                      std::shared_ptr<FlightService> flight,
-                     std::shared_ptr<PassengerService> passenger);
+                     std::shared_ptr<PassengerService> passenger,
+                     std::shared_ptr<TicketService> ticket);
 
 private:
     void OnBack(wxCommandEvent &event);
@@ -25,9 +26,6 @@ private:
     void OnDeleteAircraft(wxCommandEvent &event);
     void OnSearchById(wxCommandEvent &event);
     void OnSearchByRegistration(wxCommandEvent &event);
-    void OnViewSeatClasses(wxCommandEvent &event);
-    void OnViewAvailableSeats(wxCommandEvent &event);
-    void OnCheckSeatAvailability(wxCommandEvent &event);
     void OnCheckAircraftExists(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshAircraftList();
@@ -41,9 +39,6 @@ private:
     wxButton *deleteButton;
     wxButton *searchByIdButton;
     wxButton *searchByRegistrationButton;
-    wxButton *viewSeatClassesButton;
-    wxButton *viewAvailableSeatsButton;
-    wxButton *checkSeatAvailabilityButton;
     wxButton *checkAircraftExistsButton;
     wxListCtrl *aircraftList;
     wxStaticText *infoLabel;
@@ -51,6 +46,7 @@ private:
     std::shared_ptr<AircraftService> aircraftService;
     std::shared_ptr<FlightService> flightService;
     std::shared_ptr<PassengerService> passengerService;
+    std::shared_ptr<TicketService> ticketService;
 
     DECLARE_EVENT_TABLE()
 };
