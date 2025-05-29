@@ -225,10 +225,11 @@ Result<size_t> AircraftRepository::count() {
 
 Result<Aircraft> AircraftRepository::create(const Aircraft& aircraft) {
     try {
-        if (_logger) _logger->debug("Creating new aircraft");
+        if (_logger) _logger->debug("Creating new aircraft with serial: " + aircraft.getSerial().toString());
 
         // Start transaction
         _connection->beginTransaction();
+        if (_logger) _logger->debug("Started transaction for aircraft creation");
 
         // Insert aircraft
         auto prepareResult = _connection->prepareStatement(INSERT_QUERY);
@@ -237,6 +238,7 @@ Result<Aircraft> AircraftRepository::create(const Aircraft& aircraft) {
             return Failure<Aircraft>(CoreError("Failed to prepare statement", "PREPARE_FAILED"));
         }
         int stmtId = prepareResult.value();
+        if (_logger) _logger->debug("Prepared statement for aircraft creation");
 
         auto setSerialResult = _connection->setString(stmtId, 1, aircraft.getSerial().toString());
         auto setModelResult = _connection->setString(stmtId, 2, aircraft.getModel());
@@ -250,6 +252,7 @@ Result<Aircraft> AircraftRepository::create(const Aircraft& aircraft) {
             if (_logger) _logger->error("Failed to set parameters for creating aircraft");
             return Failure<Aircraft>(CoreError("Failed to set parameters", "PARAM_FAILED"));
         }
+        if (_logger) _logger->debug("Set all parameters for aircraft creation");
 
         auto result = _connection->executeStatement(stmtId);
         _connection->freeStatement(stmtId);
@@ -259,6 +262,7 @@ Result<Aircraft> AircraftRepository::create(const Aircraft& aircraft) {
             if (_logger) _logger->error("Failed to execute statement for creating aircraft");
             return Failure<Aircraft>(CoreError("Failed to execute statement", "EXECUTE_FAILED"));
         }
+        if (_logger) _logger->debug("Executed statement for aircraft creation");
 
         auto idResult = _connection->getLastInsertId();
         if (!idResult) {
@@ -266,11 +270,14 @@ Result<Aircraft> AircraftRepository::create(const Aircraft& aircraft) {
             if (_logger) _logger->error("Failed to get last insert id for aircraft");
             return Failure<Aircraft>(CoreError("Failed to get last insert id", "GET_ID_FAILED"));
         }
+        if (_logger) _logger->debug("Got last insert id: " + std::to_string(idResult.value()));
 
         _connection->commitTransaction();
+        if (_logger) _logger->debug("Committed transaction for aircraft creation");
 
         auto newAircraft = aircraft;
         newAircraft.setId(idResult.value());
+        if (_logger) _logger->debug("Set aircraft ID to: " + std::to_string(newAircraft.getId()));
         if (_logger) _logger->debug("Successfully created aircraft with id: " + std::to_string(idResult.value()));
         return Success(newAircraft);
     } catch (const std::exception& e) {
