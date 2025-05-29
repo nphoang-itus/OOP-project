@@ -38,58 +38,64 @@ void PassengerWindow::setServices(std::shared_ptr<AircraftService> aircraftServi
 void PassengerWindow::CreateUI()
 {
     panel = new wxPanel(this);
-
-    // Main sizer
     mainSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer *contentSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Title
-    wxStaticText *titleText = new wxStaticText(panel, wxID_ANY, wxT("Quản lý Hành khách"));
-    wxFont titleFont = titleText->GetFont();
-    titleFont.SetPointSize(16);
-    titleFont.SetWeight(wxFONTWEIGHT_BOLD);
-    titleText->SetFont(titleFont);
-    mainSizer->Add(titleText, 0, wxALL | wxCENTER, 10);
+    // Create back button
+    backButton = new wxButton(panel, 1001, wxT("Quay lại"), wxDefaultPosition, wxSize(100, 30));
+    buttonSizer->Add(backButton, 0, wxALL, 10);
 
-    // Info label
-    infoLabel = new wxStaticText(panel, wxID_ANY, wxT("Danh sách hành khách"));
-    mainSizer->Add(infoLabel, 0, wxALL | wxEXPAND, 5);
+    // Create main function buttons
+    showButton = new wxButton(panel, 1002, wxT("Hiển thị"), wxDefaultPosition, wxSize(200, 50));
+    addButton = new wxButton(panel, 1003, wxT("Thêm"), wxDefaultPosition, wxSize(200, 50));
+    editButton = new wxButton(panel, 1004, wxT("Sửa"), wxDefaultPosition, wxSize(200, 50));
+    deleteButton = new wxButton(panel, 1005, wxT("Xóa"), wxDefaultPosition, wxSize(200, 50));
+    searchByIdButton = new wxButton(panel, 1006, wxT("Tìm theo ID"), wxDefaultPosition, wxSize(200, 50));
+    searchByPassportButton = new wxButton(panel, 1007, wxT("Tìm theo hộ chiếu"), wxDefaultPosition, wxSize(200, 50));
+    checkBookingsButton = new wxButton(panel, 1008, wxT("Kiểm tra đặt chỗ"), wxDefaultPosition, wxSize(200, 50));
+    viewStatsButton = new wxButton(panel, 1009, wxT("Thống kê"), wxDefaultPosition, wxSize(200, 50));
 
-    // Passenger list
-    passengerList = new wxListCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
+    // Create passenger list
+    passengerList = new wxListCtrl(panel, wxID_ANY, wxDefaultPosition, wxSize(1000, 300), wxLC_REPORT | wxLC_SINGLE_SEL);
     passengerList->AppendColumn(wxT("ID"), wxLIST_FORMAT_LEFT, 80);
     passengerList->AppendColumn(wxT("Họ tên"), wxLIST_FORMAT_LEFT, 180);
     passengerList->AppendColumn(wxT("Hộ chiếu"), wxLIST_FORMAT_LEFT, 140);
     passengerList->AppendColumn(wxT("Email"), wxLIST_FORMAT_LEFT, 160);
     passengerList->AppendColumn(wxT("Điện thoại"), wxLIST_FORMAT_LEFT, 130);
     passengerList->AppendColumn(wxT("Địa chỉ"), wxLIST_FORMAT_LEFT, 320);
-    mainSizer->Add(passengerList, 1, wxALL | wxEXPAND, 50);
 
-    // Buttons
-    wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    // Create info label
+    infoLabel = new wxStaticText(panel, wxID_ANY, wxT(""), wxDefaultPosition, wxSize(800, 50));
+    infoLabel->Wrap(800);
 
-    backButton = new wxButton(panel, 1001, wxT("Quay lại"));
-    showButton = new wxButton(panel, 1002, wxT("Hiển thị"));
-    addButton = new wxButton(panel, 1003, wxT("Thêm"));
-    editButton = new wxButton(panel, 1004, wxT("Sửa"));
-    deleteButton = new wxButton(panel, 1005, wxT("Xóa"));
-    searchByIdButton = new wxButton(panel, 1006, wxT("Tìm theo ID"));
-    searchByPassportButton = new wxButton(panel, 1007, wxT("Tìm theo hộ chiếu"));
-    checkBookingsButton = new wxButton(panel, 1008, wxT("Kiểm tra đặt chỗ"));
-    viewStatsButton = new wxButton(panel, 1009, wxT("Thống kê"));
+    // Add buttons to content sizer (3 rows)
+    wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
+    row1->Add(showButton, 0, wxALL, 10);
+    row1->Add(addButton, 0, wxALL, 10);
+    row1->Add(editButton, 0, wxALL, 10);
+    row1->Add(deleteButton, 0, wxALL, 10);
 
-    buttonSizer->Add(backButton, 0, wxALL, 5);
-    buttonSizer->Add(showButton, 0, wxALL, 5);
-    buttonSizer->Add(addButton, 0, wxALL, 5);
-    buttonSizer->Add(editButton, 0, wxALL, 5);
-    buttonSizer->Add(deleteButton, 0, wxALL, 5);
-    buttonSizer->Add(searchByIdButton, 0, wxALL, 5);
-    buttonSizer->Add(searchByPassportButton, 0, wxALL, 5);
-    buttonSizer->Add(checkBookingsButton, 0, wxALL, 5);
-    buttonSizer->Add(viewStatsButton, 0, wxALL, 5);
+    wxBoxSizer *row2 = new wxBoxSizer(wxHORIZONTAL);
+    row2->Add(searchByIdButton, 0, wxALL, 10);
+    row2->Add(searchByPassportButton, 0, wxALL, 10);
 
-    mainSizer->Add(buttonSizer, 0, wxALL | wxCENTER, 10);
+    wxBoxSizer *row3 = new wxBoxSizer(wxHORIZONTAL);
+    row3->Add(checkBookingsButton, 0, wxALL, 10);
+    row3->Add(viewStatsButton, 0, wxALL, 10);
+
+    contentSizer->Add(row1, 0, wxALIGN_CENTER);
+    contentSizer->Add(row2, 0, wxALIGN_CENTER);
+    contentSizer->Add(row3, 0, wxALIGN_CENTER);
+    contentSizer->Add(passengerList, 1, wxALL | wxEXPAND, 10);
+    contentSizer->Add(infoLabel, 0, wxALL | wxALIGN_CENTER, 10);
+
+    // Add sizers to main sizer
+    mainSizer->Add(buttonSizer, 0, wxEXPAND);
+    mainSizer->Add(contentSizer, 1, wxEXPAND);
 
     panel->SetSizer(mainSizer);
+    Centre();
 }
 
 void PassengerWindow::RefreshPassengerList()
@@ -102,6 +108,8 @@ void PassengerWindow::RefreshPassengerList()
     auto passengersResult = passengerService->getAllPassengers();
     if (!passengersResult)
     {
+        infoLabel->SetLabel(wxString::Format(wxT("Lỗi tải danh sách hành khách: %s"),
+                                           passengersResult.error().message.c_str()));
         wxMessageBox(wxString::Format(wxT("Lỗi tải danh sách hành khách: %s"),
                                       passengersResult.error().message.c_str()),
                      wxT("Lỗi"), wxOK | wxICON_ERROR);
@@ -112,7 +120,6 @@ void PassengerWindow::RefreshPassengerList()
     for (size_t i = 0; i < passengers.size(); ++i)
     {
         const auto &passenger = passengers[i];
-
         long index = passengerList->InsertItem(i, wxString::Format(wxT("%d"), passenger.getId()));
         passengerList->SetItem(index, 1, wxString(passenger.getName().c_str(), wxConvUTF8));
         passengerList->SetItem(index, 2, wxString(passenger.getPassport().toString().c_str(), wxConvUTF8));
@@ -120,6 +127,8 @@ void PassengerWindow::RefreshPassengerList()
         passengerList->SetItem(index, 4, wxString(passenger.getContactInfo().getPhone().c_str(), wxConvUTF8));
         passengerList->SetItem(index, 5, wxString(passenger.getContactInfo().getAddress().c_str(), wxConvUTF8));
     }
+    
+    infoLabel->SetLabel(wxString::Format(wxT("Hiển thị %zu hành khách"), passengers.size()));
 }
 
 void PassengerWindow::OnBack(wxCommandEvent &event)
@@ -449,6 +458,7 @@ void PassengerWindow::OnSearchById(wxCommandEvent &event)
     auto passengersResult = passengerService->getAllPassengers();
     if (!passengersResult)
     {
+        infoLabel->SetLabel(wxT("Lỗi tải danh sách hành khách!"));
         wxMessageBox(wxT("Lỗi tải danh sách hành khách!"), wxT("Lỗi"), wxOK | wxICON_ERROR);
         return;
     }
@@ -474,8 +484,13 @@ void PassengerWindow::OnSearchById(wxCommandEvent &event)
         }
     }
 
-    if (!found)
+    if (found)
     {
+        infoLabel->SetLabel(wxString::Format(wxT("Tìm thấy hành khách có ID: %ld"), searchId));
+    }
+    else
+    {
+        infoLabel->SetLabel(wxString::Format(wxT("Không tìm thấy hành khách có ID: %ld"), searchId));
         wxMessageBox(wxT("Không tìm thấy hành khách!"), wxT("Thông báo"), wxOK | wxICON_INFORMATION);
     }
 }
@@ -499,6 +514,8 @@ void PassengerWindow::OnSearchByPassport(wxCommandEvent &event)
     auto passengerResult = passengerService->getPassenger(*passportResult);
     if (!passengerResult)
     {
+        infoLabel->SetLabel(wxString::Format(wxT("Không tìm thấy hành khách có hộ chiếu: %s"), 
+                                           passportDialog.GetValue()));
         wxMessageBox(wxT("Không tìm thấy hành khách!"), wxT("Thông báo"), wxOK | wxICON_INFORMATION);
         return;
     }
@@ -513,6 +530,9 @@ void PassengerWindow::OnSearchByPassport(wxCommandEvent &event)
     passengerList->SetItem(index, 3, wxString(passenger.getContactInfo().getEmail().c_str(), wxConvUTF8));
     passengerList->SetItem(index, 4, wxString(passenger.getContactInfo().getPhone().c_str(), wxConvUTF8));
     passengerList->SetItem(index, 5, wxString(passenger.getContactInfo().getAddress().c_str(), wxConvUTF8));
+    
+    infoLabel->SetLabel(wxString::Format(wxT("Tìm thấy hành khách: %s"), 
+                                       wxString(passenger.getName().c_str(), wxConvUTF8)));
 }
 
 void PassengerWindow::OnListItemSelected(wxListEvent &event)
