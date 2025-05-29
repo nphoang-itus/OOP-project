@@ -1,5 +1,11 @@
 #include "FlightUI.h"
 #include "utils/utils.h"
+#include "../core/value_objects/flight_number/FlightNumber.h"
+#include "../core/value_objects/route/Route.h"
+#include "../core/value_objects/schedule/Schedule.h"
+#include "../core/value_objects/aircraft_serial/AircraftSerial.h"
+#include "../core/value_objects/flight_status/FlightStatus.h"
+#include "../core/entities/Flight.h"
 #include <iomanip>
 #include <sstream>
 #include <ctime>
@@ -220,8 +226,8 @@ void FlightWindow::OnAddFlight(wxCommandEvent &event)
         }
 
         // Combine date and time for processing
-        std::string departure = departureDate + " " + departureTime + ":00";
-        std::string arrival = arrivalDate + " " + arrivalTime + ":00";
+        std::string departure = departureDate + " " + departureTime;
+        std::string arrival = arrivalDate + " " + arrivalTime;
 
         // Create flight using factory method would be called here
         // For now just show success message
@@ -242,6 +248,7 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
         return;
     }
 
+    // Get current flight ID first
     wxListItem item;
     item.SetId(itemIndex);
     item.SetColumn(0);
@@ -249,35 +256,43 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
     flightList->GetItem(item);
     std::string flightId = item.GetText().ToStdString();
 
-    // Get current flight data from list
+    // Get current flight data from list - reset item id each time
+    item.SetId(itemIndex);
     item.SetColumn(1);
     flightList->GetItem(item);
     std::string currentFlightNumber = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(2);
     flightList->GetItem(item);
     std::string currentOrigin = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(3);
     flightList->GetItem(item);
     std::string currentDestination = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(4);
     flightList->GetItem(item);
     std::string currentDepartureDate = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(5);
     flightList->GetItem(item);
     std::string currentDepartureTime = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(6);
     flightList->GetItem(item);
     std::string currentArrivalDate = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(7);
     flightList->GetItem(item);
     std::string currentArrivalTime = item.GetText().ToStdString();
 
+    item.SetId(itemIndex);
     item.SetColumn(8);
     flightList->GetItem(item);
     std::string currentAircraft = item.GetText().ToStdString();
@@ -369,12 +384,145 @@ void FlightWindow::OnEditFlight(wxCommandEvent &event)
         std::string arrivalTime = arrivalTimeCtrl->GetValue().ToStdString();
         std::string status = statusChoice->GetStringSelection().ToStdString();
 
-        // Combine date and time for processing if needed
-        std::string departure = departureDate + " " + departureTime + ":00";
-        std::string arrival = arrivalDate + " " + arrivalTime + ":00";
+        // Validate input
+        if (flightNumber.empty() || origin.empty() || destination.empty() ||
+            aircraft.empty() || departureDate.empty() || departureTime.empty() ||
+            arrivalDate.empty() || arrivalTime.empty())
+        {
+            wxMessageBox("Vui lòng điền đầy đủ thông tin", "Lỗi", wxOK | wxICON_ERROR);
+            dialog->Destroy();
+            return;
+        }
 
-        wxMessageBox("Cập nhật chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
-        RefreshFlightList();
+        try
+        {
+            // Create FlightNumber value object to check if flight exists
+            auto checkFlightNumberResult = FlightNumber::create(flightNumber);
+            if (!checkFlightNumberResult)
+            {
+                wxMessageBox("Số hiệu chuyến bay không hợp lệ: " + checkFlightNumberResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Check if the flight exists (using the flight number from the form)
+            auto existingFlightResult = flightService->getFlight(*checkFlightNumberResult);
+            if (!existingFlightResult)
+            {
+                wxMessageBox("Không thể tìm thấy chuyến bay để cập nhật: " + existingFlightResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Get the flight ID from the existing flight
+            int existingFlightId = existingFlightResult.value().getId();
+
+            // Create FlightNumber value object
+            auto flightNumberResult = FlightNumber::create(flightNumber);
+            if (!flightNumberResult)
+            {
+                wxMessageBox("Số hiệu chuyến bay không hợp lệ: " + flightNumberResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Get the existing route with airport codes from the current flight
+            const auto &existingRoute = existingFlightResult.value().getRoute();
+
+            // Create Route value object using the existing airport codes but potentially updated city names
+            auto routeResult = Route::create(origin, existingRoute.getOriginCode(), destination, existingRoute.getDestinationCode());
+            if (!routeResult)
+            {
+                wxMessageBox("Tuyến đường không hợp lệ: " + routeResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Find aircraft by serial number
+            auto aircraftSerialResult = AircraftSerial::create(aircraft);
+            if (!aircraftSerialResult)
+            {
+                wxMessageBox("Số hiệu máy bay không hợp lệ: " + aircraftSerialResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            auto aircraftResult = aircraftService->getAircraft(*aircraftSerialResult);
+            if (!aircraftResult)
+            {
+                wxMessageBox("Không tìm thấy máy bay với số hiệu: " + aircraft,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+            auto aircraftPtr = std::make_shared<Aircraft>(aircraftResult.value());
+
+            // Create Schedule value object from separate date and time strings
+            std::string departureDateTime = departureDate + " " + departureTime;
+            std::string arrivalDateTime = arrivalDate + " " + arrivalTime;
+
+            auto scheduleResult = Schedule::create(departureDateTime, arrivalDateTime);
+            if (!scheduleResult)
+            {
+                wxMessageBox("Lịch trình không hợp lệ: " + scheduleResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Convert status from Vietnamese to enum
+            FlightStatus flightStatus;
+            try
+            {
+                flightStatus = FlightStatusUtil::fromString(status);
+            }
+            catch (const std::exception &e)
+            {
+                wxMessageBox("Trạng thái chuyến bay không hợp lệ: " + status,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Create updated flight object
+            auto updatedFlightResult = Flight::create(*flightNumberResult, *routeResult,
+                                                      *scheduleResult, aircraftPtr);
+            if (!updatedFlightResult)
+            {
+                wxMessageBox("Không thể tạo chuyến bay: " + updatedFlightResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            // Set the ID and status for the updated flight
+            auto updatedFlight = updatedFlightResult.value();
+            updatedFlight.setId(existingFlightId);
+            updatedFlight.setStatus(flightStatus);
+
+            // Update the flight in the database
+            auto updateResult = flightService->updateFlight(updatedFlight);
+            if (!updateResult)
+            {
+                wxMessageBox("Lỗi khi cập nhật chuyến bay: " + updateResult.error().message,
+                             "Lỗi", wxOK | wxICON_ERROR);
+                dialog->Destroy();
+                return;
+            }
+
+            wxMessageBox("Cập nhật chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
+            RefreshFlightList();
+            infoLabel->SetLabel("Đã cập nhật chuyến bay: " + flightNumber);
+        }
+        catch (const std::exception &e)
+        {
+            wxMessageBox("Lỗi: " + std::string(e.what()), "Lỗi", wxOK | wxICON_ERROR);
+        }
     }
 
     dialog->Destroy();
@@ -444,12 +592,12 @@ void FlightWindow::OnSearchById(wxCommandEvent &event)
                     // Set departure date and time using utils function
                     std::string departureDateTime = convertTimeToString(departure);
                     flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-                    flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+                    flightList->SetItem(index, 5, departureDateTime.substr(11, 5)); // Time: HH:MM
 
                     // Set arrival date and time using utils function
                     std::string arrivalDateTime = convertTimeToString(arrival);
                     flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-                    flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
+                    flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5)); // Time: HH:MM
 
                     // Aircraft info
                     if (flight.getAircraft())
@@ -520,12 +668,12 @@ void FlightWindow::OnSearchByFlightNumber(wxCommandEvent &event)
                 // Set departure date and time using utils function
                 std::string departureDateTime = convertTimeToString(departure);
                 flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-                flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+                flightList->SetItem(index, 5, departureDateTime.substr(11, 5)); // Time: HH:MM
 
                 // Set arrival date and time using utils function
                 std::string arrivalDateTime = convertTimeToString(arrival);
                 flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-                flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
+                flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5)); // Time: HH:MM
 
                 // Aircraft info
                 if (flight.getAircraft())
@@ -590,12 +738,12 @@ void FlightWindow::RefreshFlightList()
             // Set departure date and time using utils function
             std::string departureDateTime = convertTimeToString(departure);
             flightList->SetItem(index, 4, departureDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-            flightList->SetItem(index, 5, departureDateTime.substr(11, 5));  // Time: HH:MM
+            flightList->SetItem(index, 5, departureDateTime.substr(11, 5)); // Time: HH:MM
 
             // Set arrival date and time using utils function
             std::string arrivalDateTime = convertTimeToString(arrival);
             flightList->SetItem(index, 6, arrivalDateTime.substr(0, 10)); // Date: YYYY-MM-DD
-            flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5));  // Time: HH:MM
+            flightList->SetItem(index, 7, arrivalDateTime.substr(11, 5)); // Time: HH:MM
 
             // Aircraft info
             if (flight.getAircraft())

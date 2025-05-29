@@ -109,7 +109,7 @@ void PassengerWindow::RefreshPassengerList()
     if (!passengersResult)
     {
         infoLabel->SetLabel(wxString::Format(wxT("Lỗi tải danh sách hành khách: %s"),
-                                           passengersResult.error().message.c_str()));
+                                             passengersResult.error().message.c_str()));
         wxMessageBox(wxString::Format(wxT("Lỗi tải danh sách hành khách: %s"),
                                       passengersResult.error().message.c_str()),
                      wxT("Lỗi"), wxOK | wxICON_ERROR);
@@ -127,7 +127,7 @@ void PassengerWindow::RefreshPassengerList()
         passengerList->SetItem(index, 4, wxString(passenger.getContactInfo().getPhone().c_str(), wxConvUTF8));
         passengerList->SetItem(index, 5, wxString(passenger.getContactInfo().getAddress().c_str(), wxConvUTF8));
     }
-    
+
     infoLabel->SetLabel(wxString::Format(wxT("Hiển thị %zu hành khách"), passengers.size()));
 }
 
@@ -158,50 +158,76 @@ void PassengerWindow::OnAddPassenger(wxCommandEvent &event)
         return;
 
     // Create a custom dialog with all fields
-    wxDialog dialog(this, wxID_ANY, wxT("Thêm hành khách"), wxDefaultPosition, wxSize(500, 500));
+    wxDialog dialog(this, wxID_ANY, wxT("Thêm hành khách"), wxDefaultPosition, wxSize(450, 400));
+    dialog.Centre();
 
     wxPanel *panel = new wxPanel(&dialog);
     wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Add top margin
-    mainSizer->Add(0, 10, 0, wxEXPAND);
+    // Add title
+    wxStaticText *titleText = new wxStaticText(panel, wxID_ANY, wxT("THÔNG TIN HÀNH KHÁCH"),
+                                               wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    wxFont titleFont = titleText->GetFont();
+    titleFont.SetPointSize(12);
+    titleFont.SetWeight(wxFONTWEIGHT_BOLD);
+    titleText->SetFont(titleFont);
+    mainSizer->Add(titleText, 0, wxALL | wxALIGN_CENTER, 15);
+
+    // Create form sizer with proper alignment
+    wxFlexGridSizer *formSizer = new wxFlexGridSizer(5, 2, 10, 10);
+    formSizer->AddGrowableCol(1, 1);
 
     // Name field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Họ tên:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
-    wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(nameCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Họ tên:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+    wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString,
+                                          wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(nameCtrl, 1, wxEXPAND, 0);
 
     // Email field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Email:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
-    wxTextCtrl *emailCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(emailCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Email:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+    wxTextCtrl *emailCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString,
+                                           wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(emailCtrl, 1, wxEXPAND, 0);
 
     // Phone field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Số điện thoại:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
-    wxTextCtrl *phoneCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(phoneCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Điện thoại:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+    wxTextCtrl *phoneCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString,
+                                           wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(phoneCtrl, 1, wxEXPAND, 0);
 
     // Address field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Địa chỉ:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
-    wxTextCtrl *addressCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(addressCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Địa chỉ:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+    wxTextCtrl *addressCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString,
+                                             wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(addressCtrl, 1, wxEXPAND, 0);
 
     // Passport field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Số hộ chiếu:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
-    wxTextCtrl *passportCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(passportCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Hộ chiếu:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
+    wxTextCtrl *passportCtrl = new wxTextCtrl(panel, wxID_ANY, wxEmptyString,
+                                              wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(passportCtrl, 1, wxEXPAND, 0);
 
-    // Add space before buttons
-    mainSizer->Add(0, 30, 0, wxEXPAND);
+    mainSizer->Add(formSizer, 0, wxALL | wxEXPAND, 20);
+
+    // Add some space instead of separator line
+    mainSizer->Add(0, 10, 0, wxEXPAND);
 
     // Buttons
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton *okButton = new wxButton(panel, wxID_OK, wxT("Thêm"), wxDefaultPosition, wxSize(120, 40));
-    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, wxT("Hủy"), wxDefaultPosition, wxSize(120, 40));
-    buttonSizer->Add(okButton, 0, wxALL, 15);
-    buttonSizer->Add(cancelButton, 0, wxALL, 15);
+    wxButton *okButton = new wxButton(panel, wxID_OK, wxT("Thêm"), wxDefaultPosition, wxSize(100, 35));
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, wxT("Hủy"), wxDefaultPosition, wxSize(100, 35));
 
-    mainSizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxBOTTOM, 20);
+    buttonSizer->AddStretchSpacer();
+    buttonSizer->Add(okButton, 0, wxRIGHT, 10);
+    buttonSizer->Add(cancelButton, 0, 0, 0);
+    buttonSizer->AddStretchSpacer();
+
+    mainSizer->Add(buttonSizer, 0, wxALL | wxEXPAND, 20);
 
     panel->SetSizer(mainSizer);
 
@@ -279,60 +305,81 @@ void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
     const auto &currentPassenger = *passengerResult;
 
     // Create a custom dialog with all fields pre-filled
-    wxDialog dialog(this, wxID_ANY, wxT("Sửa hành khách"), wxDefaultPosition, wxSize(500, 500));
+    wxDialog dialog(this, wxID_ANY, wxT("Sửa hành khách"), wxDefaultPosition, wxSize(450, 400));
+    dialog.Centre();
 
     wxPanel *panel = new wxPanel(&dialog);
     wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Add top margin
-    mainSizer->Add(0, 10, 0, wxEXPAND);
+    // Add title
+    wxStaticText *titleText = new wxStaticText(panel, wxID_ANY, wxT("CHỈNH SỬA THÔNG TIN HÀNH KHÁCH"),
+                                               wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+    wxFont titleFont = titleText->GetFont();
+    titleFont.SetPointSize(12);
+    titleFont.SetWeight(wxFONTWEIGHT_BOLD);
+    titleText->SetFont(titleFont);
+    mainSizer->Add(titleText, 0, wxALL | wxALIGN_CENTER, 15);
+
+    // Create form sizer with proper alignment
+    wxFlexGridSizer *formSizer = new wxFlexGridSizer(5, 2, 10, 10);
+    formSizer->AddGrowableCol(1, 1);
 
     // Name field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Họ tên:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Họ tên:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
     wxTextCtrl *nameCtrl = new wxTextCtrl(panel, wxID_ANY,
                                           wxString(currentPassenger.getName().c_str(), wxConvUTF8),
-                                          wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(nameCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+                                          wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(nameCtrl, 1, wxEXPAND, 0);
 
     // Email field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Email:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Email:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
     wxTextCtrl *emailCtrl = new wxTextCtrl(panel, wxID_ANY,
                                            wxString(currentPassenger.getContactInfo().getEmail().c_str(), wxConvUTF8),
-                                           wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(emailCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+                                           wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(emailCtrl, 1, wxEXPAND, 0);
 
     // Phone field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Số điện thoại:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Điện thoại:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
     wxTextCtrl *phoneCtrl = new wxTextCtrl(panel, wxID_ANY,
                                            wxString(currentPassenger.getContactInfo().getPhone().c_str(), wxConvUTF8),
-                                           wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(phoneCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+                                           wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(phoneCtrl, 1, wxEXPAND, 0);
 
     // Address field
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Địa chỉ:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Địa chỉ:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
     wxTextCtrl *addressCtrl = new wxTextCtrl(panel, wxID_ANY,
                                              wxString(currentPassenger.getContactInfo().getAddress().c_str(), wxConvUTF8),
-                                             wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(addressCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+                                             wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(addressCtrl, 1, wxEXPAND, 0);
 
     // Passport field (editable for editing)
-    mainSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Số hộ chiếu:")), 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    formSizer->Add(new wxStaticText(panel, wxID_ANY, wxT("Hộ chiếu:")),
+                   0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
     wxTextCtrl *passportCtrl = new wxTextCtrl(panel, wxID_ANY,
                                               wxString(currentPassenger.getPassport().toString().c_str(), wxConvUTF8),
-                                              wxDefaultPosition, wxSize(400, 30));
-    mainSizer->Add(passportCtrl, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+                                              wxDefaultPosition, wxSize(250, 25));
+    formSizer->Add(passportCtrl, 1, wxEXPAND, 0);
 
-    // Add space before buttons
-    mainSizer->Add(0, 30, 0, wxEXPAND);
+    mainSizer->Add(formSizer, 0, wxALL | wxEXPAND, 20);
+
+    // Add some space instead of separator line
+    mainSizer->Add(0, 10, 0, wxEXPAND);
 
     // Buttons
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton *okButton = new wxButton(panel, wxID_OK, wxT("Cập nhật"), wxDefaultPosition, wxSize(120, 40));
-    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, wxT("Hủy"), wxDefaultPosition, wxSize(120, 40));
-    buttonSizer->Add(okButton, 0, wxALL, 15);
-    buttonSizer->Add(cancelButton, 0, wxALL, 15);
+    wxButton *okButton = new wxButton(panel, wxID_OK, wxT("Cập nhật"), wxDefaultPosition, wxSize(100, 35));
+    wxButton *cancelButton = new wxButton(panel, wxID_CANCEL, wxT("Hủy"), wxDefaultPosition, wxSize(100, 35));
 
-    mainSizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxBOTTOM, 20);
+    buttonSizer->AddStretchSpacer();
+    buttonSizer->Add(okButton, 0, wxRIGHT, 10);
+    buttonSizer->Add(cancelButton, 0, 0, 0);
+    buttonSizer->AddStretchSpacer();
+
+    mainSizer->Add(buttonSizer, 0, wxALL | wxEXPAND, 20);
 
     panel->SetSizer(mainSizer);
 
@@ -364,6 +411,9 @@ void PassengerWindow::OnEditPassenger(wxCommandEvent &event)
                      wxT("Lỗi"), wxOK | wxICON_ERROR);
         return;
     }
+
+    // Preserve the original passenger ID for update
+    updatedPassengerResult->setId(currentPassenger.getId());
 
     auto updateResult = passengerService->updatePassenger(*updatedPassengerResult);
     if (!updateResult)
@@ -514,8 +564,8 @@ void PassengerWindow::OnSearchByPassport(wxCommandEvent &event)
     auto passengerResult = passengerService->getPassenger(*passportResult);
     if (!passengerResult)
     {
-        infoLabel->SetLabel(wxString::Format(wxT("Không tìm thấy hành khách có hộ chiếu: %s"), 
-                                           passportDialog.GetValue()));
+        infoLabel->SetLabel(wxString::Format(wxT("Không tìm thấy hành khách có hộ chiếu: %s"),
+                                             passportDialog.GetValue()));
         wxMessageBox(wxT("Không tìm thấy hành khách!"), wxT("Thông báo"), wxOK | wxICON_INFORMATION);
         return;
     }
@@ -530,9 +580,9 @@ void PassengerWindow::OnSearchByPassport(wxCommandEvent &event)
     passengerList->SetItem(index, 3, wxString(passenger.getContactInfo().getEmail().c_str(), wxConvUTF8));
     passengerList->SetItem(index, 4, wxString(passenger.getContactInfo().getPhone().c_str(), wxConvUTF8));
     passengerList->SetItem(index, 5, wxString(passenger.getContactInfo().getAddress().c_str(), wxConvUTF8));
-    
-    infoLabel->SetLabel(wxString::Format(wxT("Tìm thấy hành khách: %s"), 
-                                       wxString(passenger.getName().c_str(), wxConvUTF8)));
+
+    infoLabel->SetLabel(wxString::Format(wxT("Tìm thấy hành khách: %s"),
+                                         wxString(passenger.getName().c_str(), wxConvUTF8)));
 }
 
 void PassengerWindow::OnListItemSelected(wxListEvent &event)

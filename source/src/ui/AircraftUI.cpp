@@ -160,7 +160,7 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
     {
         std::string registration = registrationCtrl->GetValue().ToStdString();
         std::string type = typeCtrl->GetValue().ToStdString();
-        
+
         long economySeats, businessSeats, firstSeats;
         if (!economySeatsCtrl->GetValue().ToLong(&economySeats))
         {
@@ -174,7 +174,7 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
         {
             firstSeats = 0;
         }
-        
+
         std::string status = statusCtrl->GetValue().ToStdString();
         if (status.empty())
         {
@@ -182,9 +182,9 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
         }
 
         // Create seat layout string with proper format
-        std::string seatLayout = "E:" + std::to_string(economySeats) + 
-                               ",B:" + std::to_string(businessSeats) + 
-                               ",F:" + std::to_string(firstSeats);
+        std::string seatLayout = "E:" + std::to_string(economySeats) +
+                                 ",B:" + std::to_string(businessSeats) +
+                                 ",F:" + std::to_string(firstSeats);
 
         // Create aircraft using factory method
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
@@ -277,7 +277,7 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     {
         std::string registration = registrationCtrl->GetValue().ToStdString();
         std::string type = typeCtrl->GetValue().ToStdString();
-        
+
         long economySeats, businessSeats, firstSeats;
         if (!economySeatsCtrl->GetValue().ToLong(&economySeats))
         {
@@ -291,7 +291,7 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
         {
             firstSeats = 0;
         }
-        
+
         std::string status = statusCtrl->GetValue().ToStdString();
         if (status.empty())
         {
@@ -299,9 +299,9 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
         }
 
         // Create seat layout string with proper format
-        std::string seatLayout = "E:" + std::to_string(economySeats) + 
-                               ",B:" + std::to_string(businessSeats) + 
-                               ",F:" + std::to_string(firstSeats);
+        std::string seatLayout = "E:" + std::to_string(economySeats) +
+                                 ",B:" + std::to_string(businessSeats) +
+                                 ",F:" + std::to_string(firstSeats);
 
         // Create aircraft using factory method
         auto aircraftResult = Aircraft::create(registration, type, seatLayout);
@@ -310,6 +310,9 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
             wxMessageBox("Failed to create aircraft: " + aircraftResult.error().message, "Error", wxOK | wxICON_ERROR);
             return;
         }
+
+        // Set the correct ID for the updated aircraft
+        aircraftResult->setId(aircraftId);
 
         // Update aircraft using service
         auto updateResult = aircraftService->updateAircraft(*aircraftResult);
