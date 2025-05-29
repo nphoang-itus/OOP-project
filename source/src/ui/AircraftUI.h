@@ -28,6 +28,7 @@ private:
     void OnViewSeatClasses(wxCommandEvent &event);
     void OnViewAvailableSeats(wxCommandEvent &event);
     void OnCheckSeatAvailability(wxCommandEvent &event);
+    void OnCheckAircraftExists(wxCommandEvent &event);
     void OnListItemSelected(wxListEvent &event);
     void RefreshAircraftList();
 
@@ -43,6 +44,7 @@ private:
     wxButton *viewSeatClassesButton;
     wxButton *viewAvailableSeatsButton;
     wxButton *checkSeatAvailabilityButton;
+    wxButton *checkAircraftExistsButton;
     wxListCtrl *aircraftList;
     wxStaticText *infoLabel;
 
