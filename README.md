@@ -52,10 +52,10 @@ Phân công chi tiết được trình bày trong spreadsheet  [milestone](https
 #### Tỉ lệ đóng góp của các thành viên vào dự án
 | Tên thành viên | Số task hoàn thành | Tỉ lệ đóng góp |
 |:-:|:-:|:-:|
-| Nguyễn Phúc Hoàng |  |  |
-| Dương Nhật Cường |  |  |
+| Nguyễn Phúc Hoàng | 63 | 61.76% |
+| Dương Nhật Cường | 39 | 38.24% |
 
-#### Tỉ lệ điểm của các thành viên: Chia đều
+#### Tỉ lệ điểm của các thành viên: *Chia đều*
 
 ## II. Cách thức đánh giá:
 
@@ -1830,7 +1830,7 @@ classDiagram
     Ticket --> Price
 ```
 
-#### 5.3. Entity Relationship Diagram cho Cơ sở dữn liệu
+#### 5.3. Entity Relationship Diagram cho Cơ sở dữ liệu
 
 ```mermaid
 erDiagram
@@ -1903,39 +1903,6 @@ erDiagram
         boolean is_available
     }
 ```
-
-#### 5.4. Các Module Chính
-
-1. **Core Module** (`/src/core/`)
-   - Chứa các entity và value objects
-   - Định nghĩa các interface cơ bản
-   - Xử lý validation và business rules
-
-2. **Database Module** (`/src/database/`)
-   - Quản lý kết nối database
-   - Xử lý các thao tác CRUD cơ bản
-   - Triển khai cho MySQL
-
-3. **Repository Module** (`/src/repositories/`)
-   - Interface và implementation cho data access
-   - Tách biệt business logic và data access
-   - Hỗ trợ caching và optimization
-
-4. **Service Module** (`/src/services/`)
-   - Xử lý business logic
-   - Quản lý transaction
-   - Validation và error handling
-
-5. **Utils Module** (`/src/utils/`)
-   - Các helper functions
-   - Logger
-   - Error handling
-   - Common utilities
-
-6. **Tests Module** (`/src/tests/`)
-   - Unit tests
-   - Integration tests
-   - Test utilities và mocks
 
 ### 6. Các chủ đề nâng cao (15%)
 
@@ -2166,35 +2133,7 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
 
 ##### 1. Docker Compose cho Development Environment
 - **Mô tả:** Sử dụng Docker Compose để tạo và quản lý môi trường phát triển với MySQL server
-- **Triển khai trong dự án:**
-  ```yaml
-  services:
-    mysql:
-      image: mysql:8.0
-      container_name: airlines_mysql
-      command: --default-authentication-plugin=mysql_native_password --mysqlx=ON
-      environment:
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-phucHoang133205}
-        MYSQL_DATABASE: ${MYSQL_DATABASE:-airlines_db}
-        MYSQL_USER: ${MYSQL_USER:-nphoang}
-        MYSQL_PASSWORD: ${MYSQL_PASSWORD:-phucHoang133205}
-        TZ: Asia/Ho_Chi_Minh
-      ports:
-        - "3306:3306"   # Classic MySQL protocol
-        - "33060:33060" # X Protocol port
-      volumes:
-        - mysql_data:/var/lib/mysql
-        - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      healthcheck:
-        test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-        interval: 5s
-        timeout: 10s
-        retries: 10
-        start_period: 10s
 
-  volumes:
-    mysql_data:
-  ```
 - **Lợi ích:**
   * Môi trường phát triển nhất quán
   * Dễ dàng setup và chạy
@@ -2208,10 +2147,10 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
 - **Triển khai trong dự án:**
   ```yaml
   environment:
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-phucHoang133205}
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1162005}
     MYSQL_DATABASE: ${MYSQL_DATABASE:-airlines_db}
-    MYSQL_USER: ${MYSQL_USER:-nphoang}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD:-phucHoang133205}
+    MYSQL_USER: ${MYSQL_USER:-cuong116}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1162005}
   ```
 - **Lợi ích:**
   * Tách biệt cấu hình và code
@@ -2221,240 +2160,180 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
 
 ## III. Hướng dẫn chạy chương trình
 
-### 1. Cài đặt thủ công
+### 1. Yêu cầu hệ thống
 
-#### 1.1. Yêu cầu hệ thống
-- Hệ điều hành: macOS, Linux hoặc Windows
-- C++ Compiler: GCC 9.0+ hoặc Clang 10.0+
-- CMake 3.15+
-- MySQL Server 8.0+
-- MySQL Connector/C++ 8.0+
-- Google Test Framework (cho testing)
+#### Phần mềm cần thiết:
+- **Hệ điều hành**: Ưu tiên MacOS (do phần mềm được cài đặt trên MacOS)
+- **Docker và Docker Compose**: Để chạy cơ sở dữ liệu MySQL
+- **CMake**: Phiên bản 3.10 trở lên
+- **C++ Compiler**: Hỗ trợ C++23 (GCC 11+, Clang 14+, MSVC 2022+)
+- **wxWidgets**: Thư viện GUI
+- **MySQL Connector/C++**: Phiên bản 9.3.0 để kết nối cơ sở dữ liệu
 
-#### 1.2. Cài đặt các thư viện cần thiết
+#### Cài đặt dependencies theo hệ điều hành:
 
-##### macOS
+**macOS (sử dụng Homebrew):**
 ```bash
-# Cài đặt Homebrew nếu chưa có
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Cài đặt các công cụ cần thiết
+# Cài đặt Docker Desktop từ https://www.docker.com/products/docker-desktop
 brew install cmake
-brew install mysql
-brew install mysql-connector-cpp
-brew install googletest
+brew install wxwidgets
+brew install mysql-connector-c++
 ```
 
-##### Ubuntu/Debian
+**Ubuntu/Debian:**
 ```bash
-# Cập nhật package list
+# Cài đặt Docker
 sudo apt update
+sudo apt install docker.io docker-compose-plugin
+sudo systemctl start docker
+sudo usermod -aG docker $USER
 
-# Cài đặt các công cụ cần thiết
-sudo apt install build-essential
-sudo apt install cmake
-sudo apt install libmysqlclient-dev
+# Cài đặt các dependencies khác
+sudo apt install cmake build-essential
+sudo apt install libwxgtk3.0-gtk3-dev
 sudo apt install libmysqlcppconn-dev
-sudo apt install libgtest-dev
 ```
 
-##### Windows
-1. Cài đặt Visual Studio 2019 hoặc mới hơn
-2. Cài đặt CMake từ https://cmake.org/download/
-3. Cài đặt MySQL Server từ https://dev.mysql.com/downloads/mysql/
-4. Cài đặt MySQL Connector/C++ từ https://dev.mysql.com/downloads/connector/cpp/
-
-#### 1.3. Cấu hình và Build
-
-1. Clone repository:
+**Windows:**
 ```bash
-git clone https://github.com/your-username/airline-reservation-system.git
-cd airline-reservation-system
+# Cài đặt Docker Desktop từ https://www.docker.com/products/docker-desktop
+# Cài đặt CMake từ https://cmake.org/download/
+# Cài đặt wxWidgets từ https://www.wxwidgets.org/downloads/
+# Cài đặt MySQL Connector/C++ từ https://dev.mysql.com/downloads/connector/cpp/
 ```
 
-2. Tạo thư mục build:
+### 2. Thiết lập cơ sở dữ liệu
+
+#### Bước 1: Khởi động MySQL bằng Docker
 ```bash
+# Di chuyển đến thư mục source
+cd source
+
+# Khởi động container MySQL
+docker-compose up -d
+
+# Kiểm tra trạng thái container
+docker-compose ps
+```
+
+#### Bước 2: Xác minh kết nối cơ sở dữ liệu
+```bash
+# Kiểm tra logs để đảm bảo MySQL đã khởi động thành công
+docker-compose logs mysql
+
+# Kết nối vào MySQL để kiểm tra
+docker exec -it airlines_mysql mysql -u cuong116 -p1162005 airlines_db
+```
+
+#### Thông tin kết nối cơ sở dữ liệu:
+- **Host**: localhost
+- **Port**: 3306
+- **Database**: airlines_db
+- **Username**: cuong116
+- **Password**: 1162005
+
+### 3. Biên dịch chương trình
+
+#### Bước 1: Tạo thư mục build
+```bash
+# Từ thư mục gốc của project
 mkdir build
 cd build
 ```
 
-3. Cấu hình với CMake:
+#### Bước 2: Cấu hình CMake
 ```bash
-cmake ..
+# Cấu hình project
+cmake ../source
+
+# Hoặc nếu cần chỉ định đường dẫn cụ thể cho dependencies:
+cmake -DMYSQLCPPCONN_DIR=/path/to/mysql-connector-c++ ../source
 ```
 
-4. Build project:
+#### Bước 3: Biên dịch
 ```bash
-cmake --build .
+# Biên dịch chương trình chính
+make AirlinesManagement
+
+# Hoặc biên dịch tất cả (bao gồm tests nếu được bật)
+make all
 ```
 
-#### 1.4. Cấu hình Database
+#### Biên dịch với tests (tùy chọn):
+```bash
+# Cài đặt Google Test trước
+# macOS: brew install googletest
+# Ubuntu: sudo apt install libgtest-dev
+# Windows: vcpkg install gtest
 
-1. Tạo database và user:
-```sql
-CREATE DATABASE airline_system;
-CREATE USER 'airline_user'@'localhost' IDENTIFIED BY 'airline_pass';
-GRANT ALL PRIVILEGES ON airline_system.* TO 'airline_user'@'localhost';
-FLUSH PRIVILEGES;
+# Cấu hình với tests
+cmake -DBUILD_TESTS=ON ../source
+make all
+
+# Chạy tests
+make test
+# hoặc
+ctest
 ```
 
-2. Import schema:
+### 4. Chạy chương trình
+
+#### Bước 1: Khởi động ứng dụng
 ```bash
-mysql -u airline_user -p airline_system < source/schema.sql
+# Từ thư mục build
+./AirlinesManagement
 ```
 
-#### 1.5. Chạy chương trình
+#### Bước 2: Sử dụng giao diện
+- Giao diện wxWidgets sẽ mở ra
+- Chương trình sẽ tự động kết nối đến cơ sở dữ liệu MySQL
+- Dữ liệu mẫu đã được tải sẵn trong database
 
-1. Chạy ứng dụng:
+### 5. Xử lý sự cố
+
+#### Lỗi kết nối cơ sở dữ liệu:
 ```bash
-./airline_system
+# Kiểm tra container MySQL có đang chạy không
+docker-compose ps
+
+# Restart container nếu cần
+docker-compose restart mysql
+
+# Kiểm tra logs
+docker-compose logs mysql
 ```
 
-2. Chạy tests:
+#### Lỗi biên dịch MySQL Connector:
 ```bash
-./airline_system_tests
+# Thiết lập biến môi trường nếu cần
+export MYSQLCPPCONN_DIR=/path/to/mysql-connector-c++
+
+# Hoặc chỉ định trực tiếp trong CMake
+cmake -DMYSQLCPPCONN_DIR=/usr/local/opt/mysql-connector-c++ ../source
 ```
 
-### 2. Sử dụng Docker
-
-#### 2.1. Yêu cầu hệ thống
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- Git
-
-#### 2.2. Cài đặt Docker
-
-##### macOS
+#### Lỗi wxWidgets:
 ```bash
-# Cài đặt Docker Desktop
-brew install --cask docker
+# Kiểm tra wxWidgets đã được cài đặt
+wx-config --version
+
+# Nếu chưa có, cài đặt lại
+# macOS: brew reinstall wxwidgets
+# Ubuntu: sudo apt reinstall libwxgtk3.0-gtk3-dev
 ```
 
-##### Ubuntu/Debian
+### 6. Dừng hệ thống
+
+#### Dừng ứng dụng:
+- Đóng cửa sổ GUI hoặc nhấn Ctrl+C trong terminal
+
+#### Dừng cơ sở dữ liệu:
 ```bash
-# Cài đặt Docker Engine
-sudo apt update
-sudo apt install docker.io docker-compose
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-##### Windows
-1. Tải và cài đặt Docker Desktop từ https://www.docker.com/products/docker-desktop
-
-#### 2.3. Build và Chạy với Docker
-
-1. Clone repository:
-```bash
-git clone https://github.com/your-username/airline-reservation-system.git
-cd airline-reservation-system
-```
-
-2. Build Docker image:
-```bash
-docker build -t airline-system .
-```
-
-3. Chạy ứng dụng với Docker Compose:
-```bash
-# Khởi động database và ứng dụng
-docker-compose up -d
-
-# Xem logs
-docker-compose logs -f
-
-# Dừng các container
+# Dừng container MySQL
 docker-compose down
-```
 
-#### 2.4. Cấu trúc Docker
-
-1. **Dockerfile cho ứng dụng:**
-```dockerfile
-FROM gcc:9.4
-
-# Cài đặt các dependencies
-RUN apt-get update && apt-get install -y \
-    cmake \
-    libmysqlclient-dev \
-    libmysqlcppconn-dev \
-    libgtest-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy source code
-WORKDIR /app
-COPY . .
-
-# Build ứng dụng
-RUN mkdir build && cd build \
-    && cmake .. \
-    && cmake --build .
-
-# Chạy ứng dụng
-CMD ["./build/airline_system"]
-```
-
-2. **Docker Compose:**
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    depends_on:
-      - mysql
-    environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=airline_system
-      - DB_USER=airline_user
-      - DB_PASSWORD=airline_pass
-    networks:
-      - airline-network
-
-  mysql:
-    image: mysql:8.0
-    container_name: airline_db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: airline_system
-      MYSQL_USER: airline_user
-      MYSQL_PASSWORD: airline_pass
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./source/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - mysql_data:/var/lib/mysql
-    command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - airline-network
-
-networks:
-  airline-network:
-    driver: bridge
-
-volumes:
-  mysql_data:
-```
-
-#### 2.5. Các lệnh Docker hữu ích
-
-```bash
-# Xem danh sách container đang chạy
-docker ps
-
-# Xem logs của container
-docker logs airline_db
-
-# Truy cập vào container MySQL
-docker exec -it airline_db mysql -u airline_user -p
-
-# Backup database
-docker exec airline_db mysqldump -u root -proot airline_system > backup.sql
-
-# Restore database
-docker exec -i airline_db mysql -u root -proot airline_system < backup.sql
-
-# Xóa tất cả container và volumes
+# Dừng và xóa volumes (cảnh báo: sẽ mất dữ liệu)
 docker-compose down -v
 ```
+
 ## IV. Link video demo
