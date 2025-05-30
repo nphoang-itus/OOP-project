@@ -27,14 +27,15 @@ inline bool operator<(const SeatClass &lhs, const SeatClass &rhs)
 /**
  * @class SeatClassMap
  * @brief Đại diện cho bản đồ các hạng ghế và số lượng tương ứng
- * 
+ *
  * Lớp này là một value object đóng gói thông tin về các hạng ghế
  * và số lượng ghế của từng hạng trong máy bay.
  */
 class SeatClassMap
 {
 private:
-    std::map<SeatClass, int> _seatCounts; ///< Map lưu trữ hạng ghế và số lượng tương ứng
+    std::map<SeatClass, int> _seatCounts;  ///< Map lưu trữ hạng ghế và số lượng tương ứng
+    std::map<SeatClass, int> _bookedSeats; ///< Map lưu trữ số ghế đã được đặt của từng hạng
 
 public:
     /**
@@ -175,10 +176,95 @@ public:
      * @brief Lấy tổng số ghế
      * @return Tổng số ghế của tất cả hạng
      */
-    int getTotalSeatCount() const {
+    int getTotalSeatCount() const
+    {
         int total = 0;
-        for (const auto &[seatClass, count] : _seatCounts) {
+        for (const auto &[seatClass, count] : _seatCounts)
+        {
             total += count;
+        }
+        return total;
+    }
+
+    /**
+     * @brief Khởi tạo số ghế đã đặt
+     */
+    void initializeBookedSeats()
+    {
+        for (const auto &[seatClass, count] : _seatCounts)
+        {
+            _bookedSeats[seatClass] = 0;
+        }
+    }
+
+    /**
+     * @brief Đặt một ghế của hạng ghế
+     * @param seatClassCode Mã hạng ghế
+     * @return true nếu đặt thành công, false nếu không còn ghế trống
+     */
+    bool bookSeat(const std::string &seatClassCode)
+    {
+        auto seatClassResult = SeatClassRegistry::getByCode(seatClassCode);
+        if (!seatClassResult)
+            return false;
+
+        const auto &seatClass = seatClassResult.value();
+        auto totalCount = getSeatCount(seatClassCode);
+        auto bookedCount = _bookedSeats[seatClass];
+
+        if (bookedCount >= totalCount)
+            return false;
+
+        _bookedSeats[seatClass]++;
+        return true;
+    }
+
+    /**
+     * @brief Hủy đặt một ghế của hạng ghế
+     * @param seatClassCode Mã hạng ghế
+     * @return true nếu hủy thành công, false nếu không có ghế nào được đặt
+     */
+    bool cancelSeat(const std::string &seatClassCode)
+    {
+        auto seatClassResult = SeatClassRegistry::getByCode(seatClassCode);
+        if (!seatClassResult)
+            return false;
+
+        const auto &seatClass = seatClassResult.value();
+        if (_bookedSeats[seatClass] <= 0)
+            return false;
+
+        _bookedSeats[seatClass]--;
+        return true;
+    }
+
+    /**
+     * @brief Lấy số ghế còn trống của một hạng
+     * @param seatClassCode Mã hạng ghế
+     * @return Số ghế còn trống của hạng đó
+     */
+    int getAvailableSeatCount(const std::string &seatClassCode) const
+    {
+        auto seatClassResult = SeatClassRegistry::getByCode(seatClassCode);
+        if (!seatClassResult)
+            return 0;
+
+        const auto &seatClass = seatClassResult.value();
+        auto totalCount = getSeatCount(seatClassCode);
+        auto bookedCount = _bookedSeats.count(seatClass) ? _bookedSeats.at(seatClass) : 0;
+        return totalCount - bookedCount;
+    }
+
+    /**
+     * @brief Lấy tổng số ghế còn trống
+     * @return Tổng số ghế còn trống của tất cả hạng
+     */
+    int getTotalAvailableSeatCount() const
+    {
+        int total = 0;
+        for (const auto &[seatClass, count] : _seatCounts)
+        {
+            total += getAvailableSeatCount(seatClass.getCode());
         }
         return total;
     }

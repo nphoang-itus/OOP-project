@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS airlines_db;
 USE airlines_db;
 
 -- Grant necessary privileges for trigger creation
-GRANT ALL PRIVILEGES ON airlines_db.* TO 'nphoang'@'%';
+GRANT ALL PRIVILEGES ON airlines_db.* TO 'cuong116'@'%';
 SET GLOBAL log_bin_trust_function_creators = 1;
 FLUSH PRIVILEGES;
 
