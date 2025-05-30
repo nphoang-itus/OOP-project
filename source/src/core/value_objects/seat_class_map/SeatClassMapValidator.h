@@ -1,7 +1,7 @@
 /**
  * @file SeatClassMapValidator.h
  * @brief Định nghĩa lớp SeatClassMapValidator để xác thực bản đồ hạng ghế
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_CLASS_MAP_VALIDATOR_H

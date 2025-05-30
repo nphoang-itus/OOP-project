@@ -1,7 +1,7 @@
 /**
  * @file RouteParser.h
  * @brief Định nghĩa lớp RouteParser để phân tích chuỗi tuyến đường bay
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef ROUTE_PARSER_H

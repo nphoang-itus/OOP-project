@@ -1,7 +1,7 @@
 /**
  * @file Price.h
  * @brief Định nghĩa lớp value object Price
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PRICE_H

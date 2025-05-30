@@ -1,7 +1,7 @@
 /**
  * @file ScheduleParser.h
  * @brief Định nghĩa lớp ScheduleParser để phân tích chuỗi lịch trình bay
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SCHEDULE_PARSER_H

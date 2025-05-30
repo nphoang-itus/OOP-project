@@ -1,7 +1,7 @@
 /**
  * @file Route.h
  * @brief Định nghĩa lớp value object Route
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef ROUTE_H

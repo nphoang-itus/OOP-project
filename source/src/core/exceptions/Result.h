@@ -1,7 +1,7 @@
 /**
  * @file Result.h
  * @brief Kiểu Result để xử lý lỗi không dùng exception trong hệ thống quản lý chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

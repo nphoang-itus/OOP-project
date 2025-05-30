@@ -1,7 +1,7 @@
 /**
  * @file SeatClassMapFormatter.h
  * @brief Định nghĩa lớp SeatClassMapFormatter để định dạng bản đồ hạng ghế
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_CLASS_MAP_FORMATTER_H

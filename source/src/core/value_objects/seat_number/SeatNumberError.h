@@ -1,7 +1,7 @@
 /**
  * @file SeatNumberError.h
  * @brief Định nghĩa các lỗi xác thực số ghế và tiện ích xử lý lỗi
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_NUMBER_ERROR_H

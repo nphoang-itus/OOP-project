@@ -1,7 +1,7 @@
 /**
  * @file TicketNumberValidator.h
  * @brief Validator cho số vé máy bay theo định dạng chuẩn hàng không
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

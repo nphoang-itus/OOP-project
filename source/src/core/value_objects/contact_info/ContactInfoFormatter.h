@@ -1,7 +1,7 @@
 /**
  * @file ContactInfoFormatter.h
  * @brief Formatter để chuyển đổi thông tin liên lạc thành chuỗi định dạng
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

@@ -1,7 +1,7 @@
 /**
  * @file Schedule.h
  * @brief Định nghĩa lớp value object Schedule
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SCHEDULE_H

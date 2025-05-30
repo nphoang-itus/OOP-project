@@ -1,7 +1,7 @@
 /**
  * @file CurrencyRegistry.h
  * @brief Định nghĩa lớp CurrencyRegistry để quản lý các loại tiền tệ
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef CURRENCY_REGISTRY_H

@@ -1,7 +1,7 @@
 /**
  * @file ContactInfoValidator.h
  * @brief Validator cho thông tin liên lạc theo các chuẩn quốc tế
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

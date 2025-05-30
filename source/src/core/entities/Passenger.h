@@ -1,7 +1,7 @@
 /**
  * @file Passenger.h
  * @brief Thực thể Passenger đại diện cho các cá nhân có thể đặt vé và đi du lịch trên chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

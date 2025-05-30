@@ -1,7 +1,7 @@
 /**
  * @file SeatNumber.h
  * @brief Định nghĩa lớp value object SeatNumber
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_NUMBER_H

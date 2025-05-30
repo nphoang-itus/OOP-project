@@ -1,7 +1,7 @@
 /**
  * @file SeatClassMapParser.h
  * @brief Định nghĩa các lớp parser để phân tích bản đồ hạng ghế
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_CLASS_MAP_PARSER_H

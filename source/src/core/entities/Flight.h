@@ -1,7 +1,7 @@
 /**
  * @file Flight.h
  * @brief Thực thể Flight đại diện cho các chuyến bay được lên lịch với quản lý chỗ ngồi
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

@@ -1,7 +1,7 @@
 /**
  * @file ContactInfo.h
  * @brief Value object đại diện cho thông tin liên lạc của hành khách
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

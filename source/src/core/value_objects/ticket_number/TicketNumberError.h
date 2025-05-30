@@ -1,7 +1,7 @@
 /**
  * @file TicketNumberError.h
  * @brief Định nghĩa các loại lỗi và helper cho validation số vé máy bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

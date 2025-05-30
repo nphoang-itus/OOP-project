@@ -1,7 +1,7 @@
 /**
  * @file ScheduleError.h
  * @brief Định nghĩa các lỗi xác thực lịch trình bay và tiện ích xử lý lỗi
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SCHEDULE_ERROR_H

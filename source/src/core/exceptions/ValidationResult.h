@@ -1,7 +1,7 @@
 /**
  * @file ValidationResult.h
  * @brief Hệ thống kết quả validation để thu thập và quản lý nhiều lỗi validation
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

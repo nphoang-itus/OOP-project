@@ -1,7 +1,7 @@
 /**
  * @file FlightNumber.h
  * @brief Value object đại diện cho số hiệu chuyến bay trong hệ thống quản lý chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

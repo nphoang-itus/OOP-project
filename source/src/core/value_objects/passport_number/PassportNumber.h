@@ -1,7 +1,7 @@
 /**
  * @file PassportNumber.h
  * @brief Định nghĩa lớp value object PassportNumber
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PASSPORT_NUMBER_H

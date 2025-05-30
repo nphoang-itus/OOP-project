@@ -1,7 +1,7 @@
 /**
  * @file SeatNumberValidator.h
  * @brief Định nghĩa lớp SeatNumberValidator để xác thực số ghế
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_NUMBER_VALIDATOR_H

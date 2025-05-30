@@ -1,7 +1,7 @@
 /**
  * @file PriceValidator.h
  * @brief Định nghĩa lớp PriceValidator để xác thực giá tiền
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PRICE_VALIDATOR_H

@@ -1,7 +1,7 @@
 /**
  * @file PassportNumberParser.h
  * @brief Định nghĩa lớp PassportNumberParser để phân tích chuỗi số hộ chiếu
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PASSPORT_NUMBER_PARSER_H

@@ -1,7 +1,7 @@
 /**
  * @file ScheduleFormatter.h
  * @brief Định nghĩa lớp ScheduleFormatter để định dạng lịch trình bay
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SCHEDULE_FORMATTER_H

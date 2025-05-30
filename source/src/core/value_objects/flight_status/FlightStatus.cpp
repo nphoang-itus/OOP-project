@@ -1,7 +1,7 @@
 /**
  * @file FlightStatus.cpp
  * @brief Implementation của FlightStatusUtil cho chuyển đổi trạng thái chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

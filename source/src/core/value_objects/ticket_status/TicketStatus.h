@@ -1,7 +1,7 @@
 /**
  * @file TicketStatus.h
  * @brief Enum và utility cho trạng thái vé máy bay trong hệ thống quản lý chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

@@ -2,22 +2,28 @@
 #include <iomanip>
 #include <sstream>
 
+/**
+ * @brief Enum định nghĩa các ID cho các thành phần UI
+ */
 enum
 {
-    ID_BACK = 1,
-    ID_SHOW = 2,
-    ID_ADD = 3,
-    ID_EDIT = 4,
-    ID_DELETE = 5,
-    ID_AIRCRAFT_LIST = 6,
-    ID_SEARCH_ID = 7,
-    ID_SEARCH_REGISTRATION = 8,
-    ID_VIEW_SEAT_CLASSES = 9,
-    ID_VIEW_AVAILABLE_SEATS = 10,
-    ID_CHECK_SEAT_AVAILABILITY = 11,
-    ID_CHECK_AIRCRAFT_EXISTS = 12
+    ID_BACK = 1,                   ///< ID nút quay lại
+    ID_SHOW = 2,                   ///< ID nút hiển thị
+    ID_ADD = 3,                    ///< ID nút thêm
+    ID_EDIT = 4,                   ///< ID nút sửa
+    ID_DELETE = 5,                 ///< ID nút xóa
+    ID_AIRCRAFT_LIST = 6,          ///< ID danh sách máy bay
+    ID_SEARCH_ID = 7,              ///< ID nút tìm theo ID
+    ID_SEARCH_REGISTRATION = 8,    ///< ID nút tìm theo số đăng ký
+    ID_VIEW_SEAT_CLASSES = 9,      ///< ID nút xem hạng ghế
+    ID_VIEW_AVAILABLE_SEATS = 10,  ///< ID nút xem ghế trống
+    ID_CHECK_SEAT_AVAILABILITY = 11, ///< ID nút kiểm tra ghế
+    ID_CHECK_AIRCRAFT_EXISTS = 12  ///< ID nút kiểm tra tồn tại
 };
 
+/**
+ * @brief Bảng ánh xạ sự kiện cho cửa sổ quản lý máy bay
+ */
 BEGIN_EVENT_TABLE(AircraftWindow, wxFrame)
 EVT_BUTTON(ID_BACK, AircraftWindow::OnBack)
 EVT_BUTTON(ID_SHOW, AircraftWindow::OnShowAircraft)
@@ -30,19 +36,28 @@ EVT_BUTTON(ID_CHECK_AIRCRAFT_EXISTS, AircraftWindow::OnCheckAircraftExists)
 EVT_LIST_ITEM_SELECTED(ID_AIRCRAFT_LIST, AircraftWindow::OnListItemSelected)
 END_EVENT_TABLE()
 
+/**
+ * @brief Constructor khởi tạo cửa sổ quản lý máy bay
+ * 
+ * Khởi tạo tất cả các thành phần giao diện và thiết lập layout
+ * 
+ * @param title Tiêu đề cửa sổ
+ * @param aircraftService Service quản lý máy bay
+ */
 AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftService> aircraftService)
     : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(1000, 600)), aircraftService(aircraftService)
 {
+    // Khởi tạo panel chính
     panel = new wxPanel(this, wxID_ANY);
     mainSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
     wxBoxSizer *contentSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Create back button
+    // Tạo nút quay lại
     backButton = new wxButton(panel, ID_BACK, "Back", wxDefaultPosition, wxSize(100, 30));
     buttonSizer->Add(backButton, 0, wxALL, 10);
 
-    // Create main function buttons
+    // Tạo các nút chức năng chính
     showButton = new wxButton(panel, ID_SHOW, "Hiển thị thông tin máy bay", wxDefaultPosition, wxSize(250, 50));
     addButton = new wxButton(panel, ID_ADD, "Thêm máy bay", wxDefaultPosition, wxSize(250, 50));
     editButton = new wxButton(panel, ID_EDIT, "Sửa thông tin máy bay", wxDefaultPosition, wxSize(250, 50));
@@ -50,10 +65,10 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     searchByIdButton = new wxButton(panel, ID_SEARCH_ID, "Tìm theo ID", wxDefaultPosition, wxSize(250, 50));
     searchByRegistrationButton = new wxButton(panel, ID_SEARCH_REGISTRATION, "Tìm theo số đăng ký", wxDefaultPosition, wxSize(250, 50));
 
-    // Add new business operation buttons
+    // Thêm nút kiểm tra tồn tại
     checkAircraftExistsButton = new wxButton(panel, ID_CHECK_AIRCRAFT_EXISTS, "Kiểm tra tồn tại", wxDefaultPosition, wxSize(250, 50));
 
-    // Create aircraft list
+    // Tạo danh sách máy bay
     aircraftList = new wxListCtrl(panel, ID_AIRCRAFT_LIST, wxDefaultPosition, wxSize(900, 300),
                                   wxLC_REPORT | wxLC_SINGLE_SEL);
     aircraftList->InsertColumn(0, "ID");
@@ -65,21 +80,21 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     aircraftList->InsertColumn(6, "Tổng ghế");
     aircraftList->InsertColumn(7, "Trạng thái");
 
-    // Set column widths - make aircraft type column wider
+    // Thiết lập độ rộng cột - làm rộng cột loại máy bay
     aircraftList->SetColumnWidth(0, 60);  // ID
     aircraftList->SetColumnWidth(1, 120); // Số đăng ký
-    aircraftList->SetColumnWidth(2, 150); // Loại máy bay - wider for Boeing A380, etc.
+    aircraftList->SetColumnWidth(2, 150); // Loại máy bay - rộng hơn cho Boeing A380, v.v.
     aircraftList->SetColumnWidth(3, 100); // Ghế thường
     aircraftList->SetColumnWidth(4, 120); // Ghế thương gia
     aircraftList->SetColumnWidth(5, 120); // Ghế hạng nhất
     aircraftList->SetColumnWidth(6, 80);  // Tổng ghế
     aircraftList->SetColumnWidth(7, 100); // Trạng thái
 
-    // Create info label
+    // Tạo label thông tin
     infoLabel = new wxStaticText(panel, wxID_ANY, "", wxDefaultPosition, wxSize(600, 50));
     infoLabel->Wrap(600);
 
-    // Add buttons to content sizer (3 hàng ngang)
+    // Thêm các nút vào content sizer (3 hàng ngang)
     wxBoxSizer *row1 = new wxBoxSizer(wxHORIZONTAL);
     row1->Add(showButton, 0, wxALL, 10);
     row1->Add(addButton, 0, wxALL, 10);
@@ -99,7 +114,7 @@ AircraftWindow::AircraftWindow(const wxString &title, std::shared_ptr<AircraftSe
     contentSizer->Add(aircraftList, 1, wxALL | wxEXPAND, 10);
     contentSizer->Add(infoLabel, 0, wxALL | wxALIGN_CENTER, 10);
 
-    // Add sizers to main sizer
+    // Thêm sizer vào main sizer
     mainSizer->Add(buttonSizer, 0, wxEXPAND);
     mainSizer->Add(contentSizer, 1, wxEXPAND);
 
@@ -118,6 +133,13 @@ void AircraftWindow::setServices(std::shared_ptr<AircraftService> aircraft,
     this->ticketService = ticket;
 }
 
+/**
+ * @brief Sự kiện nhấn nút quay lại
+ * 
+ * Đóng cửa sổ hiện tại và mở cửa sổ quản lý chính
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnBack(wxCommandEvent &event)
 {
     this->Hide();
@@ -130,11 +152,25 @@ void AircraftWindow::OnBack(wxCommandEvent &event)
     this->Close();
 }
 
+/**
+ * @brief Sự kiện nhấn nút hiển thị thông tin máy bay
+ * 
+ * Làm mới danh sách máy bay
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnShowAircraft(wxCommandEvent &event)
 {
     RefreshAircraftList();
 }
 
+/**
+ * @brief Sự kiện nhấn nút thêm máy bay
+ * 
+ * Hiển thị hộp thoại thêm máy bay và lưu thông tin máy bay mới nếu người dùng xác nhận
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
 {
     wxDialog *dialog = new wxDialog(this, wxID_ANY, "Thêm máy bay", wxDefaultPosition, wxSize(400, 500));
@@ -230,6 +266,13 @@ void AircraftWindow::OnAddAircraft(wxCommandEvent &event)
     dialog->Destroy();
 }
 
+/**
+ * @brief Sự kiện nhấn nút sửa máy bay
+ * 
+ * Hiển thị hộp thoại sửa máy bay với thông tin máy bay được chọn và lưu thay đổi nếu người dùng xác nhận
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
 {
     long itemIndex = -1;
@@ -359,6 +402,13 @@ void AircraftWindow::OnEditAircraft(wxCommandEvent &event)
     dialog->Destroy();
 }
 
+/**
+ * @brief Sự kiện nhấn nút xóa máy bay
+ * 
+ * Xóa máy bay được chọn sau khi xác nhận từ người dùng
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnDeleteAircraft(wxCommandEvent &event)
 {
     long itemIndex = -1;
@@ -407,12 +457,24 @@ void AircraftWindow::OnDeleteAircraft(wxCommandEvent &event)
     }
 }
 
+/**
+ * @brief Sự kiện chọn một mục trong danh sách máy bay
+ * 
+ * Bỏ qua sự kiện này để không hiển thị thông tin chi tiết
+ * 
+ * @param event Sự kiện chọn mục
+ */
 void AircraftWindow::OnListItemSelected(wxListEvent &event)
 {
     // Simply handle the selection event without displaying detailed information
     event.Skip();
 }
 
+/**
+ * @brief Làm mới danh sách máy bay
+ * 
+ * Xóa tất cả các mục trong danh sách và thêm lại từ dịch vụ quản lý máy bay
+ */
 void AircraftWindow::RefreshAircraftList()
 {
     aircraftList->DeleteAllItems();
@@ -445,6 +507,13 @@ void AircraftWindow::RefreshAircraftList()
     }
 }
 
+/**
+ * @brief Sự kiện nhấn nút tìm kiếm theo ID
+ * 
+ * Tìm kiếm máy bay theo ID và hiển thị kết quả trong danh sách
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnSearchById(wxCommandEvent &event)
 {
     wxString idStr = wxGetTextFromUser("Nhập ID máy bay:", "Tìm kiếm theo ID");
@@ -503,6 +572,13 @@ void AircraftWindow::OnSearchById(wxCommandEvent &event)
     aircraftList->SetItem(0, 7, "A"); // Default status
 }
 
+/**
+ * @brief Sự kiện nhấn nút tìm kiếm theo số đăng ký
+ * 
+ * Tìm kiếm máy bay theo số đăng ký và hiển thị kết quả trong danh sách
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
 {
     wxString registration = wxGetTextFromUser("Nhập số đăng ký máy bay:", "Tìm kiếm theo số đăng ký");
@@ -535,6 +611,13 @@ void AircraftWindow::OnSearchByRegistration(wxCommandEvent &event)
     aircraftList->SetItem(0, 7, "A"); // Default status
 }
 
+/**
+ * @brief Sự kiện nhấn nút kiểm tra máy bay tồn tại
+ * 
+ * Kiểm tra xem máy bay có tồn tại trong hệ thống hay không và hiển thị kết quả
+ * 
+ * @param event Sự kiện nút bấm
+ */
 void AircraftWindow::OnCheckAircraftExists(wxCommandEvent &event)
 {
     // Ask user to enter aircraft registration

@@ -1,7 +1,7 @@
 /**
  * @file ContactInfoParser.h
  * @brief Parser để phân tích chuỗi thông tin liên lạc thành các thành phần riêng biệt
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

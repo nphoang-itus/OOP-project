@@ -1,7 +1,7 @@
 /**
  * @file FlightNumberValidator.h
  * @brief Validator cho số hiệu chuyến bay theo chuẩn IATA
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

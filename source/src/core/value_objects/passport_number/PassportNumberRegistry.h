@@ -1,7 +1,7 @@
 /**
  * @file PassportNumberRegistry.h
  * @brief Định nghĩa lớp PassportNumberRegistry để quản lý các quốc gia cấp hộ chiếu
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PASSPORT_NUMBER_REGISTRY_H

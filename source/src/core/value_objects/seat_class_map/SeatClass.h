@@ -1,7 +1,7 @@
 /**
  * @file SeatClass.h
  * @brief Định nghĩa lớp SeatClass và SeatClassRegistry để quản lý hạng ghế
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_CLASS_H

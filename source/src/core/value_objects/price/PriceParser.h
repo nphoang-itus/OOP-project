@@ -1,7 +1,7 @@
 /**
  * @file PriceParser.h
  * @brief Định nghĩa lớp PriceParser để phân tích chuỗi giá tiền
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PRICE_PARSER_H

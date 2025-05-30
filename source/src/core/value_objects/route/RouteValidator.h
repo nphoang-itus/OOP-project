@@ -1,7 +1,7 @@
 /**
  * @file RouteValidator.h
  * @brief Định nghĩa lớp RouteValidator để xác thực tuyến đường bay
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef ROUTE_VALIDATOR_H

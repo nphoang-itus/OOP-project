@@ -1,7 +1,7 @@
 /**
  * @file SeatClassMap.h
  * @brief Định nghĩa lớp value object SeatClassMap
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef SEAT_CLASS_MAP_H

@@ -1,7 +1,7 @@
 /**
  * @file RouteFormatter.h
  * @brief Định nghĩa lớp RouteFormatter để định dạng tuyến đường bay
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef ROUTE_FORMATTER_H

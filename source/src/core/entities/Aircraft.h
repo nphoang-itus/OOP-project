@@ -1,7 +1,7 @@
 /**
  * @file Aircraft.h
  * @brief Thực thể Aircraft đại diện cho máy bay vật lý trong hệ thống quản lý chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

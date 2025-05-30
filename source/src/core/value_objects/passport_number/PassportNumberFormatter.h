@@ -1,7 +1,7 @@
 /**
  * @file PassportNumberFormatter.h
  * @brief Định nghĩa lớp PassportNumberFormatter để định dạng số hộ chiếu
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PASSPORT_NUMBER_FORMATTER_H

@@ -1,7 +1,7 @@
 /**
  * @file PriceFormatter.h
  * @brief Định nghĩa lớp PriceFormatter để định dạng giá tiền
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PRICE_FORMATTER_H

@@ -1,7 +1,7 @@
 /**
  * @file PassportNumberValidator.h
  * @brief Định nghĩa lớp PassportNumberValidator để xác thực số hộ chiếu
- * @author Nhóm dự án OOP
+ * @author Nguyễn Phúc Hoàng
  */
 
 #ifndef PASSPORT_NUMBER_VALIDATOR_H

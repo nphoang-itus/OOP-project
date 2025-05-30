@@ -1,7 +1,7 @@
 /**
  * @file AircraftSerialValidator.h
  * @brief Validator cho số serial máy bay với các quy tắc nghiệp vụ cụ thể
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 

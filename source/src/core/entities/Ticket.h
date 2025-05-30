@@ -1,7 +1,7 @@
 /**
  * @file Ticket.h
  * @brief Thực thể Ticket đại diện cho đặt chỗ và booking chuyến bay
- * @author Đội phát triển Hệ thống Quản lý Chuyến bay
+ * @author Nguyễn Phúc Hoàng
  * @version 1.0
  */
 
