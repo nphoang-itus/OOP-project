@@ -53,38 +53,89 @@ MainWindow::MainWindow(const wxString &title,
 
     panel->SetSizer(mainSizer);
     Centre();
+
+    // Initialize UIFactory
+    uiFactory = std::make_unique<UIFactory>(aircraftService, flightService, passengerService, ticketService);
+}
+
+// UIFactory implementation
+wxFrame *MainWindow::UIFactory::createWindow(UIType type, const wxString &title)
+{
+    wxFrame *window = nullptr;
+
+    switch (type)
+    {
+    case UIType::AIRCRAFT:
+    {
+        AircraftWindow *aircraftWindow = new AircraftWindow(title, aircraftService);
+        aircraftWindow->setServices(aircraftService, flightService, passengerService, ticketService);
+        window = aircraftWindow;
+        break;
+    }
+    case UIType::FLIGHT:
+    {
+        FlightWindow *flightWindow = new FlightWindow(title, flightService);
+        flightWindow->setServices(aircraftService, flightService, passengerService, ticketService);
+        window = flightWindow;
+        break;
+    }
+    case UIType::PASSENGER:
+    {
+        PassengerWindow *passengerWindow = new PassengerWindow(title, passengerService);
+        passengerWindow->setServices(aircraftService, flightService, passengerService, ticketService);
+        window = passengerWindow;
+        break;
+    }
+    case UIType::TICKET:
+    {
+        TicketWindow *ticketWindow = new TicketWindow(title, ticketService);
+        ticketWindow->setServices(aircraftService, flightService, passengerService, ticketService);
+        window = ticketWindow;
+        break;
+    }
+    }
+
+    return window;
 }
 
 void MainWindow::OnAircraftService(wxCommandEvent &event)
 {
-    AircraftWindow *aircraftWindow = new AircraftWindow("Dịch vụ máy bay", aircraftService);
-    aircraftWindow->setServices(aircraftService, flightService, passengerService, ticketService);
-    aircraftWindow->Show();
-    this->Hide();
+    wxFrame *window = uiFactory->createWindow(UIType::AIRCRAFT, "Dịch vụ máy bay");
+    if (window)
+    {
+        window->Show();
+        this->Hide();
+    }
 }
 
 void MainWindow::OnFlightService(wxCommandEvent &event)
 {
-    FlightWindow *flightWindow = new FlightWindow("Dịch vụ chuyến bay", flightService);
-    flightWindow->setServices(aircraftService, flightService, passengerService, ticketService);
-    flightWindow->Show();
-    this->Hide();
+    wxFrame *window = uiFactory->createWindow(UIType::FLIGHT, "Dịch vụ chuyến bay");
+    if (window)
+    {
+        window->Show();
+        this->Hide();
+    }
 }
 
 void MainWindow::OnPassengerService(wxCommandEvent &event)
 {
-    PassengerWindow *passengerWindow = new PassengerWindow("Dịch vụ hành khách", passengerService);
-    passengerWindow->setServices(aircraftService, flightService, passengerService, ticketService);
-    passengerWindow->Show();
-    this->Hide();
+    wxFrame *window = uiFactory->createWindow(UIType::PASSENGER, "Dịch vụ hành khách");
+    if (window)
+    {
+        window->Show();
+        this->Hide();
+    }
 }
 
 void MainWindow::OnTicketService(wxCommandEvent &event)
 {
-    TicketWindow *ticketWindow = new TicketWindow("Dịch vụ vé máy bay", ticketService);
-    ticketWindow->setServices(aircraftService, flightService, passengerService, ticketService);
-    ticketWindow->Show();
-    this->Hide();
+    wxFrame *window = uiFactory->createWindow(UIType::TICKET, "Dịch vụ vé máy bay");
+    if (window)
+    {
+        window->Show();
+        this->Hide();
+    }
 }
 
 void MainWindow::OnExit(wxCommandEvent &event)

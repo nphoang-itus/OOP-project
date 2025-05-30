@@ -302,35 +302,53 @@ void TicketWindow::AddTicketDialog()
 
 void TicketWindow::EditTicketDialog(const Ticket &ticket)
 {
-    // Get new price
-    wxString priceStr = wxGetTextFromUser("Nhập giá vé mới:", "Sửa vé",
-                                          std::to_string(ticket.getPrice().getAmount()));
-    if (priceStr.IsEmpty())
+    // Get new passport number
+    wxString passportStr = wxGetTextFromUser("Nhập số hộ chiếu mới:", "Sửa vé",
+                                             ticket.getPassenger()->getPassport().toString());
+    if (passportStr.IsEmpty())
         return;
 
-    auto priceResult = Price::create(priceStr.ToStdString());
-    if (!priceResult)
+    // Validate passport number format
+    auto passportResult = PassportNumber::create(passportStr.ToStdString());
+    if (!passportResult)
     {
-        wxMessageBox("Giá vé không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        wxMessageBox("Số hộ chiếu không hợp lệ: " + passportResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
-    // Create new ticket with updated price
+    // Check if passenger with this passport exists
+    auto newPassengerResult = passengerService->getPassenger(passportResult.value());
+    if (!newPassengerResult)
+    {
+        wxMessageBox("Không tìm thấy hành khách với số hộ chiếu này. Vui lòng đảm bảo hành khách đã được đăng ký trong hệ thống.",
+                     "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // Create updated ticket by copying the original ticket and updating the passenger
+    auto updatedTicket = ticket; // Copy the original ticket to preserve ID and other properties
+
+    // Update only the passenger information
     auto newTicket = Ticket::create(
         ticket.getTicketNumber(),
-        ticket.getPassenger(),
+        std::make_shared<Passenger>(newPassengerResult.value()),
         ticket.getFlight(),
         ticket.getSeatNumber(),
-        priceResult.value());
+        ticket.getPrice());
 
     if (!newTicket)
     {
-        wxMessageBox("Lỗi khi tạo vé mới", "Lỗi", wxOK | wxICON_ERROR);
+        wxMessageBox("Lỗi khi tạo vé với hành khách mới: " + newTicket.error().message, "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
 
+    // Preserve the original ticket's ID and status but update the passenger
+    updatedTicket = newTicket.value();
+    updatedTicket.setId(ticket.getId());
+    updatedTicket.setStatus(ticket.getStatus());
+
     // Update ticket
-    auto result = ticketService->updateTicket(newTicket.value());
+    auto result = ticketService->updateTicket(updatedTicket);
     if (!result)
     {
         wxMessageBox("Lỗi khi cập nhật vé: " + result.error().message, "Lỗi", wxOK | wxICON_ERROR);
@@ -340,7 +358,6 @@ void TicketWindow::EditTicketDialog(const Ticket &ticket)
     wxMessageBox("Cập nhật vé thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
     RefreshTicketList();
 }
-
 void TicketWindow::DeleteTicketDialog(const Ticket &ticket)
 {
     int answer = wxMessageBox(

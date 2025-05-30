@@ -647,7 +647,7 @@ void FlightWindow::OnDeleteFlight(wxCommandEvent &event)
         {
             flightId = flightResult.value().getId();
         }
-        wxLogMessage("[DEBUG] Đang xóa chuyến bay: %s, ID: %d", flightNumber, flightId);
+        // wxLogMessage("[DEBUG] Đang xóa chuyến bay: %s, ID: %d", flightNumber, flightId);
         auto result = flightService->deleteFlight(flightNumberResult.value());
         if (!result)
         {
@@ -670,7 +670,6 @@ void FlightWindow::OnDeleteFlight(wxCommandEvent &event)
             }
             return;
         }
-        wxMessageBox("Xóa chuyến bay thành công!", "Thông báo", wxOK | wxICON_INFORMATION);
         RefreshFlightList();
     }
 }

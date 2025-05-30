@@ -14,8 +14,37 @@ class FlightWindow;
 class PassengerWindow;
 class TicketWindow;
 
+enum class UIType
+{
+    AIRCRAFT,
+    FLIGHT,
+    PASSENGER,
+    TICKET
+};
+
 class MainWindow : public wxFrame
 {
+private:
+    // Nested Factory class for creating UI windows
+    class UIFactory
+    {
+    private:
+        std::shared_ptr<AircraftService> aircraftService;
+        std::shared_ptr<FlightService> flightService;
+        std::shared_ptr<PassengerService> passengerService;
+        std::shared_ptr<TicketService> ticketService;
+
+    public:
+        UIFactory(std::shared_ptr<AircraftService> aircraft,
+                  std::shared_ptr<FlightService> flight,
+                  std::shared_ptr<PassengerService> passenger,
+                  std::shared_ptr<TicketService> ticket)
+            : aircraftService(aircraft), flightService(flight),
+              passengerService(passenger), ticketService(ticket) {}
+
+        wxFrame *createWindow(UIType type, const wxString &title);
+    };
+
 public:
     MainWindow(const wxString &title,
                std::shared_ptr<AircraftService> aircraftService,
@@ -48,6 +77,9 @@ private:
     std::shared_ptr<FlightService> flightService;
     std::shared_ptr<PassengerService> passengerService;
     std::shared_ptr<TicketService> ticketService;
+
+    // Factory for creating UI windows
+    std::unique_ptr<UIFactory> uiFactory;
 
     DECLARE_EVENT_TABLE()
 };
