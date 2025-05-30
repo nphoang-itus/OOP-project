@@ -1151,11 +1151,24 @@ void FlightWindow::OnCheckSeatAvailability(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn một chuyến bay để kiểm tra ghế", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
-    wxString serial = flightList->GetItemText(itemIndex, 8); // Cột máy bay
-    auto serialResult = AircraftSerial::create(serial.ToStdString());
-    if (!serialResult)
+    wxString flightNumberStr = flightList->GetItemText(itemIndex, 1); // Cột số hiệu chuyến bay
+    std::string flightNumber = flightNumberStr.ToStdString();
+    auto flightNumberResult = FlightNumber::create(flightNumber);
+    if (!flightNumberResult)
     {
-        wxMessageBox("Số đăng ký máy bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        wxMessageBox("Số hiệu chuyến bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    auto flightResult = flightService->getFlight(*flightNumberResult);
+    if (!flightResult)
+    {
+        wxMessageBox("Không tìm thấy chuyến bay", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    const Flight &flight = flightResult.value();
+    if (!flight.getAircraft())
+    {
+        wxMessageBox("Chuyến bay không có thông tin máy bay", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
     wxString seatNumber = wxGetTextFromUser(
@@ -1163,17 +1176,56 @@ void FlightWindow::OnCheckSeatAvailability(wxCommandEvent &event)
         "Kiểm tra ghế");
     if (seatNumber.IsEmpty())
         return;
-    auto availabilityResult = aircraftService->isSeatAvailable(*serialResult, seatNumber.ToStdString());
-    if (!availabilityResult)
+    std::string seatNumStr = seatNumber.ToStdString();
+    // Lấy seat layout
+    const auto &seatLayout = flight.getAircraft()->getSeatLayout();
+    // Kiểm tra seatNumStr có hợp lệ không
+    bool isValid = false;
+    for (const auto &[seatClass, count] : seatLayout.getSeatCounts())
     {
-        wxMessageBox("Không thể kiểm tra ghế: " + availabilityResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
+        std::string classCode = seatClass.getCode();
+        int total = seatLayout.getSeatCount(classCode);
+        int padding = total > 99 ? 3 : 2;
+        for (int i = 1; i <= total; ++i)
+        {
+            std::stringstream ss;
+            ss << classCode << std::setfill('0') << std::setw(padding) << i;
+            if (ss.str() == seatNumStr)
+            {
+                isValid = true;
+                break;
+            }
+        }
+        if (isValid)
+            break;
+    }
+    if (!isValid)
+    {
+        wxMessageBox("Số ghế không hợp lệ cho chuyến bay này!", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
-    bool isAvailable = *availabilityResult;
+    // Kiểm tra ghế đã được đặt chưa (dựa vào ticket)
+    bool isBooked = false;
+    if (ticketService)
+    {
+        auto ticketResult = ticketService->getAllTickets();
+        if (ticketResult.has_value())
+        {
+            for (const auto &ticket : ticketResult.value())
+            {
+                if (ticket.getFlight()->getFlightNumber().toString() == flight.getFlightNumber().toString() &&
+                    ticket.getSeatNumber().toString() == seatNumStr)
+                {
+                    isBooked = true;
+                    break;
+                }
+            }
+        }
+    }
     wxString message = wxString::Format(
-        "Ghế %s trên máy bay %s:\n\n%s",
+        "Ghế %s trên chuyến bay %s:\n\n%s",
         seatNumber,
-        serial,
-        isAvailable ? "✅ TRỐNG - Có thể đặt" : "❌ ĐÃ ĐƯỢC ĐẶT - Không thể đặt");
+        flightNumberStr,
+        !isBooked ? "✅ TRỐNG - Có thể đặt" : "❌ ĐÃ ĐƯỢC ĐẶT - Không thể đặt");
     wxMessageBox(message, "Kết quả kiểm tra ghế", wxOK | wxICON_INFORMATION);
 }
