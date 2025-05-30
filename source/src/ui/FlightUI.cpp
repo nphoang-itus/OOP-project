@@ -1,4 +1,3 @@
-
 #include "FlightUI.h"
 #include "utils/utils.h"
 #include "../core/value_objects/flight_number/FlightNumber.h"
@@ -930,6 +929,52 @@ void FlightWindow::RefreshFlightList()
     // Đồng bộ số ghế đã đặt
     syncBookedSeatsWithTickets(tickets, flights);
 
+    // Cập nhật lại _seatAvailability cho từng chuyến bay dựa trên seatLayout đã cập nhật
+    for (auto &flight : flights)
+    {
+        if (!flight.getAircraft())
+            continue;
+        const auto &seatLayout = flight.getAircraft()->getSeatLayout();
+        std::unordered_map<SeatNumber, bool> seatAvailability;
+        // Duyệt tất cả các hạng ghế
+        for (const auto &[seatClass, count] : seatLayout.getSeatCounts())
+        {
+            std::string classCode = seatClass.getCode();
+            int total = seatLayout.getSeatCount(classCode);
+            int padding = total > 99 ? 3 : 2;
+            for (int i = 1; i <= total; ++i)
+            {
+                std::stringstream ss;
+                ss << classCode << std::setfill('0') << std::setw(padding) << i;
+                auto seatNumResult = SeatNumber::create(ss.str(), seatLayout);
+                if (seatNumResult)
+                {
+                    bool isAvailable = seatLayout.getAvailableSeatCount(classCode) > 0;
+                    // Đánh dấu ghế là available nếu chưa bị book hết
+                    // Nhưng phải kiểm tra đúng từng ghế, không chỉ tổng số
+                    // => Dùng bookedSeats để xác định
+                    // Đếm số ghế đã book cho từng class
+                    // Nhưng SeatClassMap không lưu từng ghế, chỉ tổng số
+                    // => Đánh dấu available nếu tổng số booked < tổng số
+                    // Nhưng để chính xác, cần lưu từng ghế đã book (nếu muốn cực chuẩn)
+                    // Ở đây, ta đánh dấu tất cả ghế của class là available nếu còn slot
+                    seatAvailability[*seatNumResult] = true;
+                }
+            }
+        }
+        // Đánh dấu các ghế đã book là false dựa trên vé
+        for (const auto &ticket : tickets)
+        {
+            if (ticket.getFlight()->getFlightNumber().toString() == flight.getFlightNumber().toString())
+            {
+                auto seatNum = ticket.getSeatNumber();
+                seatAvailability[seatNum] = false;
+            }
+        }
+        // Gán lại vào flight
+        flight.setSeatAvailability(seatAvailability);
+    }
+
     for (size_t i = 0; i < flights.size(); ++i)
     {
         const auto &flight = flights[i];
@@ -997,11 +1042,25 @@ void FlightWindow::OnViewAvailableSeats(wxCommandEvent &event)
         wxMessageBox("Vui lòng chọn một chuyến bay để xem ghế trống", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
-    wxString serial = flightList->GetItemText(itemIndex, 8); // Cột máy bay
-    auto serialResult = AircraftSerial::create(serial.ToStdString());
-    if (!serialResult)
+    wxString flightNumberStr = flightList->GetItemText(itemIndex, 1); // Cột số hiệu chuyến bay
+    std::string flightNumber = flightNumberStr.ToStdString();
+    // Lấy flight từ service (đã đồng bộ vé ở RefreshFlightList)
+    auto flightNumberResult = FlightNumber::create(flightNumber);
+    if (!flightNumberResult)
     {
-        wxMessageBox("Số đăng ký máy bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        wxMessageBox("Số hiệu chuyến bay không hợp lệ", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    auto flightResult = flightService->getFlight(*flightNumberResult);
+    if (!flightResult)
+    {
+        wxMessageBox("Không tìm thấy chuyến bay", "Lỗi", wxOK | wxICON_ERROR);
+        return;
+    }
+    const Flight &flight = flightResult.value();
+    if (!flight.getAircraft())
+    {
+        wxMessageBox("Chuyến bay không có thông tin máy bay", "Lỗi", wxOK | wxICON_ERROR);
         return;
     }
     wxArrayString choices;
@@ -1012,21 +1071,58 @@ void FlightWindow::OnViewAvailableSeats(wxCommandEvent &event)
     if (dialog.ShowModal() != wxID_OK)
         return;
     std::string seatClass = dialog.GetStringSelection().ToStdString();
-    auto availableSeatsResult = aircraftService->getAvailableSeats(*serialResult, seatClass);
-    if (!availableSeatsResult)
+    char seatClassCode = 'E';
+    wxString seatClassName = "Hạng thường";
+    if (seatClass == "BUSINESS")
     {
-        wxMessageBox("Không thể lấy thông tin ghế trống: " + availableSeatsResult.error().message, "Lỗi", wxOK | wxICON_ERROR);
-        return;
-    }
-    const auto &availableSeats = *availableSeatsResult;
-    wxString seatClassName;
-    if (seatClass == "ECONOMY")
-        seatClassName = "Hạng thường";
-    else if (seatClass == "BUSINESS")
+        seatClassCode = 'B';
         seatClassName = "Hạng thương gia";
+    }
     else if (seatClass == "FIRST")
+    {
+        seatClassCode = 'F';
         seatClassName = "Hạng nhất";
-    wxString message = wxString::Format("Ghế trống cho máy bay %s - %s:\n\n", serial, seatClassName);
+    }
+
+    // Lấy seat layout và generate toàn bộ seat number cho class đó
+    const auto &seatLayout = flight.getAircraft()->getSeatLayout();
+    std::vector<std::string> allSeats;
+    int total = seatLayout.getSeatCount(std::string(1, seatClassCode));
+    int padding = total > 99 ? 3 : 2;
+    for (int i = 1; i <= total; ++i)
+    {
+        std::stringstream ss;
+        ss << seatClassCode << std::setfill('0') << std::setw(padding) << i;
+        allSeats.push_back(ss.str());
+    }
+    // Lấy danh sách vé đã đặt cho chuyến bay này
+    std::vector<std::string> bookedSeats;
+    if (ticketService)
+    {
+        auto ticketResult = ticketService->getAllTickets();
+        if (ticketResult.has_value())
+        {
+            for (const auto &ticket : ticketResult.value())
+            {
+                if (ticket.getFlight()->getFlightNumber().toString() == flight.getFlightNumber().toString())
+                {
+                    std::string seatNum = ticket.getSeatNumber().toString();
+                    if (!seatNum.empty() && seatNum[0] == seatClassCode)
+                        bookedSeats.push_back(seatNum);
+                }
+            }
+        }
+    }
+    // Lọc ra các ghế chưa được đặt
+    std::vector<std::string> availableSeats;
+    for (const auto &seat : allSeats)
+    {
+        if (std::find(bookedSeats.begin(), bookedSeats.end(), seat) == bookedSeats.end())
+            availableSeats.push_back(seat);
+    }
+    // Sắp xếp lại danh sách ghế trống cho đẹp
+    std::sort(availableSeats.begin(), availableSeats.end());
+    wxString message = wxString::Format("Ghế trống cho chuyến bay %s - %s:\n\n", flightNumberStr, seatClassName);
     message += wxString::Format("Tổng số ghế trống: %zu\n\n", availableSeats.size());
     if (availableSeats.empty())
     {

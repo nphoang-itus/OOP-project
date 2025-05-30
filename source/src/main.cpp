@@ -32,6 +32,7 @@ public:
             {
                 logger->error("Failed to connect to the database: Unknown error");
             }
+            std::cerr << "Server is not start !!!" << std::endl;
             return false;
         }
 
