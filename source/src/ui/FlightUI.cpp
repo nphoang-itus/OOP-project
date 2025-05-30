@@ -1,12 +1,3 @@
-// [DEBUG] Building prepared statement from: DELETE FROM flight WHERE id = ?
-// [DEBUG] Built final query: DELETE FROM flight WHERE id = '13'
-// [DEBUG] Executing prepared statement: DELETE FROM flight WHERE id = '13'
-// [ERROR] MySQL error executing statement: CDK Error: Cannot delete or update a parent row: a foreign key constraint fails (`airlines_db`.`flight_seat_availability`, CONSTRAINT `flight_seat_availability_ibfk_1` FOREIGN KEY (`flight_id`) REFERENCES `flight` (`id`))
-// [DEBUG] Freeing prepared statement with ID: 76
-// [DEBUG] Statement freed successfully
-// [DEBUG] Rolling back database transaction
-// [DEBUG] Transaction rolled back successfully
-// [ERROR] Failed to execute statement for deleting flight
 
 #include "FlightUI.h"
 #include "utils/utils.h"
@@ -662,7 +653,15 @@ void FlightWindow::OnDeleteFlight(wxCommandEvent &event)
         if (!result)
         {
             wxString errMsg = result.error().message;
-            if (errMsg.Contains("Failed to execute statement"))
+            if (errMsg.Contains("foreign key constraint") || errMsg.Contains("FOREIGN KEY"))
+            {
+                wxMessageBox("Không thể xóa chuyến bay này vì có dữ liệu liên quan (ghế ngồi hoặc vé đã đặt). Vui lòng kiểm tra và xóa dữ liệu liên quan trước.", "Lỗi ràng buộc dữ liệu", wxOK | wxICON_ERROR);
+            }
+            else if (errMsg.Contains("FLIGHT_HAS_TICKETS"))
+            {
+                wxMessageBox("Không thể xóa chuyến bay này vì đã có vé được đặt. Vui lòng hủy tất cả vé trước khi xóa chuyến bay.", "Chuyến bay có vé", wxOK | wxICON_ERROR);
+            }
+            else if (errMsg.Contains("Failed to execute statement"))
             {
                 wxMessageBox("Không thể xóa chuyến bay. Có thể dữ liệu chuyến bay bị lỗi hoặc ID không hợp lệ. Hãy kiểm tra lại dữ liệu!", "Lỗi", wxOK | wxICON_ERROR);
             }
