@@ -1,0 +1,26 @@
+var class_flight_service =
+[
+    [ "FlightService", "class_flight_service.html#ab6b26ef06c07293b0f5d176a825753cd", null ],
+    [ "canBoardPassenger", "class_flight_service.html#aa552cb16982f9b203e7a9d81942592ee", null ],
+    [ "cancelFlight", "class_flight_service.html#aa69911a63992f31d87aa8d933a11d931", null ],
+    [ "createFlight", "class_flight_service.html#a8c9a350efdc8fe3a8286f84ba5fbc05a", null ],
+    [ "delayFlight", "class_flight_service.html#a42dca6d1723b1658911e12296cae9013", null ],
+    [ "deleteFlight", "class_flight_service.html#ae6f464970286746de8d17534177b3d9a", null ],
+    [ "flightExists", "class_flight_service.html#a0433407df92bde4e0858b4380cee9bef", null ],
+    [ "getAllFlights", "class_flight_service.html#add5a498fe92abd3dc56519ad56061626", null ],
+    [ "getAvailableSeats", "class_flight_service.html#afc4a001b2d0a2bde15a562e4e7e37606", null ],
+    [ "getConflictingFlights", "class_flight_service.html#a4700ecf5c95072ab65630e82c0613177", null ],
+    [ "getFlight", "class_flight_service.html#a5ff39974e275262317b01fe671a48723", null ],
+    [ "getFlightsByAircraft", "class_flight_service.html#a51c50c05aafe616c1e9b3ce61f7cc6a6", null ],
+    [ "getFlightsByDate", "class_flight_service.html#a36329a0650a66aa18191707e4b75947b", null ],
+    [ "getFlightsByRoute", "class_flight_service.html#adea97cabbc24b5f707f092206e5830c0", null ],
+    [ "getRemainingCapacity", "class_flight_service.html#a17815c71cd911885f738f58e9fb22049", null ],
+    [ "isFlightDepartureImminent", "class_flight_service.html#aa77be418063c87614adb9f747931e78c", null ],
+    [ "isFlightFull", "class_flight_service.html#a19c431545dd5812acd45c384b9b08d44", null ],
+    [ "isSeatAvailable", "class_flight_service.html#a5c3f5d24e0bd3cb272b80e7d527441a1", null ],
+    [ "releaseSeat", "class_flight_service.html#ad8cc265b44cfb8f45436462d9a76b0b0", null ],
+    [ "reserveSeat", "class_flight_service.html#ace6103cd72ad3be924aa84a09d0f7634", null ],
+    [ "updateFlight", "class_flight_service.html#a7cc79d87d30bcd9b33614f8dd9d484f8", null ],
+    [ "updateFlightStatus", "class_flight_service.html#aca99f43bf3d52b8dcb2d0488a45d037a", null ],
+    [ "validateScheduleForAircraft", "class_flight_service.html#a04a9b30c9463963afcd1ddba4bf53df1", null ]
+];

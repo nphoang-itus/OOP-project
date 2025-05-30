@@ -34,9 +34,9 @@
 # Other
 .temp/
 .vscode/
-source/build/
-source/docs/
-source/Doxyfile
+# source/build/
+# source/docs/
+# source/Doxyfile
 
 source/CMakeLists.txt
 

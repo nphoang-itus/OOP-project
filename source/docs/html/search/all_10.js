@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['refunded_0',['REFUNDED',['../_ticket_status_8h.html#ae4ad5c9a1b71b87331ca7c0cd486446da72498e65a0803a35d8379566cd08b5ff',1,'TicketStatus.h']]],
+  ['refundticket_1',['refundTicket',['../class_ticket_service.html#a9d2f8726c3a7830d59f19ec8235d234b',1,'TicketService']]],
+  ['registercurrency_2',['registerCurrency',['../class_currency_registry.html#ae2a7bdeb8970e0341b1e2b8d13fa99f0',1,'CurrencyRegistry']]],
+  ['registerissuingcountry_3',['registerIssuingCountry',['../class_passport_number_registry.html#ab331e0c2ceafe92b9fd0744b12ad5970',1,'PassportNumberRegistry']]],
+  ['registerseatclass_4',['registerSeatClass',['../class_seat_class_registry.html#a326c3054f8481969b47666c708a44bef',1,'SeatClassRegistry']]],
+  ['registerstrategy_5',['registerStrategy',['../class_seat_class_map_parser_factory.html#a1238b05c366e1319d74b536a6f50a9d5',1,'SeatClassMapParserFactory']]],
+  ['releaseseat_6',['releaseSeat',['../class_flight.html#adc559c8bde49cf67abf54c53d6e935ea',1,'Flight::releaseSeat()'],['../class_flight_repository.html#aac35376d162407b42d1c994252233cbd',1,'FlightRepository::releaseSeat()'],['../class_flight_service.html#ad8cc265b44cfb8f45436462d9a76b0b0',1,'FlightService::releaseSeat()']]],
+  ['reserveseat_7',['reserveSeat',['../class_flight.html#afe1b655e4b01c33eabc05bef8c8067c6',1,'Flight::reserveSeat()'],['../class_flight_repository.html#a5372dc51e088b6abb4a900a8c833a9fc',1,'FlightRepository::reserveSeat()'],['../class_flight_service.html#ace6103cd72ad3be924aa84a09d0f7634',1,'FlightService::reserveSeat()']]],
+  ['reset_8',['reset',['../class_ticket_search_builder.html#a072699dbce8e21b07100d013cfab1b36',1,'TicketSearchBuilder']]],
+  ['result_9',['Result',['../_result_8h.html#ac760baeab29427a70baa792390d4c385',1,'Result.h']]],
+  ['result_2eh_10',['Result.h',['../_result_8h.html',1,'']]],
+  ['rollbacktransaction_11',['rollbackTransaction',['../class_i_database_connection.html#aa06d60e63d1d64f7e377d4e03aaeeb8e',1,'IDatabaseConnection::rollbackTransaction()'],['../class_my_s_q_l_x_connection.html#afa07420f6a12359961ded53c5b88036f',1,'MySQLXConnection::rollbackTransaction()']]],
+  ['route_12',['Route',['../class_route.html',1,'Route'],['../class_route.html#a1aa9340cc2461d752e8294b421050981',1,'Route::Route()']]],
+  ['route_2eh_13',['Route.h',['../_route_8h.html',1,'']]],
+  ['routeerror_14',['RouteError',['../_route_error_8h.html#a93ddc5aa829b35c7d202361daf55b65c',1,'RouteError.h']]],
+  ['routeerror_2eh_15',['RouteError.h',['../_route_error_8h.html',1,'']]],
+  ['routeerrorhelper_16',['RouteErrorHelper',['../struct_route_error_helper.html',1,'']]],
+  ['routeformatter_17',['RouteFormatter',['../class_route_formatter.html',1,'']]],
+  ['routeformatter_2eh_18',['RouteFormatter.h',['../_route_formatter_8h.html',1,'']]],
+  ['routeparser_19',['RouteParser',['../class_route_parser.html',1,'']]],
+  ['routeparser_2eh_20',['RouteParser.h',['../_route_parser_8h.html',1,'']]],
+  ['routetest_21',['RouteTest',['../class_route_test.html',1,'']]],
+  ['routevalidator_22',['RouteValidator',['../class_route_validator.html',1,'']]],
+  ['routevalidator_2eh_23',['RouteValidator.h',['../_route_validator_8h.html',1,'']]]
+];

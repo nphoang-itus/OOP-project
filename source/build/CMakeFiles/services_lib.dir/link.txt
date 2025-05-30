@@ -1,0 +1,2 @@
+/usr/bin/ar qc libservices_lib.a CMakeFiles/services_lib.dir/src/services/AircraftService.cpp.o CMakeFiles/services_lib.dir/src/services/FlightService.cpp.o CMakeFiles/services_lib.dir/src/services/PassengerService.cpp.o CMakeFiles/services_lib.dir/src/services/TicketService.cpp.o
+/usr/bin/ranlib libservices_lib.a
