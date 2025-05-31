@@ -511,7 +511,18 @@ void TicketWindow::SearchTicketDialog()
         ticketList->SetItem(index, 1, ticket.getPassenger()->getPassport().toString());
         ticketList->SetItem(index, 2, ticket.getFlight()->getFlightNumber().toString());
         ticketList->SetItem(index, 3, ticket.getSeatNumber().toString());
-        ticketList->SetItem(index, 4, std::to_string(ticket.getPrice().getAmount()));
+
+        // Format price with thousand separators
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(0) << ticket.getPrice().getAmount();
+        std::string priceStr = ss.str();
+        // Add thousand separators
+        for (int i = priceStr.length() - 3; i > 0; i -= 3)
+        {
+            priceStr.insert(i, ".");
+        }
+        ticketList->SetItem(index, 4, priceStr);
+
         ticketList->SetItem(index, 5, ticket.getStatusVietnamese());
         index++;
     }
