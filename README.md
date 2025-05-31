@@ -2166,6 +2166,10 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
 
 ## III. Hướng dẫn chạy chương trình
 
+### Lưu ý quan trọng:
+File thực thi trong `release` sẽ chỉ hoạt động với máy có đường dẫn các thư viện giống với người tạo ra file thực thi này (Ví dụ: file thực thi được link tới thư viện thuộc đường dẫn `/usr/local/opt/...` nhưng trên các máy khác thì thư viện thực sự nằm ở `/opt/homebrew/...`)
+. Vì thế muốn sử dụng được file thực thi cần biên dịch lại bằng CMake (có hướng dẫn bên dưới).
+
 ### 1. Yêu cầu hệ thống
 
 #### Phần mềm cần thiết:
@@ -2256,10 +2260,7 @@ cmake ..
 #### Bước 3: Biên dịch
 ```bash
 # Biên dịch chương trình chính
-make AirlinesManagement
-
-# Hoặc biên dịch tất cả (bao gồm tests nếu được bật)
-make all
+make 
 ```
 
 #### Biên dịch với tests (tùy chọn):

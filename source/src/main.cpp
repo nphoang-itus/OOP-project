@@ -17,7 +17,7 @@ public:
     {
         // Initialize Logger
         auto logger = Logger::getInstance();
-        logger->setMinLevel(LogLevel::INFO);
+        logger->setMinLevel(LogLevel::DEBUG);
 
         // Initialize Database Connection
         auto connection = MySQLXConnection::getInstance();
