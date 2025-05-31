@@ -1,7 +1,0 @@
-[2025-05-31 01:07:44.689] [INFO] Logger initialized
-[2025-05-31 01:07:44.689] [INFO] Log level set to DEBUG
-[2025-05-31 01:07:44.690] [DEBUG] MySQLXConnection instance created
-[2025-05-31 01:07:44.690] [INFO] MySQLXConnection singleton instance created
-[2025-05-31 01:07:44.690] [INFO] Attempting to connect to MySQL server at localhost:33060 with user 'cuong116' and database 'airlines_db'
-[2025-05-31 01:07:44.741] [INFO] Successfully connected to MySQL database 'airlines_db'
-[2025-05-31 01:07:46.184] [INFO] Logger shutting down

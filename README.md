@@ -46,14 +46,14 @@ Phân công chi tiết được trình bày trong spreadsheet  [milestone](https
 | **M2** | Thiết kế, kết nối cơ sở dữ liệu với chức năng và cài đặt chương trình toàn bộ dự án |
 | **M3** | Kiểm thử và sửa lỗi |
 | **M4** | Báo cáo và hoàn thiện hệ thống |
-| **OOP** | Danh sách các mục áp dụng SOLID, Design Pattern, Dependency Injection trong đồ án |
 | **ĐÁNH GIÁ** | Thống kê số task mỗi thành viên nhận và hoàn thành (tính tỷ lệ đóng góp) |
 
 #### Tỉ lệ đóng góp của các thành viên vào dự án
 | Tên thành viên | Số task hoàn thành | Tỉ lệ đóng góp |
 |:-:|:-:|:-:|
-| Nguyễn Phúc Hoàng | 63 | 61.76% |
-| Dương Nhật Cường | 39 | 38.24% |
+| Nguyễn Phúc Hoàng | 62 | 60.78% |
+| Dương Nhật Cường | 40 | 39.22% |
+|***Tổng***|***102***|***100%***|
 
 #### Tỉ lệ điểm của các thành viên: *Chia đều*
 
@@ -62,15 +62,15 @@ Phân công chi tiết được trình bày trong spreadsheet  [milestone](https
 ### 1. Teamwork (15%):
 #### 1.1. Giao tiếp:
 - Trao đổi thông tin qua và họp qua Discord.
-- Nhóm tổ chức họp định kỳ mỗi tuần một lần (trừ các tuần dính lịch thi học kỳ).
+- Nhóm tổ chức họp định kỳ mỗi tuần một lần (trừ các tuần dính lịch thi học kỳ và lịch bận của từng thành viên).
 - Thư mục lưu trữ biên bản họp: [BIÊN BẢN HỌP](https://drive.google.com/drive/folders/1H37agCGiqLQLTfkh5w6cz3WedyLYk4zb?usp=drive_link)
 
 #### 1.2. Theo dõi tiến độ:
-- Thực hiện phân công theo mô hình phân chia [milestone](https://fastwork.vn/milestone-la-gi/).
-- Lập kế hoạch: Chia nhỏ công việc theo các Milestone (1-2 tuần hoặc theo các phần), theo dõi tiến độ bằng Google Sheet.
+- Thực hiện phân công theo mô hình phân chia [milestone](https://fastwork.vn/milestone-la-gi/) *(Do lần đầu tiên áp dụng nên chưa thực sự theo được mô hình milestone lắm)*.
+- Lập kế hoạch: Chia nhỏ công việc theo các Milestone, theo dõi tiến độ bằng Google Sheet.
 - Kế hoạch dự án: [KẾ HOẠCH DỰ ÁN](https://docs.google.com/spreadsheets/d/17MIbYC_3728fK3oDs7YA8lyq8wD4hYn5dRZaQUcmwqk/edit?usp=sharing)
 - Phân công công việc: [PHÂN CÔNG CÔNG VIỆC](https://docs.google.com/spreadsheets/d/10Fg3uumLuMZ6uxxLJZAJpDxn2EyuMy1-oPprR4_YdoU/edit?usp=sharing)
-- Workspace: [ĐỒ ÁN OOP](https://drive.google.com/drive/folders/1MYWCPn5Pc7lfP3YCtnfkBv9NWD09XwXE?usp=drive_link) và Discord
+- Workspace: [ĐỒ ÁN OOP](https://drive.google.com/drive/folders/1MYWCPn5Pc7lfP3YCtnfkBv9NWD09XwXE?usp=drive_link) và Lưu trữ tài liệu trên Discord
 
 #### 1.3. Quản lý mã nguồn bằng GIT:
 ##### a. Thống kê Git theo thành viên
@@ -85,9 +85,12 @@ Phân công chi tiết được trình bày trong spreadsheet  [milestone](https
 | Tuần | Số commit | Các tính năng chính | Thành viên thực hiện |
 |------|-----------|---------------------|----------------------|
 | Tuần 1 (29/04 - 05/05) | 15 | **Nguyễn Phúc Hoàng:**<br>- Khởi tạo project template<br>- Implement các model cơ bản (Flight, Passenger, Reservation)<br>- Thiết lập database connection<br>- Implement Logger<br><br>**Dương Nhật Cường:**<br>- Cập nhật thông tin SOLID<br>- Thêm class diagram để mô phỏng các lớp | Nguyễn Phúc Hoàng (12 commits)<br>Dương Nhật Cường (3 commits) |
-| Tuần 2 (06/05 - 12/05) | 24 | **Nguyễn Phúc Hoàng:**<br>- Implement Repository Pattern<br>- Implement các service<br>- Implement Factory Pattern<br>- Test các repository<br>- Cập nhật database connection sử dụng Singleton Pattern<br><br>**Dương Nhật Cường:**<br>- Cài đặt Mock Repository<br> | Nguyễn Phúc Hoàng (12 commits)<br>Dương Nhật Cường (12 commits) |
-| Tuần 3 (13/05 - 19/05) | 30 | **Nguyễn Phúc Hoàng:**<br>- Implement Value Objects (ContactInfo, SeatClass, AircraftSerial)<br>- Implement Core Entities<br>- Test các core entities<br>- Cập nhật schema database<br><br>**Dương Nhật Cường:**<br>- Cài đặt Mock Repository<br> - Implement các service hoàn chỉnh | Nguyễn Phúc Hoàng (20 commits)<br>Dương Nhật Cường (10 commits) |
+| Tuần 2 (06/05 - 12/05) | 24 | *(Giai đoạn này nhận thấy đồ án có nhiều vấn đề như Model đơn giản,... nên quyết định cài đặt lại Model cho chi tiết)*<br> **Nguyễn Phúc Hoàng:**<br>- Implement Repository Pattern<br>- Implement các tính năng CRUD cho service<br>- Implement Factory Pattern<br>- Test các repository<br>- Cập nhật database connection sử dụng Singleton Pattern<br><br>**Dương Nhật Cường:**<br>- Cài đặt Mock Repository<br> | Nguyễn Phúc Hoàng (12 commits)<br>Dương Nhật Cường (12 commits) |
+| Tuần 3 (13/05 - 19/05) | 30 | **Nguyễn Phúc Hoàng:**<br>- Implement Value Objects (ContactInfo, SeatClass, AircraftSerial,...)<br>- Implement Core Entities<br>- Test các core entities<br>- Cập nhật schema database<br><br>**Dương Nhật Cường:**<br>- Cài đặt Mock Repository<br> - Implement các service hoàn chỉnh | Nguyễn Phúc Hoàng (20 commits)<br>Dương Nhật Cường (10 commits) |
 | Tuần 4 (20/05 - 30/05) | 67 | **Nguyễn Phúc Hoàng:**<br>- Implement các service hoàn chỉnh<br>- Cập nhật documentation<br>- Hoàn thiện các tính năng<br>- Fix bugs trong service<br><br>**Dương Nhật Cường:**<br>- Test các service<br>- Cập nhật test cho aircraft service<br>- Hoàn thiện mock repository<br>- Phát triển UI<br>- Fix bugs trong UI | Nguyễn Phúc Hoàng (37 commits)<br>Dương Nhật Cường (30 commits) |
+
+***Minh chứng commit: Thực thi lệnh `git log --pretty=format:"%ad - %an - [%D] - %s" --date=short --decorate` trên terminal nhận được kết quả như hình bên dưới (Lưu ý: nphoang và Hoang Nguyen Phuc là Nguyễn Phúc Hoàng, cuongne và cừn là Dương Nhật Cường)***
+![Minh chứng commit](./source/img/15-MinhChungGit.png)
 
 ### 2. UI/UX (20%):
 #### 2.1. Mô tả chủ đề
@@ -372,6 +375,7 @@ Dự án được thiết kế và triển khai theo hướng đối tượng v�
         *   Quản lý `SeatNumber` cụ thể cho vé.
         *   Quản lý `Price` (với amount và currency) như một Value Object.
         *   Quản lý trạng thái vé (`TicketStatus` - PENDING, CONFIRMED, CANCELLED, etc.) với các logic nghiệp vụ như `canBeCancelled()`, `canBeCheckedIn()`.
+        *   Bổ sung thêm tính năng tìm kiếm trên nhiều trường dữ liệu như tìm theo Mã chuyến bay, tìm theo Trạng thái vé, tìm theo số Passport của khách hàng.
     *   **Phiên bản tham khảo:** Chức năng "Reserve Seat" và "User Ticket" có vẻ đơn giản là ghi/đọc thông tin đặt chỗ. Khái niệm "Ticket" không phải là một đối tượng phức tạp với các trạng thái và logic riêng.
 
 5.  **An toàn hơn:**
@@ -901,7 +905,6 @@ Dự án đã áp dụng các nguyên tắc SOLID trong thiết kế và triển
    - Test đóng kết nối
    - Test xử lý lỗi kết nối
    - Test thread safety
-   - Test connection pooling
 
    // Database Operations Tests
    - Test các câu query cơ bản
@@ -920,13 +923,13 @@ Dự án đã áp dụng các nguyên tắc SOLID trong thiết kế và triển
    ```
 
 ###### 5. Test Environment
-1. **Development Environment**
+**Development Environment**
    - IDE: Visual Studio Code
    - Compiler: GCC/Clang
    - Build System: CMake
    - Test Framework: Google Test
 
-2. **Test Database**
+**Test Database**
    - MySQL 8.0
    - Docker container
    - Test data được tạo tự động
@@ -1277,19 +1280,44 @@ Dự án tuân thủ các quy ước coding convention nghiêm ngặt để đ�
 | Enum class | `PascalCase` | `enum class FlightStatus { SCHEDULED, BOARDING }` |
 
 ##### 2. Cấu trúc thư mục
-Dự án được tổ chức theo cấu trúc thư mục rõ ràng trong `/src`:
+
+###### Thư mục gốc
+```
+OOP-project/
+├── release/            # Thư mục chứa phiên bản phát hành
+├── source/             # Mã nguồn chính của dự án
+└── README.md           # Tài liệu chi tiết dự án
+```
+
+###### Thư mục source - Chứa mã nguồn hệ thống
+```
+source/
+├── CMakeLists.txt      # Cấu hình build system
+├── docker-compose.yml  # Cấu hình Docker cho database
+├── Doxyfile            # Cấu hình tạo documentation
+├── schema.sql          # Database schema
+├── build/              # Thư mục build artifacts
+├── docs/               # Documentation được tạo tự động
+├── img/                # Hình ảnh minh họa trong README.md
+└── src/                # Lõi mã nguồn chính
+```
+
+###### Thư mục src - Cốt lõi hệ thống
+
 ```
 src/
-├── core/           # Chứa các entity và value objects
-│   ├── entities/   # Core Entities
+├── core/               # Chứa các entity và value objects
+│   ├── entities/       # Core Entities
 │   ├── value_objects/  # Value Objects
-│   └── validators/ # Validators
-├── database/       # Chứa các lớp xử lý database
-│   └── mysql/      # MySQL Implementation
-├── repositories/   # Chứa các repository interface và implementation
-├── services/       # Chứa các service xử lý business logic
-├── utils/          # Chứa các utility classes và helper functions
-└── tests/          # Chứa các test cases
+│   └── validators/     # Validators
+├── database/           # Chứa các lớp xử lý database
+│   └── mysql/          # MySQL Implementation
+├── repositories/       # Chứa các repository interface và implementation
+│   └── mock_repo/      # Mock Data
+│   └── mysql_repo/     # MySQL Repository
+├── services/           # Chứa các service xử lý business logic
+├── utils/              # Chứa các utility classes và helper functions
+└── tests/              # Chứa các test cases
 ```
 
 ##### 3. Cấu trúc và định dạng mã nguồn
@@ -1480,6 +1508,11 @@ Dự án sử dụng "Feature Branch Workflow" để quản lý mã nguồn vớ
    - Merge vào `main`
    - Tạo tag version mới
    - Triển khai lên môi trường production
+
+##### Minh chứng quy trình Feature Branch Workflow
+**Sử dụng extension Git Graph trên VSCode**
+*(Do nhiều branch được tạo và giới hạn về tài liệu nên chỉ 3/4 quy trình được hiển thị ở ảnh dưới)*
+![Feature Branch Workflow](./source/img/16-Branch-Flow.png)
 
 ### 5. Tài liệu mô tả kiến trúc phần mềm và các module (10%)
 
@@ -1908,7 +1941,7 @@ erDiagram
 
 Dự án đã áp dụng một số chủ đề nâng cao mà không được đề cập trong chương trình học chính thức. Các chủ đề này thể hiện sự tìm hiểu và nghiên cứu độc lập của nhóm:
 
-#### 6.1. Design Patterns Nâng cao
+#### 6.1. Design Patterns mới
 
 ##### 1. Strategy Pattern
 - **Mô tả:** Cho phép định nghĩa một họ các thuật toán, đóng gói mỗi thuật toán và làm cho chúng có thể hoán đổi cho nhau
@@ -1997,7 +2030,7 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
   * Truy xuất nhanh chóng thông qua khóa
   * Tự động khởi tạo với các giá trị mặc định
 
-#### 6.2. Error Handling Nâng cao
+#### 6.2. Error Handling
 
 ##### 1. Result Type Pattern
 - **Mô tả:** Pattern xử lý lỗi hiện đại, thay thế cho exceptions
@@ -2018,7 +2051,7 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
   * Không sử dụng exceptions
   * Dễ dàng theo dõi luồng lỗi
 
-#### 6.3. Database Programming Nâng cao
+#### 6.3. Database Programming
 
 ##### 1. Prepared Statements và Parameter Binding
 - **Mô tả:** Sử dụng prepared statements để tối ưu hiệu suất và bảo mật
@@ -2085,42 +2118,15 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
   * Tích hợp với hệ thống logging chung
   * Bảo mật thông tin nhạy cảm
 
-##### 4. Connection Pooling
-- **Mô tả:** Quản lý pool các kết nối database để tối ưu hiệu suất
-- **Triển khai trong dự án:**
-  ```cpp
-  class ConnectionPool {
-  private:
-      std::vector<std::shared_ptr<IDatabaseConnection>> _connections;
-      std::mutex _mutex;
-      size_t _maxSize;
-      size_t _currentSize;
-      
-  public:
-      std::shared_ptr<IDatabaseConnection> acquire();
-      void release(std::shared_ptr<IDatabaseConnection> conn);
-  };
-  ```
-- **Lợi ích:**
-  * Tối ưu hiệu suất bằng cách tái sử dụng kết nối
-  * Giảm tải cho database server
-  * Quản lý tài nguyên hiệu quả
-  * Thread-safe trong môi trường đa luồng
-
-##### 5. Transaction Management
+##### 4. Transaction Management
 - **Mô tả:** Quản lý transaction để đảm bảo tính toàn vẹn dữ liệu
 - **Triển khai trong dự án:**
   ```cpp
-  class Transaction {
-  private:
-      std::shared_ptr<IDatabaseConnection> _conn;
-      bool _isActive;
-      
+  class IDatabaseConnection {
   public:
-      Result<bool> begin();
-      Result<bool> commit();
-      Result<bool> rollback();
-      bool isActive() const;
+      virtual Result<bool> beginTransaction() = 0;
+      virtual Result<bool> commitTransaction() = 0;
+      virtual Result<bool> rollbackTransaction() = 0;
   };
   ```
 - **Lợi ích:**
@@ -2167,7 +2173,7 @@ Dự án đã áp dụng một số chủ đề nâng cao mà không được đ
 - **Docker và Docker Compose**: Để chạy cơ sở dữ liệu MySQL
 - **CMake**: Phiên bản 3.10 trở lên
 - **C++ Compiler**: Hỗ trợ C++23 (GCC 11+, Clang 14+, MSVC 2022+)
-- **wxWidgets**: Thư viện GUI
+- **wxWidgets**: Thư viện GUI phiên bản 3.2.8
 - **MySQL Connector/C++**: Phiên bản 9.3.0 để kết nối cơ sở dữ liệu
 
 #### Cài đặt dependencies theo hệ điều hành:
@@ -2244,10 +2250,7 @@ cd build
 #### Bước 2: Cấu hình CMake
 ```bash
 # Cấu hình project
-cmake ../source
-
-# Hoặc nếu cần chỉ định đường dẫn cụ thể cho dependencies:
-cmake -DMYSQLCPPCONN_DIR=/path/to/mysql-connector-c++ ../source
+cmake ..
 ```
 
 #### Bước 3: Biên dịch
@@ -2303,23 +2306,214 @@ docker-compose restart mysql
 docker-compose logs mysql
 ```
 
-#### Lỗi biên dịch MySQL Connector:
-```bash
-# Thiết lập biến môi trường nếu cần
-export MYSQLCPPCONN_DIR=/path/to/mysql-connector-c++
+#### Nếu xảy ra lỗi không tìm được thư viện:
 
-# Hoặc chỉ định trực tiếp trong CMake
-cmake -DMYSQLCPPCONN_DIR=/usr/local/opt/mysql-connector-c++ ../source
+##### A. Kiểm tra MySQL Connector/C++
+
+**1. Kiểm tra xem đã cài đặt chưa:**
+```bash
+# macOS (Homebrew)
+brew list | grep mysql-connector-c++
+brew info mysql-connector-c++
+
+# Ubuntu/Debian
+dpkg -l | grep mysql-connector
+apt list --installed | grep mysql-connector
+
+# Kiểm tra file library trong hệ thống
+find /usr -name "*mysqlcppconn*" 2>/dev/null
+find /opt -name "*mysqlcppconn*" 2>/dev/null
+find /usr/local -name "*mysqlcppconn*" 2>/dev/null
 ```
 
-#### Lỗi wxWidgets:
-```bash
-# Kiểm tra wxWidgets đã được cài đặt
-wx-config --version
+**2. Nếu chưa cài đặt:** Quay về Phần cài đặt thư viện bên trên
 
-# Nếu chưa có, cài đặt lại
-# macOS: brew reinstall wxwidgets
-# Ubuntu: sudo apt reinstall libwxgtk3.0-gtk3-dev
+**3. Nếu đã cài đặt nhưng CMake không tìm thấy, tìm đường dẫn:**
+```bash
+# Tìm đường dẫn thư viện
+find /usr -name "libmysqlcppconn*" 2>/dev/null
+find /opt -name "libmysqlcppconn*" 2>/dev/null  
+find /usr/local -name "libmysqlcppconn*" 2>/dev/null
+
+# Tìm đường dẫn header files
+find /usr -name "xdevapi.h" 2>/dev/null
+find /opt -name "xdevapi.h" 2>/dev/null
+find /usr/local -name "xdevapi.h" 2>/dev/null
+
+# macOS với Homebrew
+brew --prefix mysql-connector-c++
+ls -la $(brew --prefix mysql-connector-c++)/lib/
+ls -la $(brew --prefix mysql-connector-c++)/include/
+```
+
+**4. Chỉnh sửa CMakeLists.txt với đường dẫn tìm được:**
+
+Thêm đường dẫn vào biến `MYSQLCPPCONN_PATHS` trong file `CMakeLists.txt`:
+
+```cmake
+# Ví dụ: nếu tìm thấy library ở /opt/mysql-connector-c++/lib/
+# và headers ở /opt/mysql-connector-c++/include/
+# Thêm vào CMakeLists.txt:
+
+if(APPLE)
+    set(MYSQLCPPCONN_PATHS
+        /usr/local/Cellar/mysql-connector-c++/9.3.0
+        /usr/local/opt/mysql-connector-c++
+        /opt/homebrew/opt/mysql-connector-c++
+        /opt/mysql-connector-c++          # <-- Thêm đường dẫn tìm được
+        # Các đường dẫn khác...
+    )
+endif()
+```
+
+Hoặc sử dụng biến môi trường:
+```bash
+export MYSQLCPPCONN_DIR=/opt/mysql-connector-c++
+cmake ..
+```
+
+##### B. Kiểm tra wxWidgets
+
+**1. Kiểm tra xem đã cài đặt chưa:**
+```bash
+# Kiểm tra wx-config
+wx-config --version
+wx-config --libs
+wx-config --cppflags
+
+# macOS (Homebrew)
+brew list | grep wxwidgets
+brew info wxwidgets
+
+# Ubuntu/Debian
+dpkg -l | grep wxwidgets
+apt list --installed | grep libwxgtk
+
+# Kiểm tra file trong hệ thống
+find /usr -name "wx-config" 2>/dev/null
+find /opt -name "wx-config" 2>/dev/null
+find /usr/local -name "wx-config" 2>/dev/null
+```
+
+**2. Nếu chưa cài đặt:**
+```bash
+# macOS
+brew install wxwidgets
+
+# Ubuntu/Debian
+sudo apt install libwxgtk3.0-gtk3-dev
+
+# Windows - tải từ https://www.wxwidgets.org/downloads/
+```
+
+**3. Nếu đã cài đặt nhưng CMake không tìm thấy:**
+```bash
+# Tìm đường dẫn wxWidgets
+which wx-config
+wx-config --prefix
+
+# Tìm thư viện wx
+find /usr -name "libwx_*" 2>/dev/null | head -5
+find /opt -name "libwx_*" 2>/dev/null | head -5
+find /usr/local -name "libwx_*" 2>/dev/null | head -5
+
+# macOS với Homebrew
+brew --prefix wxwidgets
+ls -la $(brew --prefix wxwidgets)/lib/
+```
+
+**4. Chỉnh sửa CMakeLists.txt:**
+
+Thêm đường dẫn vào CMakeLists.txt:
+```cmake
+# Thêm đường dẫn tìm được vào wxWidgets_SEARCH_PATHS
+if(APPLE)
+    set(wxWidgets_SEARCH_PATHS
+        /usr/local/lib
+        /usr/local/include
+        /opt/homebrew/lib
+        /opt/homebrew/include
+        /your/found/path/lib      # <-- Thêm đường dẫn lib tìm được
+        /your/found/path/include  # <-- Thêm đường dẫn include tìm được
+    )
+endif()
+```
+
+Hoặc sử dụng biến môi trường:
+```bash
+export wxWidgets_ROOT_DIR=/your/found/path
+cmake ..
+```
+
+##### C. Kiểm tra Google Test (nếu BUILD_TESTS=ON)
+
+**1. Kiểm tra xem đã cài đặt chưa:**
+```bash
+# macOS (Homebrew)
+brew list | grep googletest
+brew info googletest
+
+# Ubuntu/Debian
+dpkg -l | grep gtest
+apt list --installed | grep libgtest
+
+# Kiểm tra file trong hệ thống
+find /usr -name "libgtest*" 2>/dev/null
+find /opt -name "libgtest*" 2>/dev/null
+find /usr/local -name "libgtest*" 2>/dev/null
+```
+
+**2. Nếu chưa cài đặt:**
+```bash
+# macOS
+brew install googletest
+
+# Ubuntu/Debian
+sudo apt install libgtest-dev
+
+# Windows (vcpkg)
+vcpkg install gtest
+```
+
+**3. Chỉnh sửa CMakeLists.txt nếu cần:**
+```cmake
+# Thêm đường dẫn vào GTEST_SEARCH_PATHS nếu tìm thấy ở vị trí khác
+set(GTEST_SEARCH_PATHS
+    /usr/local/lib
+    /usr/local/include
+    /your/gtest/path/lib      # <-- Thêm đường dẫn tìm được
+    /your/gtest/path/include  # <-- Thêm đường dẫn tìm được
+)
+```
+
+##### D. Ví dụ các lệnh chỉnh sửa cụ thể:
+
+**Nếu MySQL Connector ở `/opt/mysql-connector-c++`:**
+```bash
+# Kiểm tra
+ls -la /opt/mysql-connector-c++/lib/
+ls -la /opt/mysql-connector-c++/include/
+
+# Chỉnh sửa CMakeLists.txt - thêm dòng này vào MYSQLCPPCONN_PATHS:
+# /opt/mysql-connector-c++
+```
+
+**Nếu wxWidgets ở `/usr/local/wxwidgets`:**
+```bash
+# Kiểm tra
+ls -la /usr/local/wxwidgets/lib/
+ls -la /usr/local/wxwidgets/include/
+
+# Chỉnh sửa CMakeLists.txt - thêm vào wxWidgets_SEARCH_PATHS:
+# /usr/local/wxwidgets/lib
+# /usr/local/wxwidgets/include
+```
+
+**Sau khi chỉnh sửa CMakeLists.txt:**
+```bash
+# Xóa cache và cấu hình lại
+rm -rf CMakeCache.txt CMakeFiles/
+cmake ..
 ```
 
 ### 6. Dừng hệ thống
@@ -2337,3 +2531,8 @@ docker-compose down -v
 ```
 
 ## IV. Link video demo
+### 1. Link Youtube (Có thể bị gỡ do hiển thị nhiều thông tin cá nhân)
+[https://youtu.be/AquO8xKVRKQ?si=aZ3LjpsAlD3Mzo9_](https://youtu.be/AquO8xKVRKQ?si=aZ3LjpsAlD3Mzo9_)
+
+### 2. Link Google Drive (Link backup cho trường hợp trên)
+[https://drive.google.com/file/d/1bu4DMNX372y9-8IWXfR1C9qSkO_Hgk_k/view?usp=drive_link](https://drive.google.com/file/d/1bu4DMNX372y9-8IWXfR1C9qSkO_Hgk_k/view?usp=drive_link)
